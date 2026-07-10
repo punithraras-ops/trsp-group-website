@@ -7,8 +7,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY . .
 
-ENV PORT=3000
 ENV PHP_PORT=8000
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "server.js"]
