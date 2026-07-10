@@ -3,9 +3,9 @@
 declare(strict_types=1);
 
 return [
-    'company_name' => 'TRSP Groups',
-    'legal_name' => 'TRSP Groups',
-    'short_name' => 'TRSP Groups',
+    'company_name' => 'Technical of RSP Groups',
+    'legal_name' => 'Technical of RSP Groups',
+    'short_name' => 'Technical of RSP Groups',
     'location' => 'Chikkamagaluru, Karnataka',
     'address' => '[Your Full Address]',
     'postal_code' => '577101',
@@ -14,7 +14,7 @@ return [
     'phone_display' => '+91 XXXXXXXXXX',
     'phone_href' => '+91XXXXXXXXXX',
     'whatsapp_href' => 'https://wa.me/91XXXXXXXXXX',
-    'default_description' => 'TRSP Groups delivers research-driven software, digital products, and technology solutions from Chikkamagaluru, Karnataka.',
+    'default_description' => 'Technical of RSP Groups delivers research-driven software, digital products, and technology solutions from Chikkamagaluru, Karnataka.',
     'routes' => [
         'home' => '/',
         'about' => '/about',
@@ -96,7 +96,7 @@ return [
     ],
     'testimonials' => [
         [
-            'quote' => 'Outstanding service and professionalism from TRSP Groups!',
+            'quote' => 'Outstanding service and professionalism from Technical of RSP Groups!',
             'author' => 'Client Name, Company',
         ],
         [

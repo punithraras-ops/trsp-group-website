@@ -41,7 +41,7 @@ include __DIR__ . '/includes/layout-top.php';
 
             <div class="col-lg-6" data-aos="fade-left">
                 <div class="about-visual-shell">
-                    <img src="/img/placeholder-team.svg" alt="TRSP Groups Team" class="img-fluid rounded shadow-lg">
+                    <img src="/img/placeholder-team.svg" alt="Technical of RSP Groups Team" class="img-fluid rounded shadow-lg">
                 </div>
             </div>
         </div>

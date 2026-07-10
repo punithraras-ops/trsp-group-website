@@ -16,7 +16,7 @@ include __DIR__ . '/includes/layout-top.php';
             <div class="col-xl-9" data-aos="fade-up">
                 <span class="hero-kicker">Our Expertise</span>
                 <h1 class="hero-title display-3 fw-bold mb-4">Services designed to move ideas into reliable products.</h1>
-                <p class="hero-description lead mb-0">From engineering delivery to analytics, security, and product scale-up, TRSP Groups helps businesses build with clarity and confidence.</p>
+                <p class="hero-description lead mb-0">From engineering delivery to analytics, security, and product scale-up, Technical of RSP Groups helps businesses build with clarity and confidence.</p>
             </div>
         </div>
     </div>
