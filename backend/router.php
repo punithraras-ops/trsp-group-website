@@ -29,6 +29,8 @@ $routeMap = [
     '/software-development.php' => $pagesDir . '/software-development.php',
     '/contact' => $pagesDir . '/contact.php',
     '/contact.php' => $pagesDir . '/contact.php',
+    '/admin' => $pagesDir . '/admin.php',
+    '/admin.php' => $pagesDir . '/admin.php',
 ];
 
 if (isset($routeMap[$decodedPath])) {
