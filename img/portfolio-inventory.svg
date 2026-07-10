@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="420" viewBox="0 0 600 420">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1b2b"/>
+      <stop offset="100%" stop-color="#178396"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="420" fill="url(#bg)"/>
+  <rect x="230" y="140" width="60" height="110" rx="6" fill="rgba(255,255,255,0.5)"/>
+  <rect x="300" y="170" width="60" height="80" rx="6" fill="rgba(255,255,255,0.35)"/>
+  <rect x="370" y="120" width="60" height="130" rx="6" fill="rgba(255,255,255,0.65)"/>
+  <text x="50%" y="345" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">Inventory Management</text>
+</svg>

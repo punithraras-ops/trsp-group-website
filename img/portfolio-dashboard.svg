@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="420" viewBox="0 0 600 420">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1b2b"/>
+      <stop offset="100%" stop-color="#178396"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="420" fill="url(#bg)"/>
+  <polyline points="220,240 270,190 320,215 370,160 420,190" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="220" cy="240" r="7" fill="#ffffff"/>
+  <circle cx="270" cy="190" r="7" fill="#ffffff"/>
+  <circle cx="320" cy="215" r="7" fill="#ffffff"/>
+  <circle cx="370" cy="160" r="7" fill="#ffffff"/>
+  <circle cx="420" cy="190" r="7" fill="#ffffff"/>
+  <text x="50%" y="345" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">AI-Powered Dashboard</text>
+</svg>

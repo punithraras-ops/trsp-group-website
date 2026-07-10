@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="420" viewBox="0 0 600 420">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1b2b"/>
+      <stop offset="100%" stop-color="#178396"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="420" fill="url(#bg)"/>
+  <rect x="220" y="150" width="160" height="120" rx="10" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="6"/>
+  <circle cx="255" cy="292" r="12" fill="rgba(255,255,255,0.55)"/>
+  <circle cx="345" cy="292" r="12" fill="rgba(255,255,255,0.55)"/>
+  <path d="M220 150l-20-40h-30" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="6" stroke-linecap="round"/>
+  <text x="50%" y="345" text-anchor="middle" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">E-Commerce Platform</text>
+</svg>

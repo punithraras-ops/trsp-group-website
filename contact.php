@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+$site = require __DIR__ . '/includes/site.php';
+$pageTitle = $site['short_name'] . ' - Contact Us';
+$pageDescription = 'Contact ' . $site['legal_name'] . ' in ' . $site['location'] . '.';
+$activePage = 'contact';
+
+$serviceKeys = array_map(static fn(array $service): string => $service['key'], $site['services']);
+$selectedService = $_GET['service'] ?? '';
+$selectedService = in_array($selectedService, $serviceKeys, true) ? $selectedService : '';
+
+include __DIR__ . '/includes/layout-top.php';
+?>
+
+<section class="hero text-center text-white d-flex align-items-center contact-hero">
+    <div class="container">
+        <h1 class="display-3 fw-bold mb-4" data-aos="fade-up">Contact Us</h1>
+        <p class="lead mb-5" data-aos="fade-up" data-aos-delay="200">Get in touch with <?= e($site['short_name']) ?>. We are here to help.</p>
+    </div>
+</section>
+
+<section class="section-padding bg-light">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-6" data-aos="fade-right">
+                <h3 class="fw-bold mb-4">Get in Touch</h3>
+                <div class="alert d-none" data-form-status role="status" aria-live="polite"></div>
+                <form data-contact-form>
+                    <div class="mb-4">
+                        <input type="text" name="name" class="form-control form-control-lg rounded-pill" placeholder="Your Name" required>
+                    </div>
+                    <div class="mb-4">
+                        <input type="email" name="email" class="form-control form-control-lg rounded-pill" placeholder="Your Email" required>
+                    </div>
+                    <div class="mb-4">
+                        <input type="tel" name="phone" class="form-control form-control-lg rounded-pill" placeholder="Phone Number">
+                    </div>
+                    <div class="mb-4">
+                        <select name="service" class="form-control form-control-lg rounded-pill">
+                            <option value="">Select a service</option>
+                            <?php foreach ($site['services'] as $service): ?>
+                                <option value="<?= e($service['key']) ?>" <?= $selectedService === $service['key'] ? 'selected' : '' ?>><?= e($service['title']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <textarea name="message" class="form-control form-control-lg rounded-3" rows="6" placeholder="Your Message" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg px-5 shadow">
+                        <span data-submit-label>Send Message</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="col-lg-6" data-aos="fade-left">
+                <h3 class="fw-bold mb-4">Our Location</h3>
+                <p class="lead mb-4">
+                    <?= e($site['address']) ?><br>
+                    <?= e($site['location']) ?> - <?= e($site['postal_code']) ?><br>
+                    Phone: <?= e($site['phone_display']) ?><br>
+                    Email: <?= e($site['email']) ?>
+                </p>
+
+                <div class="ratio ratio-16x9 rounded-4 overflow-hidden shadow-lg">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15592.843846892315!2d75.767748!3d13.315308!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bbb5e6c5d0b5b3d%3A0x6f0b5e6c5d0b5b3d!2sChikkamagaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1708000000000" width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<?php include __DIR__ . '/includes/layout-bottom.php'; ?>

@@ -1,0 +1,94 @@
+<?php
+
+declare(strict_types=1);
+
+$site = require __DIR__ . '/includes/site.php';
+$pageTitle = $site['short_name'] . ' - Our Services';
+$pageDescription = 'Explore the services offered by ' . $site['legal_name'] . '.';
+$activePage = 'services';
+
+include __DIR__ . '/includes/layout-top.php';
+?>
+
+<section class="hero text-center text-white d-flex align-items-center services-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-xl-9" data-aos="fade-up">
+                <span class="hero-kicker">Our Expertise</span>
+                <h1 class="hero-title display-3 fw-bold mb-4">Services designed to move ideas into reliable products.</h1>
+                <p class="hero-description lead mb-0">From engineering delivery to analytics, security, and product scale-up, TRSP Groups helps businesses build with clarity and confidence.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-padding bg-light" id="services">
+    <div class="container">
+        <div class="section-heading text-center mx-auto" data-aos="fade-up">
+            <span class="section-eyebrow">What We Offer</span>
+            <h2 class="display-4 fw-bold mb-3">Our Services</h2>
+            <p class="section-description">Each service is shaped to reduce delivery friction, improve visibility, and give your team a stronger foundation for growth.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <?php foreach ($site['services'] as $index => $service): ?>
+                <div class="col-xl-3 col-lg-6 col-md-6" data-aos="zoom-in" data-aos-delay="<?= (string) ($index * 100) ?>">
+                    <article class="card service-card h-100 border-0 shadow-lg">
+                        <div class="card-body d-flex flex-column">
+                            <div class="service-card-header">
+                                <span class="service-icon-wrap">
+                                    <i class="<?= e($service['icon']) ?>" aria-hidden="true"></i>
+                                </span>
+                            </div>
+
+                            <div class="service-card-content mb-4">
+                                <h3 class="service-card-title"><?= e($service['title']) ?></h3>
+                                <p class="card-text text-muted mb-0"><?= e($service['summary']) ?></p>
+                            </div>
+
+                            <a href="<?= e($service['href']) ?>" class="btn btn-primary service-card-button mt-auto">
+                                <?= e($service['cta_label']) ?> <i class="fas fa-arrow-right ms-2" aria-hidden="true"></i>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<section class="section-padding section-soft">
+    <div class="container">
+        <div class="section-heading text-center mx-auto" data-aos="fade-up">
+            <span class="section-eyebrow">How We Work</span>
+            <h2 class="display-5 fw-bold mb-3">A simple process with strong execution.</h2>
+            <p class="section-description">We keep communication clear, delivery structured, and technical decisions aligned with business goals.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-4 col-md-6" data-aos="fade-up">
+                <div class="process-card h-100">
+                    <span class="process-number">01</span>
+                    <h3>Discover</h3>
+                    <p>We understand your goals, users, constraints, and technical priorities before recommending the right path.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
+                <div class="process-card h-100">
+                    <span class="process-number">02</span>
+                    <h3>Design & Build</h3>
+                    <p>We shape the architecture, user flows, and implementation plan, then deliver in focused, testable increments.</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="process-card h-100">
+                    <span class="process-number">03</span>
+                    <h3>Improve & Scale</h3>
+                    <p>We refine performance, strengthen security, and support the next stage of growth after launch.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<?php include __DIR__ . '/includes/layout-bottom.php'; ?>

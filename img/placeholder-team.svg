@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="620" viewBox="0 0 760 620">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1b2b"/>
+      <stop offset="100%" stop-color="#22a8bc"/>
+    </linearGradient>
+  </defs>
+  <rect width="760" height="620" fill="url(#bg)"/>
+  <circle cx="380" cy="250" r="80" fill="rgba(255,255,255,0.14)"/>
+  <path d="M260 430c0-66 54-120 120-120s120 54 120 120" fill="rgba(255,255,255,0.14)"/>
+  <text x="50%" y="530" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#ffffff">TRSP Groups</text>
+  <text x="50%" y="565" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" fill="rgba(255,255,255,0.75)">Team photo coming soon</text>
+</svg>
