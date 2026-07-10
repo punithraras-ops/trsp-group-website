@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://trsp-groups-production.up.railway.app/sitemap.xml
