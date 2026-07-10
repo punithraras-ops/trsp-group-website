@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$site = require __DIR__ . '/includes/site.php';
+$site = require dirname(__DIR__, 2) . '/backend/config/site.php';
 $pageTitle = $site['short_name'] . ' - Contact Us';
 $pageDescription = 'Contact ' . $site['legal_name'] . ' in ' . $site['location'] . '.';
 $activePage = 'contact';
@@ -11,7 +11,7 @@ $serviceKeys = array_map(static fn(array $service): string => $service['key'], $
 $selectedService = $_GET['service'] ?? '';
 $selectedService = in_array($selectedService, $serviceKeys, true) ? $selectedService : '';
 
-include __DIR__ . '/includes/layout-top.php';
+include __DIR__ . '/layout-top.php';
 ?>
 
 <section class="hero text-center text-white d-flex align-items-center contact-hero">
@@ -71,4 +71,4 @@ include __DIR__ . '/includes/layout-top.php';
     </div>
 </section>
 
-<?php include __DIR__ . '/includes/layout-bottom.php'; ?>
+<?php include __DIR__ . '/layout-bottom.php'; ?>

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-$site = require __DIR__ . '/includes/site.php';
+$site = require dirname(__DIR__, 2) . '/backend/config/site.php';
 $pageTitle = $site['short_name'] . ' - Custom Software Development';
 $pageDescription = 'Custom software development services from ' . $site['legal_name'] . '.';
 $activePage = 'services';
 
-include __DIR__ . '/includes/layout-top.php';
+include __DIR__ . '/layout-top.php';
 ?>
 
 <section class="hero text-center text-white d-flex align-items-center">
@@ -62,4 +62,4 @@ include __DIR__ . '/includes/layout-top.php';
     </div>
 </section>
 
-<?php include __DIR__ . '/includes/layout-bottom.php'; ?>
+<?php include __DIR__ . '/layout-bottom.php'; ?>

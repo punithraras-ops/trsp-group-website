@@ -8,6 +8,7 @@ const phpPort = Number(process.env.PHP_PORT || 8000);
 const phpHost = '127.0.0.1';
 const nodeHost = process.env.HOST || '0.0.0.0';
 const baseDir = __dirname;
+const frontendDir = path.join(baseDir, '..', 'frontend');
 const storageDir = path.join(baseDir, 'storage');
 const storageFile = path.join(storageDir, 'contact-submissions.json');
 
@@ -95,7 +96,7 @@ function sendJson(res, statusCode, payload) {
     res.end(JSON.stringify(payload));
 }
 
-const phpProcess = spawn('php', ['-S', `${phpHost}:${phpPort}`, 'router.php'], {
+const phpProcess = spawn('php', ['-S', `${phpHost}:${phpPort}`, '-t', frontendDir, 'router.php'], {
     cwd: baseDir,
     stdio: 'inherit',
 });

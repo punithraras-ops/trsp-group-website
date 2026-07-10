@@ -1,4 +1,4 @@
 node_modules
-storage/*.json
+backend/storage/*.json
 .git
 .gitignore

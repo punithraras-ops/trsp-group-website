@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-$site = require __DIR__ . '/includes/site.php';
+$site = require dirname(__DIR__, 2) . '/backend/config/site.php';
 $pageTitle = 'Page Not Found';
 $pageDescription = 'The requested page could not be found.';
 $activePage = '';
 
-include __DIR__ . '/includes/layout-top.php';
+include __DIR__ . '/layout-top.php';
 ?>
 
 <section class="section-padding bg-light page-offset">
@@ -18,4 +18,4 @@ include __DIR__ . '/includes/layout-top.php';
     </div>
 </section>
 
-<?php include __DIR__ . '/includes/layout-bottom.php'; ?>
+<?php include __DIR__ . '/layout-bottom.php'; ?>

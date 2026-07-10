@@ -1,6 +1,6 @@
 node_modules/
-storage/*.json
-!storage/.gitkeep
+backend/storage/*.json
+!backend/storage/.gitkeep
 .env
 .DS_Store
 *.log

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$site = $site ?? require __DIR__ . '/site.php';
+$site = $site ?? require dirname(__DIR__, 2) . '/backend/config/site.php';
 $pageTitle = $pageTitle ?? $site['company_name'];
 $pageDescription = $pageDescription ?? $site['default_description'];
 $activePage = $activePage ?? '';

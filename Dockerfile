@@ -10,4 +10,4 @@ COPY . .
 ENV PHP_PORT=8000
 EXPOSE 8080
 
-CMD ["node", "server.js"]
+CMD ["node", "backend/server.js"]
