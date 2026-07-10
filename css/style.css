@@ -70,17 +70,14 @@ img {
     letter-spacing: -0.02em;
 }
 
+.navbar-logo-mark {
+    height: 40px;
+    width: auto;
+}
+
 .brand-full {
-    display: none;
-    font-size: 1.35rem;
-}
-
-body.scrolled .brand-short {
-    display: none;
-}
-
-body.scrolled .brand-full {
-    display: inline;
+    font-size: 1.15rem;
+    line-height: 1.15;
 }
 
 .nav-link {
