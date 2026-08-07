@@ -492,6 +492,17 @@ router.post('/admin/design/remove/:slot', async (req, res) => {
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Image removed.' });
 });
 
+router.post('/admin/orders/:id/delivery-status', async (req, res) => {
+    const allowed = ['processing', 'shipped', 'delivered', 'cancelled'];
+    if (db.isDbConfigured() && allowed.includes(req.body.delivery_status)) {
+        await db.getDb().collection('orders').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { delivery_status: req.body.delivery_status, updated_at: new Date() } }
+        );
+    }
+    res.redirect('/admin#tab-orders');
+});
+
 router.get('/admin/site-info', async (req, res) => {
     const currentSite = await siteInfo.getMergedSite();
     res.render('admin-site-info', { site: currentSite, error: '', message: '' });

@@ -35,6 +35,7 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
             amount_paise: product.price_paise,
             currency: product.currency,
             status: 'created',
+            delivery_status: 'processing',
             razorpay_order_id: null,
             razorpay_payment_id: null,
             razorpay_signature: null,

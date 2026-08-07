@@ -90,7 +90,7 @@
             <% } else { %>
             <div class="table-responsive">
                 <table class="table table-striped align-middle bg-white rounded shadow-sm">
-                    <thead><tr><th>ID</th><th>User</th><th>Product</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+                    <thead><tr><th>ID</th><th>User</th><th>Product</th><th>Amount</th><th>Payment</th><th>Date</th><th>Delivery Status</th></tr></thead>
                     <tbody>
                         <% orders.forEach(o => { %>
                             <tr>
@@ -100,6 +100,16 @@
                                 <td>&#8377;<%= (o.amount_paise / 100).toLocaleString('en-IN') %></td>
                                 <td><span class="badge bg-<%= o.status === 'paid' ? 'success' : (o.status === 'failed' ? 'danger' : 'secondary') %>"><%= o.status %></span></td>
                                 <td class="text-nowrap"><%= new Date(o.created_at).toLocaleString('en-IN') %></td>
+                                <td>
+                                    <form method="POST" action="/admin/orders/<%= o.id %>/delivery-status" class="d-flex gap-2">
+                                        <select name="delivery_status" class="form-select form-select-sm">
+                                            <% ['processing','shipped','delivered','cancelled'].forEach(s => { %>
+                                                <option value="<%= s %>" <%= (o.delivery_status || 'processing') === s ? 'selected' : '' %>><%= s %></option>
+                                            <% }) %>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary text-nowrap">Save</button>
+                                    </form>
+                                </td>
                             </tr>
                         <% }) %>
                     </tbody>
@@ -274,5 +284,13 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    if (window.location.hash) {
+        var targetTab = document.querySelector('button[data-bs-target="' + window.location.hash + '"]');
+        if (targetTab) {
+            new bootstrap.Tab(targetTab).show();
+        }
+    }
+</script>
 </body>
 </html>

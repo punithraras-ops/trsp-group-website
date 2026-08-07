@@ -17,7 +17,8 @@
                             <th>Date</th>
                             <th>Product</th>
                             <th>Amount</th>
-                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Delivery</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -27,6 +28,13 @@
                                 <td><%= order.product_title %></td>
                                 <td>&#8377;<%= (order.amount_paise / 100).toLocaleString('en-IN') %></td>
                                 <td><span class="badge bg-<%= order.status === 'paid' ? 'success' : (order.status === 'failed' ? 'danger' : 'secondary') %>"><%= order.status %></span></td>
+                                <td>
+                                    <% if (order.status === 'paid') { %>
+                                        <span class="badge bg-<%= order.delivery_status === 'delivered' ? 'success' : (order.delivery_status === 'cancelled' ? 'danger' : 'info') %>"><%= order.delivery_status || 'processing' %></span>
+                                    <% } else { %>
+                                        <span class="text-muted">&mdash;</span>
+                                    <% } %>
+                                </td>
                             </tr>
                         <% }) %>
                     </tbody>
