@@ -1,14 +1,5 @@
-<?php
-
-declare(strict_types=1);
-
-$site = require dirname(__DIR__, 2) . '/backend/config/site.php';
-$pageTitle = $site['company_name'];
-$pageDescription = $site['default_description'];
-$activePage = 'home';
-
-include __DIR__ . '/layout-top.php';
-?>
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
 
 <section class="hero hero-home text-center text-white d-flex align-items-center">
     <div class="container position-relative">
@@ -19,14 +10,14 @@ include __DIR__ . '/layout-top.php';
                 <p class="hero-description lead mb-5">We help organizations move from concept to launch with modern engineering, better user experience, secure delivery, and practical product strategy.</p>
 
                 <div class="hero-actions d-flex flex-column flex-sm-row justify-content-center gap-3 mb-5">
-                    <a href="<?= e($site['routes']['contact']) ?>" class="btn btn-primary btn-lg shadow">Get Quote</a>
-                    <a href="tel:<?= e($site['phone_href']) ?>" class="btn btn-outline-light btn-lg shadow">Call Now</a>
+                    <a href="<%= site.routes.contact %>" class="btn btn-primary btn-lg shadow">Get Quote</a>
+                    <a href="tel:<%= site.phone_href %>" class="btn btn-outline-light btn-lg shadow">Call Now</a>
                 </div>
 
                 <div class="hero-pillbar d-flex flex-wrap justify-content-center gap-3">
-                    <?php foreach ($site['services'] as $service): ?>
-                        <span class="hero-pill"><?= e($service['title']) ?></span>
-                    <?php endforeach; ?>
+                    <% site.services.forEach(service => { %>
+                        <span class="hero-pill"><%= service.title %></span>
+                    <% }) %>
                 </div>
             </div>
         </div>
@@ -42,32 +33,32 @@ include __DIR__ . '/layout-top.php';
         </div>
 
         <div class="row g-4 justify-content-center">
-            <?php foreach ($site['services'] as $index => $service): ?>
-                <div class="col-xl-3 col-lg-6 col-md-6" data-aos="zoom-in" data-aos-delay="<?= (string) ($index * 100) ?>">
+            <% site.services.forEach((service, index) => { %>
+                <div class="col-xl-3 col-lg-6 col-md-6" data-aos="zoom-in" data-aos-delay="<%= index * 100 %>">
                     <article class="card service-card h-100 border-0 shadow-lg">
                         <div class="card-body d-flex flex-column">
                             <div class="service-card-header">
                                 <span class="service-icon-wrap">
-                                    <i class="<?= e($service['icon']) ?>" aria-hidden="true"></i>
+                                    <i class="<%= service.icon %>" aria-hidden="true"></i>
                                 </span>
                             </div>
 
                             <div class="service-card-content mb-4">
-                                <h3 class="service-card-title"><?= e($service['title']) ?></h3>
-                                <p class="card-text text-muted mb-0"><?= e($service['summary']) ?></p>
+                                <h3 class="service-card-title"><%= service.title %></h3>
+                                <p class="card-text text-muted mb-0"><%= service.summary %></p>
                             </div>
 
-                            <a href="<?= e($service['href']) ?>" class="btn btn-primary service-card-button mt-auto">
-                                <?= e($service['cta_label']) ?> <i class="fas fa-arrow-right ms-2" aria-hidden="true"></i>
+                            <a href="<%= service.href %>" class="btn btn-primary service-card-button mt-auto">
+                                <%= service.cta_label %> <i class="fas fa-arrow-right ms-2" aria-hidden="true"></i>
                             </a>
                         </div>
                     </article>
                 </div>
-            <?php endforeach; ?>
+            <% }) %>
         </div>
 
         <div class="text-center mt-5">
-            <a href="<?= e($site['routes']['services']) ?>" class="btn btn-primary btn-lg shadow">View All Services</a>
+            <a href="<%= site.routes.services %>" class="btn btn-primary btn-lg shadow">View All Services</a>
         </div>
     </div>
 </section>
@@ -78,7 +69,7 @@ include __DIR__ . '/layout-top.php';
             <div class="col-lg-6" data-aos="fade-right">
                 <span class="section-eyebrow">About Us</span>
                 <h2 class="display-5 fw-bold mb-4">Technology delivery backed by clear research and practical execution.</h2>
-                <p class="lead"><?= e($site['short_name']) ?> is a technology-focused organization based in <?= e($site['location']) ?>, helping teams modernize operations and launch better digital experiences.</p>
+                <p class="lead"><%= site.short_name %> is a technology-focused organization based in <%= site.location %>, helping teams modernize operations and launch better digital experiences.</p>
                 <p>We focus on strong fundamentals: clean architecture, secure implementation, measurable outcomes, and collaboration that keeps projects moving forward.</p>
 
                 <div class="about-mini-grid">
@@ -92,7 +83,7 @@ include __DIR__ . '/layout-top.php';
                     </div>
                 </div>
 
-                <a href="<?= e($site['routes']['about']) ?>" class="btn btn-primary shadow mt-4">Learn More <i class="fas fa-arrow-right ms-2"></i></a>
+                <a href="<%= site.routes.about %>" class="btn btn-primary shadow mt-4">Learn More <i class="fas fa-arrow-right ms-2"></i></a>
             </div>
 
             <div class="col-lg-6" data-aos="fade-left">
@@ -104,6 +95,32 @@ include __DIR__ . '/layout-top.php';
     </div>
 </section>
 
+<% if (typeof upcomingFeatures !== 'undefined' && upcomingFeatures.length > 0) { %>
+<section class="section-padding bg-light" id="upcoming-features">
+    <div class="container">
+        <div class="section-heading text-center mx-auto" data-aos="fade-up">
+            <span class="section-eyebrow">What's Next</span>
+            <h2 class="display-5 fw-bold mb-3">Upcoming Features</h2>
+            <p class="section-description">A look at what our team is actively building next.</p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <% upcomingFeatures.forEach(feature => { %>
+                <div class="col-lg-4 col-md-6">
+                    <div class="card research-card h-100 shadow-lg border-0 rounded-4">
+                        <div class="card-body p-4">
+                            <span class="badge bg-primary mb-3 text-uppercase"><%= feature.status %></span>
+                            <h4 class="card-title fw-bold mb-3"><%= feature.title %></h4>
+                            <p class="card-text text-muted"><%= feature.description %></p>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</section>
+<% } %>
+
 <section class="section-padding bg-light" id="research-verticals">
     <div class="container">
         <div class="section-heading text-center mx-auto" data-aos="fade-up">
@@ -113,28 +130,28 @@ include __DIR__ . '/layout-top.php';
         </div>
 
         <div class="row g-4 justify-content-center">
-            <?php foreach ($site['research_verticals'] as $vertical): ?>
+            <% site.research_verticals.forEach(vertical => { %>
                 <div class="col-lg-4 col-md-6">
                     <div class="card research-card h-100 shadow-lg border-0 rounded-4">
                         <div class="card-body p-4">
-                            <h4 class="card-title fw-bold text-primary mb-3"><?= e($vertical['title']) ?></h4>
-                            <p class="card-text text-muted"><?= e($vertical['summary']) ?></p>
+                            <h4 class="card-title fw-bold text-primary mb-3"><%= vertical.title %></h4>
+                            <p class="card-text text-muted"><%= vertical.summary %></p>
 
-                            <button class="btn btn-link text-primary p-0 mt-3 fw-medium collapse-btn collapsed" data-bs-toggle="collapse" data-bs-target="#<?= e($vertical['id']) ?>" aria-expanded="false" aria-controls="<?= e($vertical['id']) ?>">
+                            <button class="btn btn-link text-primary p-0 mt-3 fw-medium collapse-btn collapsed" data-bs-toggle="collapse" data-bs-target="#<%= vertical.id %>" aria-expanded="false" aria-controls="<%= vertical.id %>">
                                 View Research Areas <i class="fas fa-chevron-down ms-2"></i>
                             </button>
 
-                            <div class="collapse mt-4" id="<?= e($vertical['id']) ?>">
+                            <div class="collapse mt-4" id="<%= vertical.id %>">
                                 <ul class="list-unstyled mb-0">
-                                    <?php foreach ($vertical['areas'] as $area): ?>
-                                        <li class="mb-2"><?= e($area) ?></li>
-                                    <?php endforeach; ?>
+                                    <% vertical.areas.forEach(area => { %>
+                                        <li class="mb-2"><%= area %></li>
+                                    <% }) %>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
-            <?php endforeach; ?>
+            <% }) %>
         </div>
     </div>
 </section>
@@ -149,14 +166,14 @@ include __DIR__ . '/layout-top.php';
 
         <div id="testimonialCarousel" class="carousel slide testimonial-carousel" data-bs-ride="carousel">
             <div class="carousel-inner">
-                <?php foreach ($site['testimonials'] as $index => $testimonial): ?>
-                    <div class="carousel-item <?= $index === 0 ? 'active' : '' ?>">
+                <% site.testimonials.forEach((testimonial, index) => { %>
+                    <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
                         <div class="testimonial-card text-center mx-auto">
-                            <p class="lead fs-4 mb-4">"<?= e($testimonial['quote']) ?>"</p>
-                            <h5 class="text-white mb-0">- <?= e($testimonial['author']) ?></h5>
+                            <p class="lead fs-4 mb-4">"<%= testimonial.quote %>"</p>
+                            <h5 class="text-white mb-0">- <%= testimonial.author %></h5>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                <% }) %>
             </div>
             <button class="carousel-control-prev" type="button" data-bs-target="#testimonialCarousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon"></span>
@@ -168,4 +185,4 @@ include __DIR__ . '/layout-top.php';
     </div>
 </section>
 
-<?php include __DIR__ . '/layout-bottom.php'; ?>
+<%- include('partials/footer') %>

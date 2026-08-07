@@ -3,6 +3,22 @@ document.addEventListener('DOMContentLoaded', () => {
         window.AOS.init({ duration: 1000, once: true });
     }
 
+    const authModalEl = document.getElementById('authModal');
+    if (authModalEl && window.bootstrap) {
+        const authModal = new window.bootstrap.Modal(authModalEl);
+
+        document.querySelectorAll('[data-open-login]').forEach(trigger => {
+            trigger.addEventListener('click', event => {
+                event.preventDefault();
+                authModal.show();
+            });
+        });
+
+        if (authModalEl.dataset.autoshow === '1') {
+            authModal.show();
+        }
+    }
+
     const navbar = document.querySelector('.navbar');
 
     const updateScrollState = () => {

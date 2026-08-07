@@ -1,0 +1,51 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+
+<section class="section-padding bg-light page-offset">
+    <div class="container">
+        <% if (!dbConfigured) { %>
+            <div class="alert alert-info text-center">Checkout is not fully configured yet. Please check back soon.</div>
+        <% } else if (!product) { %>
+            <div class="alert alert-warning text-center">That product could not be found. <a href="/store">Back to store</a></div>
+        <% } else if (!user) { %>
+            <div class="text-center py-5">
+                <h2 class="fw-bold mb-3">Please sign in to continue</h2>
+                <p class="text-muted">You need an account to purchase <strong><%= product.title %></strong>.</p>
+                <button class="btn btn-primary btn-lg" data-open-login>Login / Sign Up</button>
+            </div>
+        <% } else { %>
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-lg rounded-4">
+                        <div class="card-body p-4">
+                            <h3 class="fw-bold mb-4">Checkout</h3>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><%= product.title %></span>
+                                <span>&#8377;<%= (product.price_paise / 100).toLocaleString('en-IN') %></span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
+                                <span>Total</span>
+                                <span>&#8377;<%= (product.price_paise / 100).toLocaleString('en-IN') %></span>
+                            </div>
+
+                            <% if (!razorpayConfigured) { %>
+                                <div class="alert alert-info">Online payments are not enabled yet. Please contact us to complete this purchase.</div>
+                            <% } else { %>
+                                <div class="alert d-none" data-checkout-status role="status"></div>
+                                <button class="btn btn-primary btn-lg w-100" id="payNowBtn" data-product-id="<%= product.id %>">Pay Now</button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</section>
+
+<% if (razorpayConfigured) { %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<% } %>
+<script src="/js/checkout.js"></script>
+
+<%- include('partials/footer') %>

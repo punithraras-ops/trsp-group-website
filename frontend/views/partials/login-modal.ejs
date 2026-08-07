@@ -1,0 +1,73 @@
+<% const redirectTo = typeof redirect !== 'undefined' && redirect ? redirect : currentPath; %>
+<% const err = typeof authError !== 'undefined' ? authError : ''; %>
+<div class="modal fade" id="authModal" tabindex="-1" aria-labelledby="authModalLabel" aria-hidden="true" data-autoshow="<%= typeof autoShowLogin !== 'undefined' && autoShowLogin ? '1' : '0' %>">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="authModalLabel">Sign in to continue</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+                <% if (err) { %>
+                    <div class="alert alert-danger"><%= err %></div>
+                <% } %>
+
+                <ul class="nav nav-pills nav-fill mb-4" id="authTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="login-tab" data-bs-toggle="pill" data-bs-target="#login-pane" type="button" role="tab">Login</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="signup-tab" data-bs-toggle="pill" data-bs-target="#signup-pane" type="button" role="tab">Sign Up</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
+                        <form method="POST" action="/login">
+                            <input type="hidden" name="redirect" value="<%= redirectTo %>">
+                            <div class="mb-3">
+                                <input type="email" name="email" class="form-control form-control-lg rounded-pill" placeholder="Email" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="password" name="password" class="form-control form-control-lg rounded-pill" placeholder="Password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow">Login</button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="signup-pane" role="tabpanel">
+                        <form method="POST" action="/signup">
+                            <input type="hidden" name="redirect" value="<%= redirectTo %>">
+                            <div class="mb-3">
+                                <input type="text" name="name" class="form-control form-control-lg rounded-pill" placeholder="Full Name" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="email" name="email" class="form-control form-control-lg rounded-pill" placeholder="Email" required>
+                            </div>
+                            <div class="mb-3">
+                                <input type="password" name="password" class="form-control form-control-lg rounded-pill" placeholder="Password (min 8 characters)" minlength="8" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow">Create Account</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="text-center text-muted my-3">or continue with</div>
+
+                <div class="d-flex flex-column gap-2">
+                    <% if (oauth && oauth.google) { %>
+                        <a href="/auth/google?redirect=<%= encodeURIComponent(redirectTo) %>" class="btn btn-outline-secondary rounded-pill"><i class="fab fa-google me-2"></i>Google</a>
+                    <% } else { %>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill" disabled title="Coming soon"><i class="fab fa-google me-2"></i>Google (coming soon)</button>
+                    <% } %>
+                    <% if (oauth && oauth.github) { %>
+                        <a href="/auth/github?redirect=<%= encodeURIComponent(redirectTo) %>" class="btn btn-outline-secondary rounded-pill"><i class="fab fa-github me-2"></i>GitHub</a>
+                    <% } else { %>
+                        <button type="button" class="btn btn-outline-secondary rounded-pill" disabled title="Coming soon"><i class="fab fa-github me-2"></i>GitHub (coming soon)</button>
+                    <% } %>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" disabled title="Coming soon"><i class="fab fa-facebook me-2"></i>Facebook (coming soon)</button>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" disabled title="Coming soon"><i class="fab fa-microsoft me-2"></i>Microsoft (coming soon)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

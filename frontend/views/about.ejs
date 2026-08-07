@@ -1,22 +1,13 @@
-<?php
-
-declare(strict_types=1);
-
-$site = require dirname(__DIR__, 2) . '/backend/config/site.php';
-$pageTitle = $site['short_name'] . ' - About Us';
-$pageDescription = 'About ' . $site['legal_name'] . ' in ' . $site['location'] . '.';
-$activePage = 'about';
-
-include __DIR__ . '/layout-top.php';
-?>
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
 
 <section class="section-padding section-soft page-offset">
     <div class="container">
         <div class="row align-items-center g-5">
             <div class="col-lg-6" data-aos="fade-right">
-                <span class="section-eyebrow">About <?= e($site['short_name']) ?></span>
+                <span class="section-eyebrow">About <%= site.short_name %></span>
                 <h1 class="display-4 fw-bold mb-4">Research-led technology support for businesses building what comes next.</h1>
-                <p class="lead"><?= e($site['short_name']) ?> is a technology-focused organization based in <strong><?= e($site['location']) ?></strong>. We help teams plan, build, and improve digital systems with dependable execution and a strong product mindset.</p>
+                <p class="lead"><%= site.short_name %> is a technology-focused organization based in <strong><%= site.location %></strong>. We help teams plan, build, and improve digital systems with dependable execution and a strong product mindset.</p>
                 <p>Our work combines software engineering, research thinking, security awareness, and delivery discipline so that every engagement stays practical, measurable, and aligned with business goals.</p>
 
                 <div class="about-mini-grid">
@@ -48,4 +39,4 @@ include __DIR__ . '/layout-top.php';
     </div>
 </section>
 
-<?php include __DIR__ . '/layout-bottom.php'; ?>
+<%- include('partials/footer') %>

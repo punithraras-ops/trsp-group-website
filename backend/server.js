@@ -1,179 +1,64 @@
-const http = require('node:http');
-const fs = require('node:fs');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
+const express = require('express');
+const cookieParser = require('cookie-parser');
 
-const nodePort = Number(process.env.PORT || 3000);
-const phpPort = Number(process.env.PHP_PORT || 8000);
-const phpHost = '127.0.0.1';
-const nodeHost = process.env.HOST || '0.0.0.0';
-const baseDir = __dirname;
-const frontendDir = path.join(baseDir, '..', 'frontend');
-const storageDir = path.join(baseDir, 'storage');
-const storageFile = path.join(storageDir, 'contact-submissions.json');
+const db = require('./db');
+const site = require('./config/site');
+const { attachUser } = require('./lib/auth');
+const { google, github } = require('./lib/oauth');
 
-let shuttingDown = false;
+const port = Number(process.env.PORT || 3000);
+const host = process.env.HOST || '0.0.0.0';
+const frontendDir = path.join(__dirname, '..', 'frontend');
 
-function ensureStorage() {
-    if (!fs.existsSync(storageDir)) {
-        fs.mkdirSync(storageDir, { recursive: true });
-    }
+const app = express();
 
-    if (!fs.existsSync(storageFile)) {
-        fs.writeFileSync(storageFile, '[]\n', 'utf8');
-    }
-}
+app.set('view engine', 'ejs');
+app.set('views', path.join(frontendDir, 'views'));
 
-function parseRequestBody(req) {
-    return new Promise((resolve, reject) => {
-        let body = '';
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.static(frontendDir, { index: false }));
 
-        req.on('data', chunk => {
-            body += chunk;
+app.use(attachUser);
 
-            if (body.length > 1_000_000) {
-                reject(new Error('Request body is too large.'));
-                req.destroy();
-            }
-        });
+app.use((req, res, next) => {
+    res.locals.currentPath = req.originalUrl;
+    res.locals.redirect = req.query.redirect || req.originalUrl;
+    res.locals.authError = req.query.authError || '';
+    res.locals.autoShowLogin = req.query.openLogin === '1';
+    res.locals.dbConfigured = db.isDbConfigured();
+    res.locals.oauth = { google: google.isConfigured(), github: github.isConfigured() };
+    next();
+});
 
-        req.on('end', () => {
-            if (!body) {
-                resolve({});
-                return;
-            }
+app.use(require('./routes/pages'));
+app.use(require('./routes/auth'));
+app.use(require('./routes/contact'));
+app.use(require('./routes/checkout'));
+app.use(require('./routes/admin'));
 
-            try {
-                resolve(JSON.parse(body));
-            } catch (error) {
-                reject(new Error('Invalid JSON payload.'));
-            }
-        });
+app.use((req, res) => {
+    res.status(404).render('404', {
+        site,
+        pageTitle: 'Page Not Found',
+        pageDescription: 'The requested page could not be found.',
+        activePage: '',
+    });
+});
 
-        req.on('error', reject);
+app.use((err, req, res, next) => {
+    console.error(err);
+    res.status(500).send('Something went wrong.');
+});
+
+async function start() {
+    await db.migrate();
+
+    app.listen(port, host, () => {
+        console.log(`Server running at http://${host}:${port}`);
     });
 }
 
-function validateSubmission(payload) {
-    const name = String(payload.name || '').trim();
-    const email = String(payload.email || '').trim();
-    const phone = String(payload.phone || '').trim();
-    const service = String(payload.service || '').trim();
-    const message = String(payload.message || '').trim();
-
-    if (!name || !email || !message) {
-        return { ok: false, error: 'Name, email, and message are required.' };
-    }
-
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-        return { ok: false, error: 'Please enter a valid email address.' };
-    }
-
-    return {
-        ok: true,
-        data: {
-            id: `${Date.now()}`,
-            name,
-            email,
-            phone,
-            service,
-            message,
-            createdAt: new Date().toISOString(),
-        },
-    };
-}
-
-function writeSubmission(entry) {
-    ensureStorage();
-    const existing = JSON.parse(fs.readFileSync(storageFile, 'utf8'));
-    existing.push(entry);
-    fs.writeFileSync(storageFile, `${JSON.stringify(existing, null, 2)}\n`, 'utf8');
-}
-
-function sendJson(res, statusCode, payload) {
-    res.writeHead(statusCode, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify(payload));
-}
-
-const phpProcess = spawn('php', ['-S', `${phpHost}:${phpPort}`, '-t', frontendDir, 'router.php'], {
-    cwd: baseDir,
-    stdio: 'inherit',
-});
-
-phpProcess.on('exit', code => {
-    if (!shuttingDown) {
-        console.error(`PHP server exited unexpectedly with code ${code ?? 'unknown'}.`);
-        process.exit(code ?? 1);
-    }
-});
-
-const server = http.createServer(async (req, res) => {
-    if (!req.url) {
-        sendJson(res, 400, { error: 'Invalid request URL.' });
-        return;
-    }
-
-    const requestUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-
-    if (requestUrl.pathname === '/api/contact') {
-        if (req.method !== 'POST') {
-            sendJson(res, 405, { error: 'Method not allowed.' });
-            return;
-        }
-
-        try {
-            const payload = await parseRequestBody(req);
-            const validation = validateSubmission(payload);
-
-            if (!validation.ok) {
-                sendJson(res, 422, { error: validation.error });
-                return;
-            }
-
-            writeSubmission(validation.data);
-            sendJson(res, 201, { message: 'Message received successfully.' });
-        } catch (error) {
-            sendJson(res, 400, { error: error.message || 'Unable to process request.' });
-        }
-
-        return;
-    }
-
-    const proxyRequest = http.request(
-        {
-            hostname: phpHost,
-            port: phpPort,
-            path: `${requestUrl.pathname}${requestUrl.search}`,
-            method: req.method,
-            headers: req.headers,
-        },
-        proxyResponse => {
-            res.writeHead(proxyResponse.statusCode || 500, proxyResponse.headers);
-            proxyResponse.pipe(res);
-        }
-    );
-
-    proxyRequest.on('error', error => {
-        sendJson(res, 502, { error: `Upstream PHP server error: ${error.message}` });
-    });
-
-    req.pipe(proxyRequest);
-});
-
-function shutdown() {
-    shuttingDown = true;
-    server.close(() => {
-        phpProcess.kill('SIGTERM');
-        process.exit(0);
-    });
-}
-
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-
-server.listen(nodePort, nodeHost, () => {
-    ensureStorage();
-    console.log(`Node server running at http://${nodeHost}:${nodePort}`);
-    console.log(`PHP renderer proxied from http://${phpHost}:${phpPort}`);
-});
+start();

@@ -1,23 +1,10 @@
-<?php
-
-declare(strict_types=1);
-
-$site = require dirname(__DIR__, 2) . '/backend/config/site.php';
-$pageTitle = $site['short_name'] . ' - Contact Us';
-$pageDescription = 'Contact ' . $site['legal_name'] . ' in ' . $site['location'] . '.';
-$activePage = 'contact';
-
-$serviceKeys = array_map(static fn(array $service): string => $service['key'], $site['services']);
-$selectedService = $_GET['service'] ?? '';
-$selectedService = in_array($selectedService, $serviceKeys, true) ? $selectedService : '';
-
-include __DIR__ . '/layout-top.php';
-?>
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
 
 <section class="hero text-center text-white d-flex align-items-center contact-hero">
     <div class="container">
         <h1 class="display-3 fw-bold mb-4" data-aos="fade-up">Contact Us</h1>
-        <p class="lead mb-5" data-aos="fade-up" data-aos-delay="200">Get in touch with <?= e($site['short_name']) ?>. We are here to help.</p>
+        <p class="lead mb-5" data-aos="fade-up" data-aos-delay="200">Get in touch with <%= site.short_name %>. We are here to help.</p>
     </div>
 </section>
 
@@ -40,9 +27,9 @@ include __DIR__ . '/layout-top.php';
                     <div class="mb-4">
                         <select name="service" class="form-control form-control-lg rounded-pill">
                             <option value="">Select a service</option>
-                            <?php foreach ($site['services'] as $service): ?>
-                                <option value="<?= e($service['key']) ?>" <?= $selectedService === $service['key'] ? 'selected' : '' ?>><?= e($service['title']) ?></option>
-                            <?php endforeach; ?>
+                            <% site.services.forEach(service => { %>
+                                <option value="<%= service.key %>" <%= selectedService === service.key ? 'selected' : '' %>><%= service.title %></option>
+                            <% }) %>
                         </select>
                     </div>
                     <div class="mb-4">
@@ -57,10 +44,10 @@ include __DIR__ . '/layout-top.php';
             <div class="col-lg-6" data-aos="fade-left">
                 <h3 class="fw-bold mb-4">Our Location</h3>
                 <p class="lead mb-4">
-                    <?= e($site['address']) ?><br>
-                    <?= e($site['location']) ?> - <?= e($site['postal_code']) ?><br>
-                    Phone: <?= e($site['phone_display']) ?><br>
-                    Email: <?= e($site['email']) ?>
+                    <%= site.address %><br>
+                    <%= site.location %> - <%= site.postal_code %><br>
+                    Phone: <%= site.phone_display %><br>
+                    Email: <%= site.email %>
                 </p>
 
                 <div class="ratio ratio-16x9 rounded-4 overflow-hidden shadow-lg">
@@ -71,4 +58,4 @@ include __DIR__ . '/layout-top.php';
     </div>
 </section>
 
-<?php include __DIR__ . '/layout-bottom.php'; ?>
+<%- include('partials/footer') %>

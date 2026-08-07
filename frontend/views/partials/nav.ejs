@@ -1,0 +1,27 @@
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm transition-all">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="<%= site.routes.home %>">
+                <img src="<%= site.icon_path %>" alt="<%= site.legal_name %> logo" class="navbar-logo-mark">
+                <span class="brand-full"><%= site.legal_name %></span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item"><a class="nav-link <%= activePage === 'home' ? 'active' : '' %>" href="<%= site.routes.home %>">Home</a></li>
+                    <li class="nav-item"><a class="nav-link <%= activePage === 'services' ? 'active' : '' %>" href="<%= site.routes.services %>">Services</a></li>
+                    <li class="nav-item"><a class="nav-link <%= activePage === 'store' ? 'active' : '' %>" href="/store">Store</a></li>
+                    <li class="nav-item"><a class="nav-link <%= activePage === 'contact' ? 'active' : '' %>" href="<%= site.routes.contact %>">Contact</a></li>
+                    <li class="nav-item"><a class="nav-link <%= activePage === 'about' ? 'active' : '' %>" href="<%= site.routes.about %>">About</a></li>
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <li class="nav-item"><a class="nav-link <%= activePage === 'account' ? 'active' : '' %>" href="/account"><i class="fas fa-user-circle me-1"></i><%= user.name %></a></li>
+                        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+                    <% } else { %>
+                        <li class="nav-item"><a class="nav-link" href="#" data-open-login>Login</a></li>
+                    <% } %>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <main>

@@ -1,10 +1,19 @@
 {
   "name": "trsp-groups-site",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "PHP-rendered company site proxied through a Node.js server.",
+  "description": "Node.js/Express company site with EJS templates, Postgres-backed auth, store, and admin CMS.",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node backend/server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.6",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
   }
 }
