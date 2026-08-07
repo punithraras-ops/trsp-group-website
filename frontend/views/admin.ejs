@@ -344,8 +344,9 @@
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    if (window.location.hash) {
-        var targetTab = document.querySelector('button[data-bs-target="' + window.location.hash + '"]');
+    var requestedTab = new URLSearchParams(window.location.search).get('tab');
+    if (requestedTab) {
+        var targetTab = document.querySelector('button[data-bs-target="#tab-' + requestedTab + '"]');
         if (targetTab) {
             new bootstrap.Tab(targetTab).show();
         }

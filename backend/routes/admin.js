@@ -277,7 +277,7 @@ router.post('/admin/products', upload.array('images', 10), async (req, res) => {
             created_at: new Date(),
         });
     }
-    res.redirect('/admin#tab-products');
+    res.redirect('/admin?tab=products');
 });
 
 router.post('/admin/products/:id/update', async (req, res) => {
@@ -296,7 +296,7 @@ router.post('/admin/products/:id/update', async (req, res) => {
             }
         );
     }
-    res.redirect('/admin#tab-products');
+    res.redirect('/admin?tab=products');
 });
 
 router.post('/admin/products/:id/images', upload.array('files', 10), async (req, res) => {
@@ -317,7 +317,7 @@ router.post('/admin/products/:id/images', upload.array('files', 10), async (req,
             await products.updateOne({ _id: db.toId(req.params.id) }, { $push: { images: { $each: newIds } } });
         }
     }
-    res.redirect('/admin#tab-products');
+    res.redirect('/admin?tab=products');
 });
 
 router.post('/admin/products/:id/images/remove', async (req, res) => {
@@ -328,7 +328,7 @@ router.post('/admin/products/:id/images/remove', async (req, res) => {
         );
         await db.deleteFile(req.body.fileId);
     }
-    res.redirect('/admin#tab-products');
+    res.redirect('/admin?tab=products');
 });
 
 router.post('/admin/products/:id/delete', async (req, res) => {
@@ -339,7 +339,7 @@ router.post('/admin/products/:id/delete', async (req, res) => {
             await db.deleteFile(fileId);
         }
     }
-    res.redirect('/admin#tab-products');
+    res.redirect('/admin?tab=products');
 });
 
 router.post('/admin/features', async (req, res) => {
@@ -355,7 +355,7 @@ router.post('/admin/features', async (req, res) => {
             updated_at: new Date(),
         });
     }
-    res.redirect('/admin#tab-features');
+    res.redirect('/admin?tab=features');
 });
 
 router.post('/admin/features/:id/update', async (req, res) => {
@@ -374,14 +374,14 @@ router.post('/admin/features/:id/update', async (req, res) => {
             }
         );
     }
-    res.redirect('/admin#tab-features');
+    res.redirect('/admin?tab=features');
 });
 
 router.post('/admin/features/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
         await db.getDb().collection('upcoming_features').deleteOne({ _id: db.toId(req.params.id) });
     }
-    res.redirect('/admin#tab-features');
+    res.redirect('/admin?tab=features');
 });
 
 router.post('/admin/services', async (req, res) => {
@@ -401,7 +401,7 @@ router.post('/admin/services', async (req, res) => {
             updated_at: new Date(),
         });
     }
-    res.redirect('/admin#tab-services');
+    res.redirect('/admin?tab=services');
 });
 
 router.post('/admin/services/:id/update', async (req, res) => {
@@ -425,14 +425,14 @@ router.post('/admin/services/:id/update', async (req, res) => {
             }
         );
     }
-    res.redirect('/admin#tab-services');
+    res.redirect('/admin?tab=services');
 });
 
 router.post('/admin/services/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
         await db.getDb().collection('services').deleteOne({ _id: db.toId(req.params.id) });
     }
-    res.redirect('/admin#tab-services');
+    res.redirect('/admin?tab=services');
 });
 
 router.get('/admin/design', async (req, res) => {
@@ -502,7 +502,7 @@ router.post('/admin/orders/:id/approve', async (req, res) => {
             { $set: { status: 'approved_awaiting_payment', updated_at: new Date() } }
         );
     }
-    res.redirect('/admin#tab-orders');
+    res.redirect('/admin?tab=orders');
 });
 
 router.post('/admin/orders/:id/reject', async (req, res) => {
@@ -512,7 +512,7 @@ router.post('/admin/orders/:id/reject', async (req, res) => {
             { $set: { status: 'rejected', updated_at: new Date() } }
         );
     }
-    res.redirect('/admin#tab-orders');
+    res.redirect('/admin?tab=orders');
 });
 
 router.post('/admin/orders/:id/delivery-status', async (req, res) => {
@@ -523,7 +523,7 @@ router.post('/admin/orders/:id/delivery-status', async (req, res) => {
             { $set: { delivery_status: req.body.delivery_status, updated_at: new Date() } }
         );
     }
-    res.redirect('/admin#tab-orders');
+    res.redirect('/admin?tab=orders');
 });
 
 router.post('/admin/design/admin-theme', async (req, res) => {
