@@ -1,10 +1,13 @@
 const express = require('express');
+const multer = require('multer');
 const db = require('../db');
 const site = require('../config/site');
 const { requireAdmin, createAdminSession, destroyAdminSession } = require('../lib/auth');
 const adminSecurity = require('../lib/adminSecurity');
+const design = require('../lib/design');
 
 const router = express.Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
 function safeAdminRedirect(value) {
     if (typeof value === 'string' && value.startsWith('/admin')) {
@@ -383,6 +386,56 @@ router.post('/admin/services/:id/delete', async (req, res) => {
         await db.getDb().collection('services').deleteOne({ _id: db.toId(req.params.id) });
     }
     res.redirect('/admin#tab-services');
+});
+
+router.get('/admin/design', async (req, res) => {
+    const settings = await design.getDesignSettings();
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: '' });
+});
+
+router.post('/admin/design/colors', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await design.saveColors({
+            primary_color: req.body.primary_color,
+            primary_dark: req.body.primary_dark,
+            dark_color: req.body.dark_color,
+            light_color: req.body.light_color,
+        });
+    }
+    const settings = await design.getDesignSettings();
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Colors updated.' });
+});
+
+router.post('/admin/design/upload/:slot', upload.single('file'), async (req, res) => {
+    const settings = await design.getDesignSettings();
+
+    if (!db.isDbConfigured() || !req.file) {
+        res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: 'No file received.', message: '' });
+        return;
+    }
+
+    if (!design.IMAGE_SLOTS.includes(req.params.slot)) {
+        res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: 'Unknown image slot.', message: '' });
+        return;
+    }
+
+    if (!req.file.mimetype.startsWith('image/')) {
+        res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: 'Please upload an image file.', message: '' });
+        return;
+    }
+
+    const uploadStream = db.getBucket().openUploadStream(req.file.originalname, { contentType: req.file.mimetype });
+    uploadStream.end(req.file.buffer);
+
+    uploadStream.on('finish', async () => {
+        await design.saveImageRef(req.params.slot, uploadStream.id);
+        const updated = await design.getDesignSettings();
+        res.render('admin-design', { site, colors: updated.colors, images: updated.images, error: '', message: 'Image updated.' });
+    });
+
+    uploadStream.on('error', () => {
+        res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: 'Upload failed. Please try again.', message: '' });
+    });
 });
 
 module.exports = router;

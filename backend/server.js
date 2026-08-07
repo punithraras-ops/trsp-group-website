@@ -6,6 +6,7 @@ const db = require('./db');
 const site = require('./config/site');
 const { attachUser } = require('./lib/auth');
 const { google, github } = require('./lib/oauth');
+const { getDesignSettings, DEFAULT_COLORS } = require('./lib/design');
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
@@ -23,13 +24,18 @@ app.use(express.static(frontendDir, { index: false }));
 
 app.use(attachUser);
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
     res.locals.currentPath = req.originalUrl;
     res.locals.redirect = req.query.redirect || req.originalUrl;
     res.locals.authError = req.query.authError || '';
     res.locals.autoShowLogin = req.query.openLogin === '1';
     res.locals.dbConfigured = db.isDbConfigured();
     res.locals.oauth = { google: google.isConfigured(), github: github.isConfigured() };
+    try {
+        res.locals.design = await getDesignSettings();
+    } catch (error) {
+        res.locals.design = { colors: DEFAULT_COLORS, images: {} };
+    }
     next();
 });
 

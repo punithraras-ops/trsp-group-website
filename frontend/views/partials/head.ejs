@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="<%= pageDescription %>">
     <title><%= pageTitle %></title>
-    <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/img/favicon.png">
-    <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="<%= design.images.favicon || '/img/favicon-32.png' %>">
+    <link rel="icon" type="image/png" sizes="512x512" href="<%= design.images.favicon || '/img/favicon.png' %>">
+    <link rel="apple-touch-icon" href="<%= design.images.favicon || '/img/apple-touch-icon.png' %>">
     <link rel="canonical" href="<%= site.site_url + currentPath %>">
 
     <meta property="og:type" content="website">
@@ -43,5 +43,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        :root {
+            --primary-color: <%= design.colors.primary_color %>;
+            --primary-dark: <%= design.colors.primary_dark %>;
+            --dark-color: <%= design.colors.dark_color %>;
+            --light-color: <%= design.colors.light_color %>;
+        }
+        <% if (design.images.hero_background) { %>
+        .hero {
+            background-image: linear-gradient(135deg, rgba(9, 22, 35, 0.75), rgba(26, 114, 132, 0.65)), url('<%= design.images.hero_background %>');
+        }
+        <% } %>
+    </style>
 </head>
 <body data-page="<%= activePage %>">

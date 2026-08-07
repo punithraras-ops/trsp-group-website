@@ -1,7 +1,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm transition-all">
         <div class="container">
             <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="<%= site.routes.home %>">
-                <img src="<%= site.icon_path %>" alt="<%= site.legal_name %> logo" class="navbar-logo-mark">
+                <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="navbar-logo-mark">
                 <span class="brand-full"><%= site.legal_name %></span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">

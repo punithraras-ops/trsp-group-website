@@ -19,6 +19,28 @@ async function getActiveServices() {
     }
 }
 
+router.get('/uploads/:id', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(404).end();
+        return;
+    }
+
+    try {
+        const fileId = db.toId(req.params.id);
+        const files = await db.getDb().collection('uploads.files').findOne({ _id: fileId });
+        if (!files) {
+            res.status(404).end();
+            return;
+        }
+
+        res.set('Content-Type', files.contentType || 'application/octet-stream');
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+        db.getBucket().openDownloadStream(fileId).pipe(res);
+    } catch (error) {
+        res.status(404).end();
+    }
+});
+
 router.get('/', async (req, res) => {
     let upcomingFeatures = [];
     if (db.isDbConfigured()) {

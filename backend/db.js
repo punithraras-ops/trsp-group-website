@@ -1,8 +1,9 @@
-const { MongoClient, ObjectId } = require('mongodb');
+const { MongoClient, ObjectId, GridFSBucket } = require('mongodb');
 
 const uri = process.env.MONGODB_URI || '';
 let client = null;
 let db = null;
+let bucket = null;
 
 function isDbConfigured() {
     return db !== null;
@@ -25,6 +26,7 @@ async function connect() {
         client = new MongoClient(uri);
         await client.connect();
         db = client.db();
+        bucket = new GridFSBucket(db, { bucketName: 'uploads' });
 
         await Promise.all([
             db.collection('users').createIndex({ email: 1 }, { unique: true }),
@@ -51,10 +53,17 @@ function toId(value) {
     return typeof value === 'string' ? new ObjectId(value) : value;
 }
 
+function getBucket() {
+    if (!bucket) {
+        throw new Error('Database is not configured. Set the MONGODB_URI environment variable.');
+    }
+    return bucket;
+}
+
 function withId(doc) {
     if (!doc) return doc;
     const { _id, ...rest } = doc;
     return { id: _id.toString(), ...rest };
 }
 
-module.exports = { connect, isDbConfigured, getDb, toId, withId, ObjectId };
+module.exports = { connect, isDbConfigured, getDb, getBucket, toId, withId, ObjectId };
