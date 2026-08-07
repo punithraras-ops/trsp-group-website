@@ -16,9 +16,9 @@
                     <li class="nav-item"><a class="nav-link <%= activePage === 'about' ? 'active' : '' %>" href="<%= site.routes.about %>">About</a></li>
                     <% if (typeof user !== 'undefined' && user) { %>
                         <li class="nav-item"><a class="nav-link <%= activePage === 'account' ? 'active' : '' %>" href="/account"><i class="fas fa-user-circle me-1"></i><%= user.name %></a></li>
-                        <li class="nav-item"><a class="nav-link" href="/logout">Logout</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-cta" href="/logout"><i class="fas fa-arrow-right-from-bracket me-1"></i>Logout</a></li>
                     <% } else { %>
-                        <li class="nav-item"><a class="nav-link" href="#" data-open-login>Login</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-cta" href="#" data-open-login><i class="fas fa-right-to-bracket me-1"></i>Login / Sign Up</a></li>
                     <% } %>
                 </ul>
             </div>
