@@ -32,6 +32,7 @@ async function connect() {
             db.collection('users').createIndex({ github_id: 1 }, { unique: true, sparse: true }),
             db.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
             db.collection('admin_sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
+            db.collection('admin_pending_logins').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
             db.collection('products').createIndex({ is_active: 1 }),
             db.collection('services').createIndex({ is_active: 1, sort_order: 1 }),
             db.collection('services').createIndex({ slug: 1 }, { unique: true }),

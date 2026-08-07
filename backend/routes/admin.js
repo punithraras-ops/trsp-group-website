@@ -1,7 +1,8 @@
 const express = require('express');
 const db = require('../db');
 const site = require('../config/site');
-const { requireAdmin, checkAdminCredentials, createAdminSession, destroyAdminSession } = require('../lib/auth');
+const { requireAdmin, createAdminSession, destroyAdminSession } = require('../lib/auth');
+const adminSecurity = require('../lib/adminSecurity');
 
 const router = express.Router();
 
@@ -42,13 +43,98 @@ router.get('/admin/login', (req, res) => {
 router.post('/admin/login', async (req, res) => {
     const redirect = safeAdminRedirect(req.body.redirect);
 
-    if (!checkAdminCredentials(req.body.username, req.body.password)) {
+    if (!db.isDbConfigured()) {
+        // No DB means no TOTP/self-service password possible; fall back to plain env-var check.
+        const { checkAdminCredentials } = require('../lib/auth');
+        if (!checkAdminCredentials(req.body.username, req.body.password)) {
+            res.render('admin-login', { site, redirect, error: 'Invalid username or password.' });
+            return;
+        }
+        await createAdminSession(res, req);
+        res.redirect(redirect);
+        return;
+    }
+
+    const valid = await adminSecurity.checkAdminPassword(req.body.username, req.body.password);
+    if (!valid) {
         res.render('admin-login', { site, redirect, error: 'Invalid username or password.' });
+        return;
+    }
+
+    if (await adminSecurity.isTotpEnabled()) {
+        await adminSecurity.createPendingLogin(res, redirect);
+        res.redirect('/admin/verify-2fa');
         return;
     }
 
     await createAdminSession(res, req);
     res.redirect(redirect);
+});
+
+router.get('/admin/verify-2fa', async (req, res) => {
+    const pending = await adminSecurity.getPendingLogin(req);
+    if (!pending) {
+        res.redirect('/admin/login');
+        return;
+    }
+    res.render('admin-verify-2fa', { site, error: '' });
+});
+
+router.post('/admin/verify-2fa', async (req, res) => {
+    const pending = await adminSecurity.getPendingLogin(req);
+    if (!pending) {
+        res.redirect('/admin/login');
+        return;
+    }
+
+    const valid = await adminSecurity.verifyLoginTotpCode(req.body.code);
+    if (!valid) {
+        res.render('admin-verify-2fa', { site, error: 'Invalid or expired code. Please try again.' });
+        return;
+    }
+
+    const redirect = safeAdminRedirect(pending.redirect);
+    await adminSecurity.clearPendingLogin(req, res);
+    await createAdminSession(res, req);
+    res.redirect(redirect);
+});
+
+router.get('/admin/forgot-password', async (req, res) => {
+    const totpAvailable = db.isDbConfigured() && (await adminSecurity.isTotpEnabled());
+    res.render('admin-forgot-password', { site, totpAvailable, error: '' });
+});
+
+router.post('/admin/forgot-password', async (req, res) => {
+    const totpAvailable = db.isDbConfigured() && (await adminSecurity.isTotpEnabled());
+    if (!totpAvailable) {
+        res.render('admin-forgot-password', { site, totpAvailable, error: 'Two-factor authentication is not enabled, so password recovery is not available this way.' });
+        return;
+    }
+
+    const valid = await adminSecurity.verifyLoginTotpCode(req.body.code);
+    if (!valid) {
+        res.render('admin-forgot-password', { site, totpAvailable, error: 'Invalid or expired code. Please try again.' });
+        return;
+    }
+
+    const token = await adminSecurity.createPasswordResetToken();
+    res.render('admin-reset-password', { site, token, error: '' });
+});
+
+router.post('/admin/reset-password', async (req, res) => {
+    const valid = db.isDbConfigured() && (await adminSecurity.consumePasswordResetToken(req.body.token));
+    if (!valid) {
+        res.render('admin-forgot-password', { site, totpAvailable: true, error: 'That reset link expired. Please verify your code again.' });
+        return;
+    }
+
+    if (!req.body.password || req.body.password.length < 8) {
+        res.render('admin-login', { site, redirect: '/admin', error: 'Password reset failed: new password must be at least 8 characters. Please try the forgot-password flow again.' });
+        return;
+    }
+
+    await adminSecurity.setAdminPassword(req.body.password);
+    res.render('admin-login', { site, redirect: '/admin', error: 'Password updated. Please log in with your new password.' });
 });
 
 router.get('/admin/logout', async (req, res) => {
@@ -57,6 +143,56 @@ router.get('/admin/logout', async (req, res) => {
 });
 
 router.use('/admin', requireAdmin);
+
+router.get('/admin/security', async (req, res) => {
+    const enabled = db.isDbConfigured() && (await adminSecurity.isTotpEnabled());
+    res.render('admin-security', { site, enabled, enrollment: null, error: '', message: '' });
+});
+
+router.post('/admin/security/start-enrollment', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.redirect('/admin/security');
+        return;
+    }
+    const enrollment = await adminSecurity.startTotpEnrollment();
+    const QRCode = require('qrcode');
+    const qrDataUrl = await QRCode.toDataURL(enrollment.url);
+    res.render('admin-security', { site, enabled: false, enrollment: { ...enrollment, qrDataUrl }, error: '', message: '' });
+});
+
+router.post('/admin/security/confirm-enrollment', async (req, res) => {
+    const ok = db.isDbConfigured() && (await adminSecurity.confirmTotpEnrollment(req.body.code));
+    if (!ok) {
+        res.render('admin-security', { site, enabled: false, enrollment: null, error: 'Invalid code. Please scan the QR code again and try once more.', message: '' });
+        return;
+    }
+    res.render('admin-security', { site, enabled: true, enrollment: null, error: '', message: 'Two-factor authentication is now enabled.' });
+});
+
+router.post('/admin/security/disable', async (req, res) => {
+    const ok = db.isDbConfigured() && (await adminSecurity.disableTotp(req.body.code));
+    if (!ok) {
+        res.render('admin-security', { site, enabled: true, enrollment: null, error: 'Invalid code. Two-factor authentication was not disabled.', message: '' });
+        return;
+    }
+    res.render('admin-security', { site, enabled: false, enrollment: null, error: '', message: 'Two-factor authentication has been disabled.' });
+});
+
+router.post('/admin/security/change-password', async (req, res) => {
+    const enabled = db.isDbConfigured() && (await adminSecurity.isTotpEnabled());
+
+    if (!db.isDbConfigured() || !req.body.password || req.body.password.length < 8) {
+        res.render('admin-security', { site, enabled, enrollment: null, error: 'New password must be at least 8 characters.', message: '' });
+        return;
+    }
+    if (req.body.password !== req.body.confirm_password) {
+        res.render('admin-security', { site, enabled, enrollment: null, error: 'Passwords do not match.', message: '' });
+        return;
+    }
+
+    await adminSecurity.setAdminPassword(req.body.password);
+    res.render('admin-security', { site, enabled, enrollment: null, error: '', message: 'Password updated successfully.' });
+});
 
 router.get('/admin', async (req, res) => {
     let submissions = [];

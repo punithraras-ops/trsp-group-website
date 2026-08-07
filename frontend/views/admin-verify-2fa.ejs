@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= site.short_name %> - Verify Code</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background: #0f172a;">
+<div class="card border-0 shadow-lg rounded-4" style="width: 100%; max-width: 400px;">
+    <div class="card-body p-4">
+        <h3 class="fw-bold text-center mb-2">Two-Factor Verification</h3>
+        <p class="text-muted text-center mb-4">Enter the 6-digit code from your authenticator app.</p>
+        <% if (error) { %>
+            <div class="alert alert-danger"><%= error %></div>
+        <% } %>
+        <form method="POST" action="/admin/verify-2fa">
+            <div class="mb-4">
+                <input type="text" name="code" class="form-control form-control-lg text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autofocus>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">Verify</button>
+        </form>
+        <div class="text-center">
+            <a href="/admin/login">Back to login</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
