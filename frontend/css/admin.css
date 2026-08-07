@@ -13,7 +13,14 @@ body.admin-page {
     --admin-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
     --admin-shadow-hover: 0 4px 10px rgba(79, 70, 229, 0.08), 0 20px 40px rgba(79, 70, 229, 0.14);
 
-    background: var(--admin-bg, #eef1f5);
+    background:
+        radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--admin-bg, #eef1f5) 55%, white 45%), transparent 32%),
+        radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--admin-bg, #eef1f5) 65%, white 35%), transparent 30%),
+        radial-gradient(ellipse at 50% 115%, color-mix(in srgb, var(--admin-bg, #eef1f5) 65%, black 35%), transparent 58%),
+        radial-gradient(ellipse at 0% 50%, color-mix(in srgb, var(--admin-bg, #eef1f5) 78%, black 22%), transparent 42%),
+        radial-gradient(ellipse at 100% 50%, color-mix(in srgb, var(--admin-bg, #eef1f5) 78%, black 22%), transparent 42%),
+        var(--admin-bg, #eef1f5);
+    background-attachment: fixed;
     font-family: 'Inter', 'Poppins', sans-serif;
     color: var(--admin-text);
     min-height: 100vh;
