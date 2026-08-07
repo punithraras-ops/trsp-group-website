@@ -23,10 +23,6 @@ $site = $site ?? require dirname(__DIR__, 2) . '/backend/config/site.php';
         </div>
     </footer>
 
-    <a href="<?= e($site['whatsapp_href']) ?>" class="whatsapp-btn shadow-lg" target="_blank" rel="noreferrer">
-        <i class="fab fa-whatsapp fa-2x"></i>
-    </a>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="/js/script.js"></script>

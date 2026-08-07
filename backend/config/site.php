@@ -16,7 +16,6 @@ return [
     'email' => 'info@trspgroups.com',
     'phone_display' => '+91 7795183739',
     'phone_href' => '+917795183739',
-    'whatsapp_href' => 'https://wa.me/917795183739',
     'default_description' => 'Technical of RSP Groups delivers research-driven software, digital products, and technology solutions from Chikkamagaluru, Karnataka.',
     'routes' => [
         'home' => '/',
