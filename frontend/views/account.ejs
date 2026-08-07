@@ -17,8 +17,9 @@
                             <th>Date</th>
                             <th>Product</th>
                             <th>Amount</th>
-                            <th>Payment</th>
+                            <th>Status</th>
                             <th>Delivery</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -27,12 +28,19 @@
                                 <td class="text-nowrap"><%= new Date(order.created_at).toLocaleString('en-IN') %></td>
                                 <td><%= order.product_title %></td>
                                 <td>&#8377;<%= (order.amount_paise / 100).toLocaleString('en-IN') %></td>
-                                <td><span class="badge bg-<%= order.status === 'paid' ? 'success' : (order.status === 'failed' ? 'danger' : 'secondary') %>"><%= order.status %></span></td>
+                                <td>
+                                    <span class="badge bg-<%= order.status === 'paid' ? 'success' : (order.status === 'failed' || order.status === 'rejected' ? 'danger' : (order.status === 'pending_approval' ? 'warning text-dark' : 'secondary')) %>"><%= order.status.replace(/_/g, ' ') %></span>
+                                </td>
                                 <td>
                                     <% if (order.status === 'paid') { %>
                                         <span class="badge bg-<%= order.delivery_status === 'delivered' ? 'success' : (order.delivery_status === 'cancelled' ? 'danger' : 'info') %>"><%= order.delivery_status || 'processing' %></span>
                                     <% } else { %>
                                         <span class="text-muted">&mdash;</span>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <% if (order.status === 'approved_awaiting_payment') { %>
+                                        <a href="/checkout?product=<%= order.product_id %>" class="btn btn-sm btn-primary">Pay Now</a>
                                     <% } %>
                                 </td>
                             </tr>

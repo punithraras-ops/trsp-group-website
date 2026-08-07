@@ -167,6 +167,7 @@ router.get('/store', async (req, res) => {
 router.get('/checkout', async (req, res) => {
     const site = res.locals.site;
     let product = null;
+    let approvalOrder = null;
 
     if (db.isDbConfigured() && req.query.product) {
         try {
@@ -175,6 +176,15 @@ router.get('/checkout', async (req, res) => {
                 is_active: true,
             });
             product = doc ? db.withId(doc) : null;
+
+            if (product && product.requires_approval && req.user) {
+                const existing = await db.getDb().collection('orders').findOne({
+                    user_id: db.toId(req.user.id),
+                    product_id: db.toId(product.id),
+                    status: { $in: ['pending_approval', 'approved_awaiting_payment'] },
+                }, { sort: { created_at: -1 } });
+                approvalOrder = existing ? db.withId(existing) : null;
+            }
         } catch (error) {
             product = null;
         }
@@ -185,6 +195,7 @@ router.get('/checkout', async (req, res) => {
         pageDescription: 'Complete your purchase.',
         activePage: 'store',
         dbConfigured: db.isDbConfigured(),
+        approvalOrder,
         product,
         razorpayConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
         autoShowLogin: !req.user,

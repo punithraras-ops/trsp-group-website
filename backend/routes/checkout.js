@@ -1,10 +1,60 @@
 const express = require('express');
 const db = require('../db');
-const site = require('../config/site');
 const razorpay = require('../lib/razorpay');
 const { requireAuthApi } = require('../lib/auth');
 
 const router = express.Router();
+
+router.post('/api/checkout/request-approval', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'The store is not enabled yet.' });
+        return;
+    }
+
+    if (!req.body.productId) {
+        res.status(422).json({ error: 'A product is required.' });
+        return;
+    }
+
+    try {
+        const product = await db.getDb().collection('products').findOne({
+            _id: db.toId(req.body.productId),
+            is_active: true,
+        });
+
+        if (!product || !product.requires_approval) {
+            res.redirect(`/checkout?product=${req.body.productId}`);
+            return;
+        }
+
+        const existing = await db.getDb().collection('orders').findOne({
+            user_id: db.toId(req.user.id),
+            product_id: product._id,
+            status: { $in: ['pending_approval', 'approved_awaiting_payment'] },
+        });
+
+        if (!existing) {
+            await db.getDb().collection('orders').insertOne({
+                user_id: db.toId(req.user.id),
+                product_id: product._id,
+                quantity: 1,
+                amount_paise: product.price_paise,
+                currency: product.currency,
+                status: 'pending_approval',
+                delivery_status: 'processing',
+                razorpay_order_id: null,
+                razorpay_payment_id: null,
+                razorpay_signature: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+            });
+        }
+
+        res.redirect(`/checkout?product=${req.body.productId}`);
+    } catch (error) {
+        res.redirect(`/checkout?product=${req.body.productId}`);
+    }
+});
 
 router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
     if (!db.isDbConfigured() || !razorpay.isConfigured()) {
@@ -28,21 +78,38 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
             return;
         }
 
-        const orderResult = await db.getDb().collection('orders').insertOne({
-            user_id: db.toId(req.user.id),
-            product_id: product._id,
-            quantity: 1,
-            amount_paise: product.price_paise,
-            currency: product.currency,
-            status: 'created',
-            delivery_status: 'processing',
-            razorpay_order_id: null,
-            razorpay_payment_id: null,
-            razorpay_signature: null,
-            created_at: new Date(),
-            updated_at: new Date(),
-        });
-        const localOrderId = orderResult.insertedId.toString();
+        let localOrderId;
+
+        if (product.requires_approval) {
+            const approved = await db.getDb().collection('orders').findOne({
+                user_id: db.toId(req.user.id),
+                product_id: product._id,
+                status: 'approved_awaiting_payment',
+            });
+
+            if (!approved) {
+                res.status(403).json({ error: 'This purchase has not been approved yet.' });
+                return;
+            }
+
+            localOrderId = approved._id.toString();
+        } else {
+            const orderResult = await db.getDb().collection('orders').insertOne({
+                user_id: db.toId(req.user.id),
+                product_id: product._id,
+                quantity: 1,
+                amount_paise: product.price_paise,
+                currency: product.currency,
+                status: 'created',
+                delivery_status: 'processing',
+                razorpay_order_id: null,
+                razorpay_payment_id: null,
+                razorpay_signature: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+            });
+            localOrderId = orderResult.insertedId.toString();
+        }
 
         const razorpayOrder = await razorpay.createOrder({
             amountPaise: product.price_paise,
@@ -51,7 +118,7 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
         });
 
         await db.getDb().collection('orders').updateOne(
-            { _id: orderResult.insertedId },
+            { _id: db.toId(localOrderId) },
             { $set: { razorpay_order_id: razorpayOrder.id, updated_at: new Date() } }
         );
 
@@ -60,7 +127,7 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
             amount: product.price_paise,
             currency: product.currency,
             key: process.env.RAZORPAY_KEY_ID,
-            companyName: site.company_name,
+            companyName: res.locals.site.company_name,
             productTitle: product.title,
         });
     } catch (error) {

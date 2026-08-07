@@ -12,10 +12,11 @@ const DEFAULT_COLORS = {
 };
 
 const IMAGE_SLOTS = ['logo', 'favicon', 'hero_background', 'team_photo'];
+const DEFAULT_ADMIN_BG = '#eef1f5';
 
 async function getDesignSettings() {
     if (!db.isDbConfigured()) {
-        return { colors: DEFAULT_COLORS, images: {} };
+        return { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG };
     }
 
     const doc = await db.getDb().collection('site_settings').findOne({ _id: CONFIG_ID });
@@ -28,7 +29,17 @@ async function getDesignSettings() {
         }
     }
 
-    return { colors, images };
+    const adminBackground = (doc && doc.admin_bg_color) || DEFAULT_ADMIN_BG;
+
+    return { colors, images, adminBackground };
+}
+
+async function saveAdminBackground(color) {
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $set: { admin_bg_color: color, updated_at: new Date() } },
+        { upsert: true }
+    );
 }
 
 async function saveColors(colors) {
@@ -78,4 +89,4 @@ async function removeImage(slot) {
     }
 }
 
-module.exports = { getDesignSettings, saveColors, saveImageRef, removeImage, DEFAULT_COLORS, IMAGE_SLOTS };
+module.exports = { getDesignSettings, saveColors, saveImageRef, removeImage, saveAdminBackground, DEFAULT_COLORS, IMAGE_SLOTS, DEFAULT_ADMIN_BG };

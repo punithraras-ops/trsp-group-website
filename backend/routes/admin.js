@@ -271,6 +271,7 @@ router.post('/admin/products', upload.array('images', 10), async (req, res) => {
             price_paise: pricePaise,
             currency: 'INR',
             images,
+            requires_approval: req.body.requires_approval === '1',
             is_active: true,
             created_at: new Date(),
         });
@@ -289,6 +290,7 @@ router.post('/admin/products/:id/update', async (req, res) => {
                     description: req.body.description || '',
                     price_paise: pricePaise,
                     is_active: req.body.is_active === '1',
+                    requires_approval: req.body.requires_approval === '1',
                 },
             }
         );
@@ -492,6 +494,26 @@ router.post('/admin/design/remove/:slot', async (req, res) => {
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Image removed.' });
 });
 
+router.post('/admin/orders/:id/approve', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('orders').updateOne(
+            { _id: db.toId(req.params.id), status: 'pending_approval' },
+            { $set: { status: 'approved_awaiting_payment', updated_at: new Date() } }
+        );
+    }
+    res.redirect('/admin#tab-orders');
+});
+
+router.post('/admin/orders/:id/reject', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('orders').updateOne(
+            { _id: db.toId(req.params.id), status: 'pending_approval' },
+            { $set: { status: 'rejected', updated_at: new Date() } }
+        );
+    }
+    res.redirect('/admin#tab-orders');
+});
+
 router.post('/admin/orders/:id/delivery-status', async (req, res) => {
     const allowed = ['processing', 'shipped', 'delivered', 'cancelled'];
     if (db.isDbConfigured() && allowed.includes(req.body.delivery_status)) {
@@ -501,6 +523,14 @@ router.post('/admin/orders/:id/delivery-status', async (req, res) => {
         );
     }
     res.redirect('/admin#tab-orders');
+});
+
+router.post('/admin/design/admin-theme', async (req, res) => {
+    if (db.isDbConfigured() && req.body.admin_bg_color) {
+        await design.saveAdminBackground(req.body.admin_bg_color);
+    }
+    const settings = await design.getDesignSettings();
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Admin panel appearance updated.' });
 });
 
 router.get('/admin/site-info', async (req, res) => {
