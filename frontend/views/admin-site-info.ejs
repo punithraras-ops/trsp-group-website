@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="admin-page">
 <div class="container py-5" style="max-width: 720px;">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="display-6 fw-bold mb-0">Site Info</h1>
@@ -25,50 +25,62 @@
                     <div class="col-md-4">
                         <label class="form-label">Legal Name</label>
                         <input type="text" name="legal_name" class="form-control" value="<%= site.legal_name %>">
+                        <div class="form-text">Appears in: footer, About page, browser page titles, SEO tags</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Short Name (used in titles)</label>
+                        <label class="form-label">Short Name</label>
                         <input type="text" name="short_name" class="form-control" value="<%= site.short_name %>">
+                        <div class="form-text">Appears in: navbar next to the logo, most page titles</div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Company Name (homepage title)</label>
+                        <label class="form-label">Company Name</label>
                         <input type="text" name="company_name" class="form-control" value="<%= site.company_name %>">
+                        <div class="form-text">Appears in: homepage browser tab title only</div>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Address</label>
                         <input type="text" name="address" class="form-control" value="<%= site.address %>">
+                        <div class="form-text">Appears in: footer (on every page)</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">City / Location</label>
                         <input type="text" name="location" class="form-control" value="<%= site.location %>">
+                        <div class="form-text">Appears in: footer, About page intro, Contact page</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Postal Code</label>
                         <input type="text" name="postal_code" class="form-control" value="<%= site.postal_code %>">
+                        <div class="form-text">Appears in: footer, next to the location</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">GST Number</label>
                         <input type="text" name="gst" class="form-control" value="<%= site.gst %>">
+                        <div class="form-text">Appears in: footer only</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Email</label>
                         <input type="email" name="email" class="form-control" value="<%= site.email %>">
+                        <div class="form-text">Appears in: footer (as a mailto link), Contact page</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Phone (displayed, e.g. +91 98765 43210)</label>
                         <input type="text" name="phone_display" class="form-control" value="<%= site.phone_display %>">
+                        <div class="form-text">Appears in: footer, Contact page (the readable number shown to visitors)</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Phone (for tel: link, e.g. +919876543210)</label>
                         <input type="text" name="phone_href" class="form-control" value="<%= site.phone_href %>">
+                        <div class="form-text">Used by: the "Call Now" button and footer phone link (no spaces/dashes)</div>
                     </div>
                     <div class="col-12">
                         <label class="form-label">WhatsApp Link (e.g. https://wa.me/919876543210)</label>
                         <input type="text" name="whatsapp_href" class="form-control" value="<%= site.whatsapp_href %>">
+                        <div class="form-text">Used by: the floating WhatsApp button shown on every page</div>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Default Site Description (used for SEO)</label>
                         <textarea name="default_description" class="form-control" rows="2"><%= site.default_description %></textarea>
+                        <div class="form-text">Used by: search engines and social media link previews (not visible on the page itself)</div>
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary mt-4">Save Site Info</button>
