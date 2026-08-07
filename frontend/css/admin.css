@@ -17,6 +17,22 @@ body.admin-page {
     font-family: 'Inter', 'Poppins', sans-serif;
     color: var(--admin-text);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-page-main {
+    flex: 1 0 auto;
+}
+
+.admin-footer {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: var(--admin-text-muted);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--admin-border);
+    margin-top: 3rem;
 }
 
 body.admin-page h1,
@@ -86,26 +102,48 @@ body.admin-page .btn:hover {
     transform: translateY(-1px);
 }
 
+body.admin-page .btn:active {
+    transform: translateY(1px);
+}
+
 body.admin-page .btn-primary {
-    background: var(--admin-accent);
-    border-color: var(--admin-accent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--admin-accent) 100%, white 22%), var(--admin-accent) 60%, var(--admin-accent-dark));
+    border-color: var(--admin-accent-dark);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 -2px 4px rgba(0, 0, 0, 0.15) inset, 0 4px 10px rgba(79, 70, 229, 0.22);
 }
 
 body.admin-page .btn-primary:hover {
-    background: var(--admin-accent-dark);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--admin-accent-dark) 100%, white 15%), var(--admin-accent-dark));
     border-color: var(--admin-accent-dark);
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.28);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 6px 16px rgba(79, 70, 229, 0.32);
+}
+
+body.admin-page .btn-primary:active {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) inset;
 }
 
 body.admin-page .btn-outline-primary {
     color: var(--admin-accent);
     border-color: var(--admin-accent);
+    background: linear-gradient(180deg, #ffffff, var(--admin-surface-alt));
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
 }
 
 body.admin-page .btn-outline-primary:hover {
-    background: var(--admin-accent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--admin-accent) 100%, white 15%), var(--admin-accent));
     border-color: var(--admin-accent);
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+}
+
+body.admin-page .btn-success {
+    background: linear-gradient(180deg, #4ade80, #16a34a 60%, #15803d);
+    border-color: #15803d;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 4px 10px rgba(22, 163, 74, 0.25);
+}
+
+body.admin-page .btn-outline-danger:hover {
+    box-shadow: 0 6px 14px rgba(220, 38, 38, 0.22);
 }
 
 /* Stat tiles */
@@ -117,19 +155,19 @@ body.admin-page .btn-outline-primary:hover {
 }
 
 .admin-stat-card {
-    background: var(--admin-surface);
+    background: linear-gradient(180deg, #ffffff, var(--admin-surface-alt));
     border: 1px solid var(--admin-border);
     border-left: 4px solid var(--admin-accent);
     border-radius: var(--admin-radius);
     padding: 1.1rem 1.3rem;
-    box-shadow: var(--admin-shadow);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, var(--admin-shadow);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     animation: adminRise 0.4s ease both;
 }
 
 .admin-stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--admin-shadow-hover);
+    transform: translateY(-4px);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset, var(--admin-shadow-hover);
 }
 
 .admin-stat-card .stat-icon {
@@ -139,7 +177,8 @@ body.admin-page .btn-outline-primary:hover {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--admin-accent-soft);
+    background: linear-gradient(145deg, color-mix(in srgb, var(--admin-accent) 15%, white), var(--admin-accent-soft));
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 2px 6px rgba(79, 70, 229, 0.15);
     color: var(--admin-accent);
     font-size: 1rem;
     margin-bottom: 0.6rem;
@@ -194,9 +233,9 @@ body.admin-page .nav-tabs .nav-link:hover {
 }
 
 body.admin-page .nav-tabs .nav-link.active {
-    background: var(--admin-accent);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--admin-accent) 100%, white 18%), var(--admin-accent));
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 4px 12px rgba(79, 70, 229, 0.3);
 }
 
 /* Tab content animation */
@@ -252,6 +291,7 @@ body.admin-page .badge {
     font-weight: 600;
     padding: 0.4em 0.75em;
     letter-spacing: 0.02em;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 5px rgba(0, 0, 0, 0.12);
 }
 
 /* Form controls */

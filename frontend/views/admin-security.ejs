@@ -8,6 +8,7 @@
     </div>
 </div>
 
+<main class="admin-page-main">
 <div class="container pb-5" style="max-width: 640px;">
 
     <% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
@@ -66,5 +67,10 @@
         </div>
     </div>
 </div>
+</main>
+<footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Admin Panel.
+</footer>
+<script src="/js/click-sound.js"></script>
 </body>
 </html>
