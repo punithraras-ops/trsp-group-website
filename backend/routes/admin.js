@@ -5,6 +5,7 @@ const site = require('../config/site');
 const { requireAdmin, createAdminSession, destroyAdminSession } = require('../lib/auth');
 const adminSecurity = require('../lib/adminSecurity');
 const design = require('../lib/design');
+const siteInfo = require('../lib/siteInfo');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -443,6 +444,8 @@ router.post('/admin/design/colors', async (req, res) => {
             primary_dark: req.body.primary_dark,
             dark_color: req.body.dark_color,
             light_color: req.body.light_color,
+            text_color: req.body.text_color,
+            heading_color: req.body.heading_color,
         });
     }
     const settings = await design.getDesignSettings();
@@ -487,6 +490,19 @@ router.post('/admin/design/remove/:slot', async (req, res) => {
     }
     const settings = await design.getDesignSettings();
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Image removed.' });
+});
+
+router.get('/admin/site-info', async (req, res) => {
+    const currentSite = await siteInfo.getMergedSite();
+    res.render('admin-site-info', { site: currentSite, error: '', message: '' });
+});
+
+router.post('/admin/site-info', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await siteInfo.saveSiteInfo(req.body);
+    }
+    const currentSite = await siteInfo.getMergedSite();
+    res.render('admin-site-info', { site: currentSite, error: '', message: 'Site info updated.' });
 });
 
 module.exports = router;

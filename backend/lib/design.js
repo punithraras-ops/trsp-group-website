@@ -7,6 +7,8 @@ const DEFAULT_COLORS = {
     primary_dark: '#178396',
     dark_color: '#0c1b2b',
     light_color: '#f5f9fb',
+    text_color: '#44525f',
+    heading_color: '#132236',
 };
 
 const IMAGE_SLOTS = ['logo', 'favicon', 'hero_background', 'team_photo'];

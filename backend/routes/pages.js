@@ -1,6 +1,5 @@
 const express = require('express');
 const db = require('../db');
-const site = require('../config/site');
 
 const router = express.Router();
 
@@ -42,6 +41,7 @@ router.get('/uploads/:id', async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
+    const site = res.locals.site;
     let upcomingFeatures = [];
     if (db.isDbConfigured()) {
         try {
@@ -58,7 +58,6 @@ router.get('/', async (req, res) => {
     const services = await getActiveServices();
 
     res.render('home', {
-        site,
         pageTitle: site.company_name,
         pageDescription: site.default_description,
         activePage: 'home',
@@ -69,8 +68,8 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/about', (req, res) => {
+    const site = res.locals.site;
     res.render('about', {
-        site,
         pageTitle: `${site.short_name} - About Us`,
         pageDescription: `About ${site.legal_name} in ${site.location}.`,
         activePage: 'about',
@@ -78,10 +77,10 @@ router.get('/about', (req, res) => {
 });
 
 router.get('/services', async (req, res) => {
+    const site = res.locals.site;
     const services = await getActiveServices();
 
     res.render('services', {
-        site,
         pageTitle: `${site.short_name} - Our Services`,
         pageDescription: `Explore the services offered by ${site.legal_name}.`,
         activePage: 'services',
@@ -91,12 +90,12 @@ router.get('/services', async (req, res) => {
 });
 
 router.get('/contact', async (req, res) => {
+    const site = res.locals.site;
     const services = await getActiveServices();
     const serviceSlugs = services.map(s => s.slug);
     const selectedService = serviceSlugs.includes(req.query.service) ? req.query.service : '';
 
     res.render('contact', {
-        site,
         pageTitle: `${site.short_name} - Contact Us`,
         pageDescription: `Contact ${site.legal_name} in ${site.location}.`,
         activePage: 'contact',
@@ -106,6 +105,8 @@ router.get('/contact', async (req, res) => {
 });
 
 router.get('/services/:slug', async (req, res, next) => {
+    const site = res.locals.site;
+
     if (!db.isDbConfigured()) {
         return next();
     }
@@ -119,7 +120,6 @@ router.get('/services/:slug', async (req, res, next) => {
         const service = db.withId(doc);
 
         res.render('service-detail', {
-            site,
             pageTitle: `${site.short_name} - ${service.title}`,
             pageDescription: service.summary,
             activePage: 'services',
@@ -141,6 +141,7 @@ router.get(['/software-development', '/business-analytics', '/cybersecurity', '/
 });
 
 router.get('/store', async (req, res) => {
+    const site = res.locals.site;
     let products = [];
     if (db.isDbConfigured()) {
         try {
@@ -155,7 +156,6 @@ router.get('/store', async (req, res) => {
     }
 
     res.render('store', {
-        site,
         pageTitle: `${site.short_name} - Store`,
         pageDescription: `Products and packages from ${site.legal_name}.`,
         activePage: 'store',
@@ -165,6 +165,7 @@ router.get('/store', async (req, res) => {
 });
 
 router.get('/checkout', async (req, res) => {
+    const site = res.locals.site;
     let product = null;
 
     if (db.isDbConfigured() && req.query.product) {
@@ -180,7 +181,6 @@ router.get('/checkout', async (req, res) => {
     }
 
     res.render('checkout', {
-        site,
         pageTitle: `${site.short_name} - Checkout`,
         pageDescription: 'Complete your purchase.',
         activePage: 'store',
@@ -192,6 +192,7 @@ router.get('/checkout', async (req, res) => {
 });
 
 router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res) => {
+    const site = res.locals.site;
     let orders = [];
     if (db.isDbConfigured()) {
         try {
@@ -216,7 +217,6 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
     }
 
     res.render('account', {
-        site,
         pageTitle: `${site.short_name} - My Account`,
         pageDescription: 'Your account and order history.',
         activePage: 'account',

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= site.short_name %> - Site Info</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container py-5" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="display-6 fw-bold mb-0">Site Info</h1>
+        <a href="/admin" class="btn btn-outline-secondary">Back to Dashboard</a>
+    </div>
+
+    <% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
+    <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <p class="text-muted">These values appear across the whole site: footer, contact page, About page, and page titles. Changes apply immediately.</p>
+            <form method="POST" action="/admin/site-info">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Legal Name</label>
+                        <input type="text" name="legal_name" class="form-control" value="<%= site.legal_name %>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Short Name (used in titles)</label>
+                        <input type="text" name="short_name" class="form-control" value="<%= site.short_name %>">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Company Name (homepage title)</label>
+                        <input type="text" name="company_name" class="form-control" value="<%= site.company_name %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Address</label>
+                        <input type="text" name="address" class="form-control" value="<%= site.address %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">City / Location</label>
+                        <input type="text" name="location" class="form-control" value="<%= site.location %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Postal Code</label>
+                        <input type="text" name="postal_code" class="form-control" value="<%= site.postal_code %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">GST Number</label>
+                        <input type="text" name="gst" class="form-control" value="<%= site.gst %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control" value="<%= site.email %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone (displayed, e.g. +91 98765 43210)</label>
+                        <input type="text" name="phone_display" class="form-control" value="<%= site.phone_display %>">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone (for tel: link, e.g. +919876543210)</label>
+                        <input type="text" name="phone_href" class="form-control" value="<%= site.phone_href %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">WhatsApp Link (e.g. https://wa.me/919876543210)</label>
+                        <input type="text" name="whatsapp_href" class="form-control" value="<%= site.whatsapp_href %>">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Default Site Description (used for SEO)</label>
+                        <textarea name="default_description" class="form-control" rows="2"><%= site.default_description %></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-4">Save Site Info</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

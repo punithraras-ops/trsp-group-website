@@ -7,6 +7,7 @@ const site = require('./config/site');
 const { attachUser } = require('./lib/auth');
 const { google, github } = require('./lib/oauth');
 const { getDesignSettings, DEFAULT_COLORS } = require('./lib/design');
+const { getMergedSite } = require('./lib/siteInfo');
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
@@ -36,6 +37,11 @@ app.use(async (req, res, next) => {
     } catch (error) {
         res.locals.design = { colors: DEFAULT_COLORS, images: {} };
     }
+    try {
+        res.locals.site = await getMergedSite();
+    } catch (error) {
+        res.locals.site = site;
+    }
     next();
 });
 
@@ -47,7 +53,6 @@ app.use(require('./routes/admin'));
 
 app.use((req, res) => {
     res.status(404).render('404', {
-        site,
         pageTitle: 'Page Not Found',
         pageDescription: 'The requested page could not be found.',
         activePage: '',

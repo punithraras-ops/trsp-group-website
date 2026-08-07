@@ -20,7 +20,7 @@
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
             <h4 class="fw-bold mb-3">Colors</h4>
-            <p class="text-muted">Controls buttons, links, dark backgrounds (navbar, footer, hero), and the page background across the whole site.</p>
+            <p class="text-muted">Controls buttons, links, dark backgrounds (navbar, footer, hero), body text, headings, and the page background across the whole site.</p>
             <form method="POST" action="/admin/design/colors">
                 <div class="row g-3 mb-3">
                     <div class="col-6 col-md-3">
@@ -38,6 +38,14 @@
                     <div class="col-6 col-md-3">
                         <label class="form-label d-block">Page Background</label>
                         <input type="color" name="light_color" class="form-control form-control-color" value="<%= colors.light_color %>">
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block">Body Text</label>
+                        <input type="color" name="text_color" class="form-control form-control-color" value="<%= colors.text_color %>">
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block">Headings</label>
+                        <input type="color" name="heading_color" class="form-control form-control-color" value="<%= colors.heading_color %>">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Save Colors</button>
