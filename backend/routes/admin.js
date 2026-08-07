@@ -1,9 +1,37 @@
 const express = require('express');
 const db = require('../db');
 const site = require('../config/site');
-const { requireAdmin } = require('../lib/auth');
+const { requireAdmin, checkAdminCredentials, createAdminSession, destroyAdminSession } = require('../lib/auth');
 
 const router = express.Router();
+
+function safeAdminRedirect(value) {
+    if (typeof value === 'string' && value.startsWith('/admin')) {
+        return value;
+    }
+    return '/admin';
+}
+
+router.get('/admin/login', (req, res) => {
+    res.render('admin-login', { site, redirect: safeAdminRedirect(req.query.redirect), error: '' });
+});
+
+router.post('/admin/login', async (req, res) => {
+    const redirect = safeAdminRedirect(req.body.redirect);
+
+    if (!checkAdminCredentials(req.body.username, req.body.password)) {
+        res.render('admin-login', { site, redirect, error: 'Invalid username or password.' });
+        return;
+    }
+
+    await createAdminSession(res, req);
+    res.redirect(redirect);
+});
+
+router.get('/admin/logout', async (req, res) => {
+    await destroyAdminSession(req, res);
+    res.redirect('/admin/login');
+});
 
 router.use('/admin', requireAdmin);
 

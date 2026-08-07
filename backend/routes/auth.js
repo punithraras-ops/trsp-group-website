@@ -141,6 +141,7 @@ router.get('/auth/google/callback', async (req, res) => {
         res.clearCookie('oauth_redirect', { path: '/' });
         res.redirect(safeRedirect(redirect));
     } catch (error) {
+        console.error('Google OAuth callback failed:', error.message);
         back(res, redirect, 'Google sign-in failed. Please try again.');
     }
 });
@@ -175,6 +176,7 @@ router.get('/auth/github/callback', async (req, res) => {
         res.clearCookie('oauth_redirect', { path: '/' });
         res.redirect(safeRedirect(redirect));
     } catch (error) {
+        console.error('GitHub OAuth callback failed:', error.message);
         back(res, redirect, 'GitHub sign-in failed. Please try again.');
     }
 });

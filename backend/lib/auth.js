@@ -5,6 +5,8 @@ const db = require('../db');
 const scrypt = promisify(crypto.scrypt);
 const SESSION_COOKIE = 'sid';
 const SESSION_DAYS = 30;
+const ADMIN_SESSION_COOKIE = 'admin_sid';
+const ADMIN_SESSION_HOURS = 12;
 
 async function hashPassword(password) {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -105,8 +107,51 @@ function requireAuthApi(req, res, next) {
     next();
 }
 
-function requireAdmin(req, res, next) {
+function checkAdminCredentials(username, password) {
     const adminUser = process.env.ADMIN_USER || 'admin';
+    const adminPassword = process.env.ADMIN_PASSWORD || '';
+
+    if (!adminPassword) {
+        return false;
+    }
+
+    const userBuf = Buffer.from(String(username || ''));
+    const adminUserBuf = Buffer.from(adminUser);
+    const passBuf = Buffer.from(String(password || ''));
+    const adminPassBuf = Buffer.from(adminPassword);
+
+    const userMatches = userBuf.length === adminUserBuf.length && crypto.timingSafeEqual(userBuf, adminUserBuf);
+    const passMatches = passBuf.length === adminPassBuf.length && crypto.timingSafeEqual(passBuf, adminPassBuf);
+
+    return userMatches && passMatches;
+}
+
+async function createAdminSession(res, req) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + ADMIN_SESSION_HOURS * 60 * 60 * 1000);
+
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('admin_sessions').insertOne({ _id: token, created_at: new Date(), expires_at: expiresAt });
+    }
+
+    res.cookie(ADMIN_SESSION_COOKIE, token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: ADMIN_SESSION_HOURS * 60 * 60 * 1000,
+        path: '/',
+    });
+}
+
+async function destroyAdminSession(req, res) {
+    const token = req.cookies ? req.cookies[ADMIN_SESSION_COOKIE] : null;
+    if (token && db.isDbConfigured()) {
+        await db.getDb().collection('admin_sessions').deleteOne({ _id: token });
+    }
+    res.clearCookie(ADMIN_SESSION_COOKIE, { path: '/' });
+}
+
+async function requireAdmin(req, res, next) {
     const adminPassword = process.env.ADMIN_PASSWORD || '';
 
     if (!adminPassword) {
@@ -114,31 +159,40 @@ function requireAdmin(req, res, next) {
         return;
     }
 
-    const header = req.headers.authorization || '';
-    const match = /^Basic\s+(.+)$/i.exec(header);
+    // If the database is unavailable, admin_sessions can't be checked or created,
+    // so fall back to HTTP Basic Auth to keep the admin panel reachable.
+    if (!db.isDbConfigured()) {
+        const header = req.headers.authorization || '';
+        const match = /^Basic\s+(.+)$/i.exec(header);
+        if (match) {
+            const decoded = Buffer.from(match[1], 'base64').toString('utf8');
+            const separatorIndex = decoded.indexOf(':');
+            const providedUser = separatorIndex === -1 ? decoded : decoded.slice(0, separatorIndex);
+            const providedPassword = separatorIndex === -1 ? '' : decoded.slice(separatorIndex + 1);
+            if (checkAdminCredentials(providedUser, providedPassword)) {
+                next();
+                return;
+            }
+        }
+        res.set('WWW-Authenticate', 'Basic realm="Admin Panel"');
+        res.status(401).send('Authentication required.');
+        return;
+    }
 
-    if (match) {
-        const decoded = Buffer.from(match[1], 'base64').toString('utf8');
-        const separatorIndex = decoded.indexOf(':');
-        const providedUser = separatorIndex === -1 ? decoded : decoded.slice(0, separatorIndex);
-        const providedPassword = separatorIndex === -1 ? '' : decoded.slice(separatorIndex + 1);
-
-        const userBuf = Buffer.from(providedUser);
-        const adminUserBuf = Buffer.from(adminUser);
-        const passBuf = Buffer.from(providedPassword);
-        const adminPassBuf = Buffer.from(adminPassword);
-
-        const userMatches = userBuf.length === adminUserBuf.length && crypto.timingSafeEqual(userBuf, adminUserBuf);
-        const passMatches = passBuf.length === adminPassBuf.length && crypto.timingSafeEqual(passBuf, adminPassBuf);
-
-        if (userMatches && passMatches) {
-            next();
-            return;
+    const token = req.cookies ? req.cookies[ADMIN_SESSION_COOKIE] : null;
+    if (token) {
+        try {
+            const session = await db.getDb().collection('admin_sessions').findOne({ _id: token, expires_at: { $gt: new Date() } });
+            if (session) {
+                next();
+                return;
+            }
+        } catch (error) {
+            // fall through to login redirect
         }
     }
 
-    res.set('WWW-Authenticate', 'Basic realm="Admin Panel"');
-    res.status(401).send('Authentication required.');
+    res.redirect(`/admin/login?redirect=${encodeURIComponent(req.originalUrl)}`);
 }
 
 module.exports = {
@@ -150,4 +204,7 @@ module.exports = {
     requireAuthPage,
     requireAuthApi,
     requireAdmin,
+    checkAdminCredentials,
+    createAdminSession,
+    destroyAdminSession,
 };
