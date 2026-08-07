@@ -6,6 +6,7 @@ const { requireAdmin, createAdminSession, destroyAdminSession } = require('../li
 const adminSecurity = require('../lib/adminSecurity');
 const design = require('../lib/design');
 const siteInfo = require('../lib/siteInfo');
+const legal = require('../lib/legal');
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -544,6 +545,19 @@ router.post('/admin/site-info', async (req, res) => {
     }
     const currentSite = await siteInfo.getMergedSite();
     res.render('admin-site-info', { site: currentSite, error: '', message: 'Site info updated.' });
+});
+
+router.get('/admin/legal', async (req, res) => {
+    const terms = await legal.getTermsContent();
+    res.render('admin-legal', { terms, error: '', message: '' });
+});
+
+router.post('/admin/legal', async (req, res) => {
+    if (db.isDbConfigured() && typeof req.body.terms === 'string' && req.body.terms.trim() !== '') {
+        await legal.saveTermsContent(req.body.terms);
+    }
+    const terms = await legal.getTermsContent();
+    res.render('admin-legal', { terms, error: '', message: 'Terms & Conditions updated.' });
 });
 
 module.exports = router;

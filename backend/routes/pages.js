@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const legal = require('../lib/legal');
 
 const router = express.Router();
 
@@ -73,6 +74,18 @@ router.get('/about', (req, res) => {
         pageTitle: `${site.short_name} - About Us`,
         pageDescription: `About ${site.legal_name} in ${site.location}.`,
         activePage: 'about',
+    });
+});
+
+router.get('/terms', async (req, res) => {
+    const site = res.locals.site;
+    const terms = await legal.getTermsContent();
+
+    res.render('terms', {
+        pageTitle: `${site.short_name} - Terms & Conditions`,
+        pageDescription: `Terms and conditions, including payment terms, for ${site.legal_name}.`,
+        activePage: 'terms',
+        terms,
     });
 });
 
