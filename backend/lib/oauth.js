@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 
 function baseUrl() {
-    return process.env.SITE_URL || 'http://localhost:3000';
+    return process.env.SITE_URL || require('../config/site').site_url;
 }
 
 const google = {
