@@ -2,7 +2,7 @@
   "name": "trsp-groups-site",
   "version": "2.0.0",
   "private": true,
-  "description": "Node.js/Express company site with EJS templates, Postgres-backed auth, store, and admin CMS.",
+  "description": "Node.js/Express company site with EJS templates, MongoDB-backed auth, store, and admin CMS.",
   "engines": {
     "node": ">=20"
   },
@@ -14,6 +14,6 @@
     "cookie-parser": "^1.4.6",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
-    "pg": "^8.12.0"
+    "mongodb": "^6.9.0"
   }
 }

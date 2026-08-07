@@ -28,7 +28,12 @@ async function verifyPassword(password, stored) {
 async function createSession(res, userId) {
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-    await db.query('INSERT INTO sessions (token, user_id, expires_at) VALUES ($1, $2, $3)', [token, userId, expiresAt]);
+    await db.getDb().collection('sessions').insertOne({
+        _id: token,
+        user_id: db.toId(userId),
+        created_at: new Date(),
+        expires_at: expiresAt,
+    });
     res.cookie(SESSION_COOKIE, token, {
         httpOnly: true,
         sameSite: 'lax',
@@ -42,7 +47,7 @@ async function createSession(res, userId) {
 async function destroySession(req, res) {
     const token = req.cookies ? req.cookies[SESSION_COOKIE] : null;
     if (token && db.isDbConfigured()) {
-        await db.query('DELETE FROM sessions WHERE token = $1', [token]);
+        await db.getDb().collection('sessions').deleteOne({ _id: token });
     }
     res.clearCookie(SESSION_COOKIE, { path: '/' });
 }
@@ -64,15 +69,15 @@ async function attachUser(req, res, next) {
     }
 
     try {
-        const result = await db.query(
-            `SELECT u.id, u.name, u.email
-             FROM sessions s
-             JOIN users u ON u.id = s.user_id
-             WHERE s.token = $1 AND s.expires_at > now()`,
-            [token]
-        );
+        const session = await db.getDb().collection('sessions').findOne({ _id: token, expires_at: { $gt: new Date() } });
 
-        req.user = result.rows[0] || null;
+        if (session) {
+            const user = await db.getDb().collection('users').findOne(
+                { _id: session.user_id },
+                { projection: { name: 1, email: 1 } }
+            );
+            req.user = user ? db.withId(user) : null;
+        }
     } catch (error) {
         req.user = null;
     }

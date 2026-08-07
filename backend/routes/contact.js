@@ -35,11 +35,10 @@ router.post('/api/contact', async (req, res) => {
     }
 
     try {
-        const { name, email, phone, service, message } = validation.data;
-        await db.query(
-            'INSERT INTO contact_submissions (name, email, phone, service, message) VALUES ($1, $2, $3, $4, $5)',
-            [name, email, phone, service, message]
-        );
+        await db.getDb().collection('contact_submissions').insertOne({
+            ...validation.data,
+            created_at: new Date(),
+        });
         res.status(201).json({ message: 'Message received successfully.' });
     } catch (error) {
         res.status(500).json({ error: 'Unable to save your message right now.' });

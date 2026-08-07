@@ -54,7 +54,7 @@ app.use((err, req, res, next) => {
 });
 
 async function start() {
-    await db.migrate();
+    await db.connect();
 
     app.listen(port, host, () => {
         console.log(`Server running at http://${host}:${port}`);

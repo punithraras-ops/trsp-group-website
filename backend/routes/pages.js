@@ -8,10 +8,11 @@ router.get('/', async (req, res) => {
     let upcomingFeatures = [];
     if (db.isDbConfigured()) {
         try {
-            const result = await db.query(
-                'SELECT * FROM upcoming_features WHERE is_active = true ORDER BY sort_order ASC, created_at DESC'
-            );
-            upcomingFeatures = result.rows;
+            const docs = await db.getDb().collection('upcoming_features')
+                .find({ is_active: true })
+                .sort({ sort_order: 1, created_at: -1 })
+                .toArray();
+            upcomingFeatures = docs.map(db.withId);
         } catch (error) {
             upcomingFeatures = [];
         }
@@ -121,8 +122,11 @@ router.get('/store', async (req, res) => {
     let products = [];
     if (db.isDbConfigured()) {
         try {
-            const result = await db.query('SELECT * FROM products WHERE is_active = true ORDER BY created_at DESC');
-            products = result.rows;
+            const docs = await db.getDb().collection('products')
+                .find({ is_active: true })
+                .sort({ created_at: -1 })
+                .toArray();
+            products = docs.map(db.withId);
         } catch (error) {
             products = [];
         }
@@ -139,13 +143,15 @@ router.get('/store', async (req, res) => {
 });
 
 router.get('/checkout', async (req, res) => {
-    const productId = parseInt(req.query.product, 10);
     let product = null;
 
-    if (db.isDbConfigured() && productId) {
+    if (db.isDbConfigured() && req.query.product) {
         try {
-            const result = await db.query('SELECT * FROM products WHERE id = $1 AND is_active = true', [productId]);
-            product = result.rows[0] || null;
+            const doc = await db.getDb().collection('products').findOne({
+                _id: db.toId(req.query.product),
+                is_active: true,
+            });
+            product = doc ? db.withId(doc) : null;
         } catch (error) {
             product = null;
         }
@@ -167,15 +173,21 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
     let orders = [];
     if (db.isDbConfigured()) {
         try {
-            const result = await db.query(
-                `SELECT o.*, p.title AS product_title
-                 FROM orders o
-                 JOIN products p ON p.id = o.product_id
-                 WHERE o.user_id = $1
-                 ORDER BY o.created_at DESC`,
-                [req.user.id]
-            );
-            orders = result.rows;
+            const docs = await db.getDb().collection('orders').aggregate([
+                { $match: { user_id: db.toId(req.user.id) } },
+                { $sort: { created_at: -1 } },
+                {
+                    $lookup: {
+                        from: 'products',
+                        localField: 'product_id',
+                        foreignField: '_id',
+                        as: 'product',
+                    },
+                },
+                { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+                { $addFields: { product_title: '$product.title' } },
+            ]).toArray();
+            orders = docs.map(db.withId);
         } catch (error) {
             orders = [];
         }

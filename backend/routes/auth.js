@@ -33,18 +33,21 @@ router.post('/signup', async (req, res) => {
     }
 
     try {
-        const existing = await db.query('SELECT id FROM users WHERE email = $1', [email]);
-        if (existing.rows.length > 0) {
+        const users = db.getDb().collection('users');
+        const existing = await users.findOne({ email });
+        if (existing) {
             return back(res, redirect, 'An account with that email already exists. Please log in instead.');
         }
 
         const passwordHash = await hashPassword(password);
-        const result = await db.query(
-            'INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id',
-            [name, email, passwordHash]
-        );
+        const result = await users.insertOne({
+            name,
+            email,
+            password_hash: passwordHash,
+            created_at: new Date(),
+        });
 
-        await createSession(res, result.rows[0].id);
+        await createSession(res, result.insertedId);
         res.redirect(safeRedirect(redirect));
     } catch (error) {
         back(res, redirect, 'Something went wrong creating your account. Please try again.');
@@ -61,8 +64,7 @@ router.post('/login', async (req, res) => {
     const redirect = req.body.redirect;
 
     try {
-        const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-        const user = result.rows[0];
+        const user = await db.getDb().collection('users').findOne({ email });
 
         if (!user || !user.password_hash) {
             return back(res, redirect, 'Invalid email or password, or this account uses Google/GitHub sign-in.');
@@ -73,7 +75,7 @@ router.post('/login', async (req, res) => {
             return back(res, redirect, 'Invalid email or password.');
         }
 
-        await createSession(res, user.id);
+        await createSession(res, user._id);
         res.redirect(safeRedirect(redirect));
     } catch (error) {
         back(res, redirect, 'Something went wrong signing you in. Please try again.');
@@ -86,27 +88,27 @@ router.get('/logout', async (req, res) => {
 });
 
 async function findOrCreateOAuthUser({ provider, providerId, email, name }) {
-    const column = provider === 'google' ? 'google_id' : 'github_id';
+    const field = provider === 'google' ? 'google_id' : 'github_id';
+    const users = db.getDb().collection('users');
 
-    const byProvider = await db.query(`SELECT * FROM users WHERE ${column} = $1`, [providerId]);
-    if (byProvider.rows.length > 0) {
-        return byProvider.rows[0];
+    const byProvider = await users.findOne({ [field]: providerId });
+    if (byProvider) {
+        return byProvider;
     }
 
-    const byEmail = await db.query('SELECT * FROM users WHERE email = $1', [email]);
-    if (byEmail.rows.length > 0) {
-        const updated = await db.query(
-            `UPDATE users SET ${column} = $1 WHERE id = $2 RETURNING *`,
-            [providerId, byEmail.rows[0].id]
-        );
-        return updated.rows[0];
+    const byEmail = await users.findOne({ email });
+    if (byEmail) {
+        await users.updateOne({ _id: byEmail._id }, { $set: { [field]: providerId } });
+        return { ...byEmail, [field]: providerId };
     }
 
-    const created = await db.query(
-        `INSERT INTO users (name, email, ${column}) VALUES ($1, $2, $3) RETURNING *`,
-        [name, email, providerId]
-    );
-    return created.rows[0];
+    const result = await users.insertOne({
+        name,
+        email,
+        [field]: providerId,
+        created_at: new Date(),
+    });
+    return { _id: result.insertedId, name, email, [field]: providerId };
 }
 
 router.get('/auth/google', (req, res) => {
@@ -134,7 +136,7 @@ router.get('/auth/google/callback', async (req, res) => {
     try {
         const profile = await google.exchangeCodeForProfile(req.query.code);
         const user = await findOrCreateOAuthUser({ provider: 'google', providerId: profile.providerId, email: profile.email, name: profile.name });
-        await createSession(res, user.id);
+        await createSession(res, user._id);
         res.clearCookie('oauth_state', { path: '/' });
         res.clearCookie('oauth_redirect', { path: '/' });
         res.redirect(safeRedirect(redirect));
@@ -168,7 +170,7 @@ router.get('/auth/github/callback', async (req, res) => {
     try {
         const profile = await github.exchangeCodeForProfile(req.query.code);
         const user = await findOrCreateOAuthUser({ provider: 'github', providerId: profile.providerId, email: profile.email, name: profile.name });
-        await createSession(res, user.id);
+        await createSession(res, user._id);
         res.clearCookie('oauth_state', { path: '/' });
         res.clearCookie('oauth_redirect', { path: '/' });
         res.redirect(safeRedirect(redirect));

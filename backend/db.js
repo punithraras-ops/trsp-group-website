@@ -1,46 +1,56 @@
-const fs = require('node:fs');
-const path = require('node:path');
-const { Pool } = require('pg');
+const { MongoClient, ObjectId } = require('mongodb');
 
-const connectionString = process.env.DATABASE_URL || '';
-let pool = null;
-
-if (connectionString) {
-    pool = new Pool({
-        connectionString,
-        ssl: connectionString.includes('sslmode=disable') ? false : { rejectUnauthorized: false },
-    });
-    pool.on('error', err => {
-        console.error('Unexpected Postgres client error', err);
-    });
-}
+const uri = process.env.MONGODB_URI || '';
+let client = null;
+let db = null;
 
 function isDbConfigured() {
-    return pool !== null;
+    return db !== null;
 }
 
-async function query(text, params) {
-    if (!pool) {
-        throw new Error('Database is not configured. Set the DATABASE_URL environment variable.');
+function getDb() {
+    if (!db) {
+        throw new Error('Database is not configured. Set the MONGODB_URI environment variable.');
     }
-    return pool.query(text, params);
+    return db;
 }
 
-async function migrate() {
-    if (!pool) {
-        console.warn('DATABASE_URL not set - skipping migrations. Auth, store, and admin data features are disabled until it is configured.');
+async function connect() {
+    if (!uri) {
+        console.warn('MONGODB_URI not set - skipping database connection. Auth, store, and admin data features are disabled until it is configured.');
         return;
     }
 
-    const schemaPath = path.join(__dirname, 'db', 'schema.sql');
-    const schema = fs.readFileSync(schemaPath, 'utf8');
-
     try {
-        await pool.query(schema);
-        console.log('Database migrated successfully.');
+        client = new MongoClient(uri);
+        await client.connect();
+        db = client.db();
+
+        await Promise.all([
+            db.collection('users').createIndex({ email: 1 }, { unique: true }),
+            db.collection('users').createIndex({ google_id: 1 }, { unique: true, sparse: true }),
+            db.collection('users').createIndex({ github_id: 1 }, { unique: true, sparse: true }),
+            db.collection('sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
+            db.collection('products').createIndex({ is_active: 1 }),
+            db.collection('orders').createIndex({ user_id: 1 }),
+            db.collection('upcoming_features').createIndex({ is_active: 1, sort_order: 1 }),
+        ]);
+
+        console.log('Connected to MongoDB successfully.');
     } catch (error) {
-        console.error('Database migration failed:', error.message);
+        console.error('MongoDB connection failed:', error.message);
+        db = null;
     }
 }
 
-module.exports = { query, migrate, isDbConfigured };
+function toId(value) {
+    return typeof value === 'string' ? new ObjectId(value) : value;
+}
+
+function withId(doc) {
+    if (!doc) return doc;
+    const { _id, ...rest } = doc;
+    return { id: _id.toString(), ...rest };
+}
+
+module.exports = { connect, isDbConfigured, getDb, toId, withId, ObjectId };
