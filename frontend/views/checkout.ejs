@@ -19,6 +19,9 @@
                     <div class="card border-0 shadow-lg rounded-4">
                         <div class="card-body p-4">
                             <h3 class="fw-bold mb-4">Checkout</h3>
+                            <% if (product.images && product.images.length > 0) { %>
+                                <img src="/uploads/<%= product.images[0] %>" alt="<%= product.title %>" class="img-fluid rounded mb-3" style="max-height:180px; object-fit:cover;">
+                            <% } %>
                             <div class="d-flex justify-content-between mb-2">
                                 <span><%= product.title %></span>
                                 <span>&#8377;<%= (product.price_paise / 100).toLocaleString('en-IN') %></span>

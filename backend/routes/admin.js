@@ -253,15 +253,23 @@ router.get('/admin', async (req, res) => {
     });
 });
 
-router.post('/admin/products', async (req, res) => {
+router.post('/admin/products', upload.array('images', 10), async (req, res) => {
     if (db.isDbConfigured()) {
         const pricePaise = Math.round(parseFloat(req.body.price || '0') * 100);
+        const images = [];
+
+        for (const file of req.files || []) {
+            if (!file.mimetype.startsWith('image/')) continue;
+            const fileId = await db.uploadBuffer(file.buffer, file.originalname, file.mimetype);
+            images.push(fileId.toString());
+        }
+
         await db.getDb().collection('products').insertOne({
             title: req.body.title,
             description: req.body.description || '',
             price_paise: pricePaise,
             currency: 'INR',
-            image_url: req.body.image_url || null,
+            images,
             is_active: true,
             created_at: new Date(),
         });
@@ -279,7 +287,6 @@ router.post('/admin/products/:id/update', async (req, res) => {
                     title: req.body.title,
                     description: req.body.description || '',
                     price_paise: pricePaise,
-                    image_url: req.body.image_url || null,
                     is_active: req.body.is_active === '1',
                 },
             }
@@ -288,9 +295,45 @@ router.post('/admin/products/:id/update', async (req, res) => {
     res.redirect('/admin#tab-products');
 });
 
+router.post('/admin/products/:id/images', upload.array('files', 10), async (req, res) => {
+    if (db.isDbConfigured() && req.files && req.files.length > 0) {
+        const products = db.getDb().collection('products');
+        const product = await products.findOne({ _id: db.toId(req.params.id) });
+        const existing = (product && product.images) || [];
+        const remainingSlots = Math.max(0, 10 - existing.length);
+
+        const newIds = [];
+        for (const file of req.files.slice(0, remainingSlots)) {
+            if (!file.mimetype.startsWith('image/')) continue;
+            const fileId = await db.uploadBuffer(file.buffer, file.originalname, file.mimetype);
+            newIds.push(fileId.toString());
+        }
+
+        if (newIds.length > 0) {
+            await products.updateOne({ _id: db.toId(req.params.id) }, { $push: { images: { $each: newIds } } });
+        }
+    }
+    res.redirect('/admin#tab-products');
+});
+
+router.post('/admin/products/:id/images/remove', async (req, res) => {
+    if (db.isDbConfigured() && req.body.fileId) {
+        await db.getDb().collection('products').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $pull: { images: req.body.fileId } }
+        );
+        await db.deleteFile(req.body.fileId);
+    }
+    res.redirect('/admin#tab-products');
+});
+
 router.post('/admin/products/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
+        const product = await db.getDb().collection('products').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('products').deleteOne({ _id: db.toId(req.params.id) });
+        for (const fileId of (product && product.images) || []) {
+            await db.deleteFile(fileId);
+        }
     }
     res.redirect('/admin#tab-products');
 });
@@ -436,6 +479,14 @@ router.post('/admin/design/upload/:slot', upload.single('file'), async (req, res
     uploadStream.on('error', () => {
         res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: 'Upload failed. Please try again.', message: '' });
     });
+});
+
+router.post('/admin/design/remove/:slot', async (req, res) => {
+    if (db.isDbConfigured() && design.IMAGE_SLOTS.includes(req.params.slot)) {
+        await design.removeImage(req.params.slot);
+    }
+    const settings = await design.getDesignSettings();
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Image removed.' });
 });
 
 module.exports = router;

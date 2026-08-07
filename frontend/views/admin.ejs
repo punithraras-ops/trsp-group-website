@@ -155,40 +155,66 @@
 
         <div class="tab-pane fade" id="tab-products">
             <h3 class="mb-3">Products</h3>
-            <div class="table-responsive mb-4">
-                <table class="table table-striped align-middle bg-white rounded shadow-sm">
-                    <thead><tr><th>Title</th><th>Description</th><th>Price (INR)</th><th>Image URL</th><th>Active</th><th></th></tr></thead>
-                    <tbody>
-                        <% products.forEach(p => { %>
-                            <tr>
-                                <form method="POST" action="/admin/products/<%= p.id %>/update">
-                                    <td><input type="text" name="title" class="form-control" value="<%= p.title %>" required></td>
-                                    <td><input type="text" name="description" class="form-control" value="<%= p.description %>"></td>
-                                    <td><input type="number" name="price" class="form-control" value="<%= (p.price_paise / 100).toFixed(2) %>" step="0.01" min="0" required></td>
-                                    <td><input type="text" name="image_url" class="form-control" value="<%= p.image_url || '' %>"></td>
-                                    <td class="text-center"><input type="checkbox" name="is_active" value="1" <%= p.is_active ? 'checked' : '' %>></td>
-                                    <td class="text-nowrap">
-                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
-                                    </td>
-                                </form>
-                                <td>
-                                    <form method="POST" action="/admin/products/<%= p.id %>/delete" onsubmit="return confirm('Delete this product?');">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <% }) %>
-                    </tbody>
-                </table>
-            </div>
+            <p class="text-muted">Each product can have up to 10 images. Uploading images is optional — add as many or as few as you need.</p>
 
-            <h4 class="mb-3">Add Product</h4>
-            <form method="POST" action="/admin/products" class="row g-2 align-items-end">
-                <div class="col-md-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
-                <div class="col-md-3"><label class="form-label">Description</label><input type="text" name="description" class="form-control"></div>
+            <% products.forEach(p => { %>
+                <div class="card mb-3 border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-2">Images (<%= (p.images || []).length %>/10)</h6>
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    <% (p.images || []).forEach(fileId => { %>
+                                        <div class="text-center">
+                                            <img src="/uploads/<%= fileId %>" class="rounded border d-block mb-1" style="width:70px;height:70px;object-fit:cover;">
+                                            <form method="POST" action="/admin/products/<%= p.id %>/images/remove" onsubmit="return confirm('Remove this image?');">
+                                                <input type="hidden" name="fileId" value="<%= fileId %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
+                                            </form>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                                <% if ((p.images || []).length < 10) { %>
+                                    <form method="POST" action="/admin/products/<%= p.id %>/images" enctype="multipart/form-data" class="d-flex gap-2">
+                                        <input type="file" name="files" accept="image/*" multiple class="form-control form-control-sm">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Add</button>
+                                    </form>
+                                <% } %>
+                            </div>
+                            <div class="col-md-8">
+                                <form method="POST" action="/admin/products/<%= p.id %>/update">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-md-6"><label class="form-label">Title</label><input type="text" name="title" class="form-control" value="<%= p.title %>" required></div>
+                                        <div class="col-md-3"><label class="form-label">Price (INR)</label><input type="number" name="price" class="form-control" value="<%= (p.price_paise / 100).toFixed(2) %>" step="0.01" min="0" required></div>
+                                        <div class="col-md-3 d-flex align-items-end">
+                                            <div class="form-check">
+                                                <input type="checkbox" name="is_active" value="1" class="form-check-input" id="active-<%= p.id %>" <%= p.is_active ? 'checked' : '' %>>
+                                                <label class="form-check-label" for="active-<%= p.id %>">Active</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2"><label class="form-label">Description</label><textarea name="description" class="form-control" rows="2"><%= p.description %></textarea></div>
+                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                </form>
+                                <form method="POST" action="/admin/products/<%= p.id %>/delete" onsubmit="return confirm('Delete this product?');" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger mt-2">Delete Product</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+
+            <h4 class="mb-3 mt-4">Add Product</h4>
+            <form method="POST" action="/admin/products" enctype="multipart/form-data" class="row g-2">
+                <div class="col-md-4"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
                 <div class="col-md-2"><label class="form-label">Price (INR)</label><input type="number" name="price" class="form-control" step="0.01" min="0" required></div>
-                <div class="col-md-2"><label class="form-label">Image URL</label><input type="text" name="image_url" class="form-control"></div>
-                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Add</button></div>
+                <div class="col-md-6"><label class="form-label">Description</label><input type="text" name="description" class="form-control"></div>
+                <div class="col-md-8">
+                    <label class="form-label">Images (optional, up to 10)</label>
+                    <input type="file" name="images" accept="image/*" multiple class="form-control">
+                </div>
+                <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100">Add Product</button></div>
             </form>
         </div>
 

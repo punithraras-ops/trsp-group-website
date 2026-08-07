@@ -50,41 +50,31 @@
             <h4 class="fw-bold mb-3">Images</h4>
 
             <div class="row g-4">
-                <div class="col-md-6">
-                    <h6 class="fw-bold">Logo (navbar)</h6>
-                    <% if (images.logo) { %><img src="<%= images.logo %>" class="img-fluid mb-2 rounded border" style="max-height:80px;"><% } %>
-                    <form method="POST" action="/admin/design/upload/logo" enctype="multipart/form-data" class="d-flex gap-2">
-                        <input type="file" name="file" accept="image/*" class="form-control" required>
-                        <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
-                    </form>
-                </div>
-
-                <div class="col-md-6">
-                    <h6 class="fw-bold">Favicon (browser tab icon)</h6>
-                    <% if (images.favicon) { %><img src="<%= images.favicon %>" class="img-fluid mb-2 rounded border" style="max-height:80px;"><% } %>
-                    <form method="POST" action="/admin/design/upload/favicon" enctype="multipart/form-data" class="d-flex gap-2">
-                        <input type="file" name="file" accept="image/*" class="form-control" required>
-                        <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
-                    </form>
-                </div>
-
-                <div class="col-md-6">
-                    <h6 class="fw-bold">Hero Background (homepage banner)</h6>
-                    <% if (images.hero_background) { %><img src="<%= images.hero_background %>" class="img-fluid mb-2 rounded border" style="max-height:120px;"><% } %>
-                    <form method="POST" action="/admin/design/upload/hero_background" enctype="multipart/form-data" class="d-flex gap-2">
-                        <input type="file" name="file" accept="image/*" class="form-control" required>
-                        <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
-                    </form>
-                </div>
-
-                <div class="col-md-6">
-                    <h6 class="fw-bold">Team / About Photo</h6>
-                    <% if (images.team_photo) { %><img src="<%= images.team_photo %>" class="img-fluid mb-2 rounded border" style="max-height:120px;"><% } %>
-                    <form method="POST" action="/admin/design/upload/team_photo" enctype="multipart/form-data" class="d-flex gap-2">
-                        <input type="file" name="file" accept="image/*" class="form-control" required>
-                        <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
-                    </form>
-                </div>
+                <% const slots = [
+                    { key: 'logo', label: 'Logo (navbar)', height: 80 },
+                    { key: 'favicon', label: 'Favicon (browser tab icon)', height: 80 },
+                    { key: 'hero_background', label: 'Hero Background (homepage banner)', height: 120 },
+                    { key: 'team_photo', label: 'Team / About Photo', height: 120 },
+                ]; %>
+                <% slots.forEach(slot => { %>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold"><%= slot.label %></h6>
+                        <% if (images[slot.key]) { %>
+                            <img src="<%= images[slot.key] %>" class="img-fluid mb-2 rounded border d-block" style="max-height:<%= slot.height %>px;">
+                        <% } %>
+                        <div class="d-flex gap-2">
+                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="d-flex gap-2 flex-grow-1">
+                                <input type="file" name="file" accept="image/*" class="form-control" required>
+                                <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
+                            </form>
+                            <% if (images[slot.key]) { %>
+                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" onsubmit="return confirm('Remove this image and go back to the default?');">
+                                    <button type="submit" class="btn btn-outline-danger text-nowrap">Remove</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
             </div>
         </div>
     </div>

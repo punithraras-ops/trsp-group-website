@@ -54,4 +54,26 @@ async function saveImageRef(slot, fileId) {
     );
 }
 
-module.exports = { getDesignSettings, saveColors, saveImageRef, DEFAULT_COLORS, IMAGE_SLOTS };
+async function removeImage(slot) {
+    if (!IMAGE_SLOTS.includes(slot)) {
+        throw new Error(`Unknown image slot: ${slot}`);
+    }
+
+    const doc = await db.getDb().collection('site_settings').findOne({ _id: CONFIG_ID });
+    const existingFileId = doc && doc.images && doc.images[slot];
+
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $unset: { [`images.${slot}`]: '' }, $set: { updated_at: new Date() } }
+    );
+
+    if (existingFileId) {
+        try {
+            await db.getBucket().delete(db.toId(existingFileId));
+        } catch (error) {
+            // File may already be gone; ignore.
+        }
+    }
+}
+
+module.exports = { getDesignSettings, saveColors, saveImageRef, removeImage, DEFAULT_COLORS, IMAGE_SLOTS };

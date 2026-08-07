@@ -66,4 +66,21 @@ function withId(doc) {
     return { id: _id.toString(), ...rest };
 }
 
-module.exports = { connect, isDbConfigured, getDb, getBucket, toId, withId, ObjectId };
+function uploadBuffer(buffer, filename, contentType) {
+    return new Promise((resolve, reject) => {
+        const uploadStream = getBucket().openUploadStream(filename, { contentType });
+        uploadStream.end(buffer);
+        uploadStream.on('finish', () => resolve(uploadStream.id));
+        uploadStream.on('error', reject);
+    });
+}
+
+async function deleteFile(id) {
+    try {
+        await getBucket().delete(toId(id));
+    } catch (error) {
+        // Already gone; ignore.
+    }
+}
+
+module.exports = { connect, isDbConfigured, getDb, getBucket, toId, withId, uploadBuffer, deleteFile, ObjectId };
