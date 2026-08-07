@@ -12,6 +12,29 @@ function safeAdminRedirect(value) {
     return '/admin';
 }
 
+function slugify(value) {
+    return String(value || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function parseFeaturesText(text) {
+    return String(text || '')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+            const [title, ...rest] = line.split('::');
+            return { title: title.trim(), description: rest.join('::').trim() };
+        });
+}
+
+function featuresToText(features) {
+    return (features || []).map(f => `${f.title} :: ${f.description}`).join('\n');
+}
+
 router.get('/admin/login', (req, res) => {
     res.render('admin-login', { site, redirect: safeAdminRedirect(req.query.redirect), error: '' });
 });
@@ -41,11 +64,12 @@ router.get('/admin', async (req, res) => {
     let orders = [];
     let products = [];
     let features = [];
+    let services = [];
 
     if (db.isDbConfigured()) {
         try {
             const database = db.getDb();
-            const [submissionDocs, userDocs, orderDocs, productDocs, featureDocs] = await Promise.all([
+            const [submissionDocs, userDocs, orderDocs, productDocs, featureDocs, serviceDocs] = await Promise.all([
                 database.collection('contact_submissions').find().sort({ created_at: -1 }).toArray(),
                 database.collection('users').find().sort({ created_at: -1 }).toArray(),
                 database.collection('orders').aggregate([
@@ -64,6 +88,7 @@ router.get('/admin', async (req, res) => {
                 ]).toArray(),
                 database.collection('products').find().sort({ created_at: -1 }).toArray(),
                 database.collection('upcoming_features').find().sort({ sort_order: 1, created_at: -1 }).toArray(),
+                database.collection('services').find().sort({ sort_order: 1, created_at: 1 }).toArray(),
             ]);
 
             submissions = submissionDocs.map(db.withId);
@@ -71,6 +96,7 @@ router.get('/admin', async (req, res) => {
             orders = orderDocs.map(db.withId);
             products = productDocs.map(db.withId);
             features = featureDocs.map(db.withId);
+            services = serviceDocs.map(db.withId).map(s => ({ ...s, featuresText: featuresToText(s.features) }));
         } catch (error) {
             // Leave arrays empty if any query fails; the page still renders.
         }
@@ -84,6 +110,7 @@ router.get('/admin', async (req, res) => {
         orders,
         products,
         features,
+        services,
     });
 });
 
@@ -169,6 +196,57 @@ router.post('/admin/features/:id/delete', async (req, res) => {
         await db.getDb().collection('upcoming_features').deleteOne({ _id: db.toId(req.params.id) });
     }
     res.redirect('/admin#tab-features');
+});
+
+router.post('/admin/services', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const slug = slugify(req.body.slug || req.body.title);
+        await db.getDb().collection('services').insertOne({
+            title: req.body.title,
+            slug,
+            icon: req.body.icon || 'fas fa-briefcase',
+            summary: req.body.summary || '',
+            hero_subtitle: req.body.hero_subtitle || '',
+            cta_label: req.body.cta_label || 'View Detailed Features',
+            features: parseFeaturesText(req.body.features),
+            sort_order: parseInt(req.body.sort_order, 10) || 0,
+            is_active: true,
+            created_at: new Date(),
+            updated_at: new Date(),
+        });
+    }
+    res.redirect('/admin#tab-services');
+});
+
+router.post('/admin/services/:id/update', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const slug = slugify(req.body.slug || req.body.title);
+        await db.getDb().collection('services').updateOne(
+            { _id: db.toId(req.params.id) },
+            {
+                $set: {
+                    title: req.body.title,
+                    slug,
+                    icon: req.body.icon || 'fas fa-briefcase',
+                    summary: req.body.summary || '',
+                    hero_subtitle: req.body.hero_subtitle || '',
+                    cta_label: req.body.cta_label || 'View Detailed Features',
+                    features: parseFeaturesText(req.body.features),
+                    sort_order: parseInt(req.body.sort_order, 10) || 0,
+                    is_active: req.body.is_active === '1',
+                    updated_at: new Date(),
+                },
+            }
+        );
+    }
+    res.redirect('/admin#tab-services');
+});
+
+router.post('/admin/services/:id/delete', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('services').deleteOne({ _id: db.toId(req.params.id) });
+    }
+    res.redirect('/admin#tab-services');
 });
 
 module.exports = router;

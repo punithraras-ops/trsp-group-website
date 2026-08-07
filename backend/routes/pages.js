@@ -4,6 +4,21 @@ const site = require('../config/site');
 
 const router = express.Router();
 
+async function getActiveServices() {
+    if (!db.isDbConfigured()) {
+        return [];
+    }
+    try {
+        const docs = await db.getDb().collection('services')
+            .find({ is_active: true })
+            .sort({ sort_order: 1, created_at: 1 })
+            .toArray();
+        return docs.map(db.withId);
+    } catch (error) {
+        return [];
+    }
+}
+
 router.get('/', async (req, res) => {
     let upcomingFeatures = [];
     if (db.isDbConfigured()) {
@@ -18,12 +33,16 @@ router.get('/', async (req, res) => {
         }
     }
 
+    const services = await getActiveServices();
+
     res.render('home', {
         site,
         pageTitle: site.company_name,
         pageDescription: site.default_description,
         activePage: 'home',
         upcomingFeatures,
+        services,
+        dbConfigured: db.isDbConfigured(),
     });
 });
 
@@ -36,86 +55,67 @@ router.get('/about', (req, res) => {
     });
 });
 
-router.get('/services', (req, res) => {
+router.get('/services', async (req, res) => {
+    const services = await getActiveServices();
+
     res.render('services', {
         site,
         pageTitle: `${site.short_name} - Our Services`,
         pageDescription: `Explore the services offered by ${site.legal_name}.`,
         activePage: 'services',
+        services,
+        dbConfigured: db.isDbConfigured(),
     });
 });
 
-router.get('/contact', (req, res) => {
-    const serviceKeys = site.services.map(s => s.key);
-    const selectedService = serviceKeys.includes(req.query.service) ? req.query.service : '';
+router.get('/contact', async (req, res) => {
+    const services = await getActiveServices();
+    const serviceSlugs = services.map(s => s.slug);
+    const selectedService = serviceSlugs.includes(req.query.service) ? req.query.service : '';
 
     res.render('contact', {
         site,
         pageTitle: `${site.short_name} - Contact Us`,
         pageDescription: `Contact ${site.legal_name} in ${site.location}.`,
         activePage: 'contact',
+        services,
         selectedService,
     });
 });
 
-router.get('/software-development', (req, res) => {
-    res.render('service-detail', {
-        site,
-        pageTitle: `${site.short_name} - Custom Software Development`,
-        pageDescription: `Custom software development services from ${site.legal_name}.`,
-        activePage: 'services',
-        heroIcon: 'fas fa-laptop-code',
-        heroTitle: 'Custom Software Development',
-        heroSubtitle: 'Advanced, research-driven software solutions tailored to your business needs',
-        features: site.software_features,
-        portfolio: site.software_portfolio,
-        serviceKey: 'software-development',
-    });
+router.get('/services/:slug', async (req, res, next) => {
+    if (!db.isDbConfigured()) {
+        return next();
+    }
+
+    try {
+        const doc = await db.getDb().collection('services').findOne({ slug: req.params.slug, is_active: true });
+        if (!doc) {
+            return next();
+        }
+
+        const service = db.withId(doc);
+
+        res.render('service-detail', {
+            site,
+            pageTitle: `${site.short_name} - ${service.title}`,
+            pageDescription: service.summary,
+            activePage: 'services',
+            heroIcon: service.icon,
+            heroTitle: service.title,
+            heroSubtitle: service.hero_subtitle || service.summary,
+            features: service.features || [],
+            portfolio: service.slug === 'software-development' ? site.software_portfolio : null,
+            serviceKey: service.slug,
+        });
+    } catch (error) {
+        next();
+    }
 });
 
-router.get('/business-analytics', (req, res) => {
-    res.render('service-detail', {
-        site,
-        pageTitle: `${site.short_name} - Business Analytics`,
-        pageDescription: `Business analytics and decision-support services from ${site.legal_name}.`,
-        activePage: 'services',
-        heroIcon: 'fas fa-chart-line',
-        heroTitle: 'Business Analytics',
-        heroSubtitle: 'Dashboards, reports, and decision-support systems that turn operational data into clear business insight',
-        features: site.business_analytics_features,
-        portfolio: null,
-        serviceKey: 'business-analytics',
-    });
-});
-
-router.get('/cybersecurity', (req, res) => {
-    res.render('service-detail', {
-        site,
-        pageTitle: `${site.short_name} - Cybersecurity`,
-        pageDescription: `Cybersecurity and application hardening services from ${site.legal_name}.`,
-        activePage: 'services',
-        heroIcon: 'fas fa-shield-halved',
-        heroTitle: 'Cybersecurity',
-        heroSubtitle: 'Application hardening, access control, and secure delivery practices that help protect systems and data',
-        features: site.cybersecurity_features,
-        portfolio: null,
-        serviceKey: 'cybersecurity',
-    });
-});
-
-router.get('/product-strategy', (req, res) => {
-    res.render('service-detail', {
-        site,
-        pageTitle: `${site.short_name} - Product Strategy & Scale`,
-        pageDescription: `Product strategy and platform scaling services from ${site.legal_name}.`,
-        activePage: 'services',
-        heroIcon: 'fas fa-rocket',
-        heroTitle: 'Product Strategy & Scale',
-        heroSubtitle: 'Roadmaps, rollout planning, and platform improvements that help products launch faster and grow with confidence',
-        features: site.product_strategy_features,
-        portfolio: null,
-        serviceKey: 'product-strategy',
-    });
+// Legacy URLs from before services moved into the admin-managed database.
+router.get(['/software-development', '/business-analytics', '/cybersecurity', '/product-strategy'], (req, res) => {
+    res.redirect(301, `/services${req.path}`);
 });
 
 router.get('/store', async (req, res) => {

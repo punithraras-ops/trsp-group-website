@@ -22,6 +22,7 @@
         <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-submissions" type="button">Contact Submissions (<%= submissions.length %>)</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-users" type="button">Users (<%= users.length %>)</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-orders" type="button">Orders (<%= orders.length %>)</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-services" type="button">Services (<%= services.length %>)</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-products" type="button">Products (<%= products.length %>)</button></li>
         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-features" type="button">Upcoming Features (<%= features.length %>)</button></li>
     </ul>
@@ -100,6 +101,52 @@
                 </table>
             </div>
             <% } %>
+        </div>
+
+        <div class="tab-pane fade" id="tab-services">
+            <h3 class="mb-3">Services</h3>
+            <p class="text-muted">These are the services shown on the Home and Services pages. Each one gets its own detail page at <code>/services/&lt;slug&gt;</code>. Enter features as one per line: <code>Title :: Description</code>.</p>
+            <div class="table-responsive mb-4">
+                <table class="table table-striped align-middle bg-white rounded shadow-sm">
+                    <thead><tr><th style="min-width:160px">Title</th><th>Slug</th><th>Icon (Font Awesome class)</th><th style="min-width:220px">Summary</th><th style="min-width:260px">Features (one per line: Title :: Description)</th><th>Order</th><th>Active</th><th></th></tr></thead>
+                    <tbody>
+                        <% services.forEach(s => { %>
+                            <tr>
+                                <form method="POST" action="/admin/services/<%= s.id %>/update">
+                                    <td><input type="text" name="title" class="form-control" value="<%= s.title %>" required></td>
+                                    <td><input type="text" name="slug" class="form-control" value="<%= s.slug %>" required></td>
+                                    <td><input type="text" name="icon" class="form-control" value="<%= s.icon %>" placeholder="fas fa-briefcase"></td>
+                                    <td><textarea name="summary" class="form-control" rows="2"><%= s.summary %></textarea></td>
+                                    <td><textarea name="features" class="form-control" rows="4"><%= s.featuresText %></textarea></td>
+                                    <td><input type="number" name="sort_order" class="form-control" value="<%= s.sort_order %>"></td>
+                                    <td class="text-center"><input type="checkbox" name="is_active" value="1" <%= s.is_active ? 'checked' : '' %>></td>
+                                    <td class="text-nowrap">
+                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                    </td>
+                                </form>
+                                <td>
+                                    <form method="POST" action="/admin/services/<%= s.id %>/delete" onsubmit="return confirm('Delete this service?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="mb-3">Add Service</h4>
+            <form method="POST" action="/admin/services" class="row g-2">
+                <div class="col-md-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label">Slug (URL, optional)</label><input type="text" name="slug" class="form-control" placeholder="auto from title"></div>
+                <div class="col-md-2"><label class="form-label">Icon (Font Awesome)</label><input type="text" name="icon" class="form-control" placeholder="fas fa-briefcase"></div>
+                <div class="col-md-2"><label class="form-label">Order</label><input type="number" name="sort_order" class="form-control" value="0"></div>
+                <div class="col-md-2"><label class="form-label">CTA Label</label><input type="text" name="cta_label" class="form-control" placeholder="View Detailed Features"></div>
+                <div class="col-md-6"><label class="form-label">Summary (short card text)</label><textarea name="summary" class="form-control" rows="2" required></textarea></div>
+                <div class="col-md-6"><label class="form-label">Hero Subtitle (detail page)</label><textarea name="hero_subtitle" class="form-control" rows="2"></textarea></div>
+                <div class="col-12"><label class="form-label">Features (one per line: Title :: Description)</label><textarea name="features" class="form-control" rows="4" placeholder="Custom Web Applications :: Built with modern frameworks..."></textarea></div>
+                <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Add Service</button></div>
+            </form>
         </div>
 
         <div class="tab-pane fade" id="tab-products">

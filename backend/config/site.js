@@ -6,13 +6,13 @@ module.exports = {
     logo_path: '/img/logo.png',
     icon_path: '/img/navbar-mark.png',
     location: 'Chikkamagaluru, Karnataka',
-    address: '[Your Full Address]',
+    address: 'Near Water Tank, Teguru',
     postal_code: '577101',
     gst: '[Your GST Number]',
     email: 'info@trspgroups.com',
     phone_display: '+91 7795183739',
-    phone_href: '+917795183739',
-    whatsapp_href: 'https://wa.me/917795183739',
+    phone_href: '+917*******39',
+    whatsapp_href: 'https://wa.me/917*******39',
     default_description: 'Technical of RSP Groups delivers research-driven software, digital products, and technology solutions from Chikkamagaluru, Karnataka.',
 
     routes: {
@@ -22,41 +22,6 @@ module.exports = {
         contact: '/contact',
         'software-development': '/software-development',
     },
-
-    services: [
-        {
-            key: 'software-development',
-            title: 'Custom Software Development',
-            icon: 'fas fa-laptop-code',
-            summary: 'Web, mobile, and business software built around your workflows with modern architecture, clean UX, and scalable delivery.',
-            cta_label: 'View Detailed Features',
-            href: '/software-development',
-        },
-        {
-            key: 'business-analytics',
-            title: 'Business Analytics',
-            icon: 'fas fa-chart-line',
-            summary: 'Dashboards, reports, and decision-support systems that turn operational data into clear business insight.',
-            cta_label: 'View Detailed Features',
-            href: '/business-analytics',
-        },
-        {
-            key: 'cybersecurity',
-            title: 'Cybersecurity',
-            icon: 'fas fa-shield-halved',
-            summary: 'Application hardening, access control, and secure delivery practices that help protect systems and data.',
-            cta_label: 'View Detailed Features',
-            href: '/cybersecurity',
-        },
-        {
-            key: 'product-strategy',
-            title: 'Product Strategy & Scale',
-            icon: 'fas fa-rocket',
-            summary: 'Roadmaps, rollout planning, and platform improvements that help products launch faster and grow with confidence.',
-            cta_label: 'View Detailed Features',
-            href: '/product-strategy',
-        },
-    ],
 
     research_verticals: [
         {
@@ -101,50 +66,6 @@ module.exports = {
         { quote: 'Outstanding service and professionalism from Technical of RSP Groups!', author: 'Client Name, Company' },
         { quote: 'Highly recommended for quality and timely delivery.', author: 'Another Client' },
         { quote: 'Excellent partner for all our needs - reliable and innovative.', author: 'Third Client' },
-    ],
-
-    software_features: [
-        { title: 'Custom Web Applications', description: 'Built with modern frameworks for responsive, high-performance web experiences tailored to your workflows.' },
-        { title: 'Mobile App Development', description: 'Native or cross-platform mobile apps designed for seamless multi-device support and maintainability.' },
-        { title: 'Enterprise Software', description: 'ERP, CRM, and inventory systems designed for scalability, visibility, and operational efficiency.' },
-        { title: 'AI & Machine Learning Integration', description: 'Chatbots, predictive analytics, automation, and model-powered workflows integrated into production systems.' },
-        { title: 'Cloud-Based Solutions', description: 'Secure deployments on AWS, Azure, or Google Cloud with auto-scaling and high availability.' },
-        { title: 'API Development & Integrations', description: 'RESTful APIs and third-party integrations for payments, messaging, analytics, and internal systems.' },
-        { title: 'Secure Full-Stack Development', description: 'End-to-end security with authentication, authorization, encryption, and sound development practices.' },
-        { title: 'UI/UX Design & Prototyping', description: 'User-centered interfaces backed by wireframes, prototypes, and iterative feedback.' },
-    ],
-
-    business_analytics_features: [
-        { title: 'Executive Dashboards', description: 'Real-time, role-based dashboards that surface the KPIs leadership actually needs to make decisions.' },
-        { title: 'Custom Reporting', description: 'Scheduled and on-demand reports pulled directly from your operational systems, formatted for stakeholders.' },
-        { title: 'Data Warehousing', description: 'Centralized, query-ready storage that consolidates data from multiple sources into one reliable source of truth.' },
-        { title: 'Predictive Analytics', description: 'Forecasting and trend models that help you anticipate demand, risk, and performance shifts before they happen.' },
-        { title: 'ETL & Data Pipelines', description: 'Automated extraction, transformation, and loading pipelines that keep your analytics layer accurate and current.' },
-        { title: 'Business Intelligence Integration', description: 'Connect to tools like Power BI, Tableau, or Looker, or a purpose-built internal dashboard tailored to your workflow.' },
-        { title: 'Decision-Support Systems', description: 'Structured views that translate raw metrics into recommended actions for operations and management teams.' },
-        { title: 'Data Governance & Quality', description: 'Validation rules, access controls, and audit trails that keep reporting trustworthy as your data grows.' },
-    ],
-
-    cybersecurity_features: [
-        { title: 'Application Hardening', description: 'Secure coding review, dependency auditing, and configuration hardening across your web and backend systems.' },
-        { title: 'Access Control & Identity', description: 'Role-based access, least-privilege policies, and authentication flows that limit exposure from compromised accounts.' },
-        { title: 'Vulnerability Assessment', description: 'Structured scanning and manual review to identify and prioritize weaknesses before they are exploited.' },
-        { title: 'Secure Delivery Practices', description: 'CI/CD pipeline hardening, secrets management, and environment isolation for safer, repeatable deployments.' },
-        { title: 'Data Protection & Encryption', description: 'Encryption at rest and in transit, along with sound key management practices for sensitive data.' },
-        { title: 'Monitoring & Incident Response', description: 'Logging, alerting, and response playbooks that reduce detection and recovery time when issues occur.' },
-        { title: 'Compliance Readiness', description: 'Practical guidance aligning your systems with common security and data-protection expectations.' },
-        { title: 'Security Training & Review', description: 'Team-level guidance and periodic reviews that keep secure practices consistent as your codebase evolves.' },
-    ],
-
-    product_strategy_features: [
-        { title: 'Product Roadmapping', description: 'Clear, prioritized roadmaps that connect business goals to concrete engineering milestones.' },
-        { title: 'Rollout Planning', description: 'Phased launch plans that reduce risk, from feature flags to staged audience rollouts.' },
-        { title: 'Platform Scaling', description: 'Architecture and infrastructure improvements that let your platform handle growth without breaking.' },
-        { title: 'Market Fit Validation', description: 'Lightweight research and experimentation approaches to validate direction before heavy investment.' },
-        { title: 'Growth & Retention Strategy', description: 'Practical, data-informed approaches to improving activation, retention, and expansion metrics.' },
-        { title: 'Cross-Functional Alignment', description: 'Structured collaboration between product, engineering, and business stakeholders to keep delivery on track.' },
-        { title: 'Technical Due Diligence', description: 'Independent assessment of existing systems to inform investment, acquisition, or scaling decisions.' },
-        { title: 'Post-Launch Iteration', description: 'Metrics-driven review cycles that turn real usage data into the next set of product improvements.' },
     ],
 
     software_portfolio: [

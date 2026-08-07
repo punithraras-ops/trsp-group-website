@@ -27,8 +27,8 @@
                     <div class="mb-4">
                         <select name="service" class="form-control form-control-lg rounded-pill">
                             <option value="">Select a service</option>
-                            <% site.services.forEach(service => { %>
-                                <option value="<%= service.key %>" <%= selectedService === service.key ? 'selected' : '' %>><%= service.title %></option>
+                            <% services.forEach(service => { %>
+                                <option value="<%= service.slug %>" <%= selectedService === service.slug ? 'selected' : '' %>><%= service.title %></option>
                             <% }) %>
                         </select>
                     </div>
