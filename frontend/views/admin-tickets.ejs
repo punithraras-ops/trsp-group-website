@@ -1,0 +1,114 @@
+<%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Tickets' }) %>
+<body class="admin-page" style="--admin-bg: <%= design.adminBackground %>;">
+
+<div class="admin-topbar">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <% if (design.images.logo || site.icon_path) { %>
+                <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="admin-logo-mark">
+            <% } %>
+            <h1 class="mb-0"><i class="fas fa-ticket me-2" style="color: var(--admin-accent);"></i>Requirement Tickets</h1>
+        </div>
+        <div class="me-2"><%- include('partials/language-switcher') %></div>
+        <a href="/admin" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Dashboard</a>
+    </div>
+</div>
+
+<main class="admin-page-main">
+<div class="container-fluid px-4 pb-5">
+
+    <% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
+    <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+    <% if (tickets.length === 0) { %>
+        <p class="text-muted">No tickets raised yet.</p>
+    <% } else { %>
+        <div class="d-flex flex-column gap-3">
+            <% tickets.forEach(t => { %>
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-lg-5">
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                    <h5 class="fw-bold mb-0"><%= t.title %></h5>
+                                    <span class="badge bg-<%= t.status === 'fulfilled' ? 'success' : (t.status === 'closed' ? 'secondary' : (t.status === 'in_progress' ? 'info' : 'warning text-dark')) %>"><%= t.status.replace(/_/g, ' ') %></span>
+                                </div>
+                                <p class="text-muted small mb-1"><%= t.user_name %> (<%= t.user_email %>)</p>
+                                <p class="text-muted small mb-3"><%= new Date(t.created_at).toLocaleString('en-IN') %></p>
+                                <p class="mb-3"><%= t.description %></p>
+
+                                <% if (t.customer_rating) { %>
+                                    <p class="mb-0">
+                                        <strong>Customer rating:</strong>
+                                        <% for (let i = 1; i <= 5; i++) { %><i class="fa-star <%= i <= t.customer_rating ? 'fas text-warning' : 'far text-muted' %>"></i><% } %>
+                                        <% if (t.customer_rating_comment) { %><span class="text-muted"> &mdash; "<%= t.customer_rating_comment %>"</span><% } %>
+                                    </p>
+                                <% } %>
+                            </div>
+
+                            <div class="col-lg-4">
+                                <form method="POST" action="/admin/tickets/<%= t.id %>/update">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <div class="mb-2">
+                                        <label class="form-label small">Status</label>
+                                        <select name="status" class="form-select form-select-sm">
+                                            <% ['open','in_progress','fulfilled','closed'].forEach(s => { %>
+                                                <option value="<%= s %>" <%= t.status === s ? 'selected' : '' %>><%= s.replace(/_/g, ' ') %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Delivery Status</label>
+                                        <select name="delivery_status" class="form-select form-select-sm">
+                                            <option value="not_delivered" <%= t.delivery_status === 'not_delivered' ? 'selected' : '' %>>Not Delivered</option>
+                                            <option value="delivered" <%= t.delivery_status === 'delivered' ? 'selected' : '' %>>Delivered</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Price (INR)</label>
+                                        <input type="number" name="price" class="form-control form-control-sm" step="0.01" min="0" value="<%= t.price_paise ? (t.price_paise / 100).toFixed(2) : '' %>">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label small">Notes to customer</label>
+                                        <textarea name="admin_notes" class="form-control form-control-sm" rows="2"><%= t.admin_notes || '' %></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-primary w-100">Save</button>
+                                </form>
+                            </div>
+
+                            <div class="col-lg-3">
+                                <h6 class="fw-bold small mb-2">Deliverable Files</h6>
+                                <% (t.deliverable_files || []).forEach(f => { %>
+                                    <div class="d-flex align-items-center gap-1 mb-1">
+                                        <span class="badge bg-light text-dark border text-truncate" style="max-width: 140px;" title="<%= f.filename %>"><i class="fas fa-file me-1"></i><%= f.filename %></span>
+                                        <form method="POST" action="/admin/tickets/<%= t.id %>/deliverable/<%= f.id %>/remove" onsubmit="return confirm('Remove this file?');">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">&times;</button>
+                                        </form>
+                                    </div>
+                                <% }) %>
+                                <form method="POST" action="/admin/tickets/<%= t.id %>/deliverable" enctype="multipart/form-data" class="d-flex flex-column gap-1 mt-2" data-ajax-upload>
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <input type="file" name="files" multiple class="form-control form-control-sm">
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
+                                </form>
+                                <% if (t.price_paise) { %>
+                                    <a href="/admin/tickets/<%= t.id %>/invoice" class="btn btn-sm btn-outline-secondary w-100 mt-2"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } %>
+</div>
+</main>
+<footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Admin Panel.
+</footer>
+<script src="/js/click-sound.js"></script>
+<script src="/js/translate-widget.js"></script>
+<script src="/js/admin-upload.js"></script>
+</body>
+</html>

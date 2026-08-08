@@ -13,7 +13,7 @@ const DEFAULT_COLORS = {
 };
 
 const ADMIN_BUTTON_SLOTS = [
-    'admin_btn_siteinfo', 'admin_btn_sitedesign', 'admin_btn_legal',
+    'admin_btn_tickets', 'admin_btn_siteinfo', 'admin_btn_sitedesign', 'admin_btn_legal',
     'admin_btn_coupons', 'admin_btn_auditlog', 'admin_btn_security', 'admin_btn_logout',
 ];
 

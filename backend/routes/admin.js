@@ -743,6 +743,101 @@ router.post('/admin/design/admin-button-color/:slot/remove', async (req, res) =>
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Button color reset.' });
 });
 
+router.get('/admin/tickets', async (req, res) => {
+    let tickets = [];
+    if (db.isDbConfigured()) {
+        const docs = await db.getDb().collection('tickets').aggregate([
+            { $sort: { created_at: -1 } },
+            { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
+            { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+            { $addFields: { user_name: '$user.name', user_email: '$user.email' } },
+        ]).toArray();
+        tickets = docs.map(db.withId);
+    }
+    res.render('admin-tickets', { site, tickets, error: '', message: '' });
+});
+
+router.post('/admin/tickets/:id/update', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const allowedStatus = ['open', 'in_progress', 'fulfilled', 'closed'];
+        const allowedDelivery = ['not_delivered', 'delivered'];
+        const update = { updated_at: new Date() };
+
+        if (allowedStatus.includes(req.body.status)) update.status = req.body.status;
+        if (allowedDelivery.includes(req.body.delivery_status)) update.delivery_status = req.body.delivery_status;
+        if (req.body.price !== undefined && req.body.price !== '') {
+            update.price_paise = Math.round(parseFloat(req.body.price) * 100);
+        }
+        update.admin_notes = String(req.body.admin_notes || '').trim();
+
+        await db.getDb().collection('tickets').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: update }
+        );
+        await logAdminAction(req, 'ticket.update', req.params.id);
+    }
+    res.redirect('/admin/tickets');
+});
+
+router.post('/admin/tickets/:id/deliverable', uploadDeliverable.array('files', 5), csrf.verifyAfterUpload, async (req, res) => {
+    if (db.isDbConfigured() && req.files && req.files.length > 0) {
+        const newFiles = [];
+        for (const file of req.files) {
+            const fileId = await db.uploadBuffer(file.buffer, file.originalname, file.mimetype);
+            newFiles.push({ id: fileId.toString(), filename: file.originalname, uploaded_at: new Date() });
+        }
+        await db.getDb().collection('tickets').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $push: { deliverable_files: { $each: newFiles } }, $set: { updated_at: new Date() } }
+        );
+        await logAdminAction(req, 'ticket.deliverable_upload', `${req.params.id}: ${newFiles.map(f => f.filename).join(', ')}`);
+    }
+    res.redirect('/admin/tickets');
+});
+
+router.post('/admin/tickets/:id/deliverable/:fileId/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('tickets').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $pull: { deliverable_files: { id: req.params.fileId } } }
+        );
+        await db.deleteFile(req.params.fileId);
+        await logAdminAction(req, 'ticket.deliverable_remove', req.params.id);
+    }
+    res.redirect('/admin/tickets');
+});
+
+router.get('/admin/tickets/:id/invoice', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(404).send('Not available.');
+        return;
+    }
+    try {
+        const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id) });
+        if (!ticket || !ticket.price_paise) {
+            res.status(404).send('Invoice not available for this ticket yet.');
+            return;
+        }
+        const user = await db.getDb().collection('users').findOne({ _id: ticket.user_id });
+
+        invoices.streamInvoice(res, {
+            order: {
+                id: ticket._id.toString(),
+                created_at: ticket.created_at,
+                razorpay_payment_id: 'Custom ticket (offline/manual billing)',
+                amount_paise: ticket.price_paise,
+                currency: ticket.currency,
+            },
+            items: [{ title: ticket.title, quantity: 1, amount_paise: ticket.price_paise }],
+            customerName: user ? user.name : '',
+            customerEmail: user ? user.email : '',
+            site,
+        });
+    } catch (error) {
+        res.status(500).send('Unable to generate invoice.');
+    }
+});
+
 router.get('/admin/site-info', async (req, res) => {
     const currentSite = await siteInfo.getMergedSite();
     res.render('admin-site-info', { site: currentSite, error: '', message: '' });
