@@ -12,6 +12,7 @@ const coupons = require('../lib/coupons');
 const invoices = require('../lib/invoices');
 const reviews = require('../lib/reviews');
 const { adminLoginLimiter } = require('../lib/rateLimiters');
+const csrf = require('../lib/csrf');
 
 function logAdminAction(req, action, details) {
     return auditLog.log(req, action, details);
@@ -282,7 +283,7 @@ router.post('/admin/reviews/:id/delete', async (req, res) => {
     res.redirect('/admin?tab=reviews');
 });
 
-router.post('/admin/products', upload.array('images', 10), async (req, res) => {
+router.post('/admin/products', upload.array('images', 10), csrf.verifyAfterUpload, async (req, res) => {
     if (db.isDbConfigured()) {
         const pricePaise = Math.round(parseFloat(req.body.price || '0') * 100);
         const images = [];
@@ -330,7 +331,7 @@ router.post('/admin/products/:id/update', async (req, res) => {
     res.redirect('/admin?tab=products');
 });
 
-router.post('/admin/products/:id/images', upload.array('files', 10), async (req, res) => {
+router.post('/admin/products/:id/images', upload.array('files', 10), csrf.verifyAfterUpload, async (req, res) => {
     if (db.isDbConfigured() && req.files && req.files.length > 0) {
         const products = db.getDb().collection('products');
         const product = await products.findOne({ _id: db.toId(req.params.id) });
@@ -377,7 +378,7 @@ router.post('/admin/products/:id/delete', async (req, res) => {
     res.redirect('/admin?tab=products');
 });
 
-router.post('/admin/products/:id/deliverable', uploadDeliverable.single('deliverable'), async (req, res) => {
+router.post('/admin/products/:id/deliverable', uploadDeliverable.single('deliverable'), csrf.verifyAfterUpload, async (req, res) => {
     if (db.isDbConfigured() && req.file) {
         const product = await db.getDb().collection('products').findOne({ _id: db.toId(req.params.id) });
         if (product && product.deliverable_file_id) {
@@ -528,7 +529,7 @@ router.post('/admin/design/colors', async (req, res) => {
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Colors updated.' });
 });
 
-router.post('/admin/design/upload/:slot', upload.single('file'), async (req, res) => {
+router.post('/admin/design/upload/:slot', upload.single('file'), csrf.verifyAfterUpload, async (req, res) => {
     const settings = await design.getDesignSettings();
 
     if (!db.isDbConfigured() || !req.file) {
@@ -604,7 +605,7 @@ router.post('/admin/orders/:id/delivery-status', async (req, res) => {
     res.redirect('/admin?tab=orders');
 });
 
-router.post('/admin/orders/:id/deliverable', uploadDeliverable.array('files', 5), async (req, res) => {
+router.post('/admin/orders/:id/deliverable', uploadDeliverable.array('files', 5), csrf.verifyAfterUpload, async (req, res) => {
     if (db.isDbConfigured() && req.files && req.files.length > 0) {
         const newFiles = [];
         for (const file of req.files) {
