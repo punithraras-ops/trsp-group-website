@@ -145,7 +145,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const payBtn = document.getElementById('cartPayBtn');
-    if (payBtn && typeof Razorpay !== 'undefined') {
+    const payUpiBtn = document.getElementById('cartPayUpiBtn');
+    if ((payBtn || payUpiBtn) && typeof Razorpay !== 'undefined') {
         const statusBox = document.querySelector('[data-checkout-status]');
         const showStatus = (message, type) => {
             if (!statusBox) return;
@@ -153,8 +154,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             statusBox.className = `alert alert-${type}`;
         };
 
-        payBtn.addEventListener('click', async () => {
-            payBtn.disabled = true;
+        const setButtonsDisabled = (disabled) => {
+            if (payBtn) payBtn.disabled = disabled;
+            if (payUpiBtn) payUpiBtn.disabled = disabled;
+        };
+
+        async function startCartCheckout(useUpiOnly) {
+            setButtonsDisabled(true);
             showStatus('Preparing your order...', 'info');
             try {
                 const createResponse = await fetch('/api/checkout/create-cart-order', {
@@ -167,7 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     throw new Error(order.error || 'Unable to start checkout.');
                 }
 
-                const rzp = new Razorpay({
+                const rzpOptions = {
                     key: order.key,
                     amount: order.amount,
                     currency: order.currency,
@@ -191,23 +197,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                             window.location.href = '/account';
                         } catch (error) {
                             showStatus(error.message, 'danger');
-                            payBtn.disabled = false;
+                            setButtonsDisabled(false);
                         }
                     },
                     modal: {
                         ondismiss: () => {
-                            payBtn.disabled = false;
+                            setButtonsDisabled(false);
                             showStatus('Payment cancelled.', 'warning');
                         },
                     },
-                });
+                };
+
+                if (useUpiOnly) {
+                    rzpOptions.method = { upi: '1', card: '0', netbanking: '0', wallet: '0', emi: '0', paylater: '0' };
+                }
+
+                const rzp = new Razorpay(rzpOptions);
                 rzp.open();
                 showStatus('', 'info');
             } catch (error) {
                 showStatus(error.message, 'danger');
-                payBtn.disabled = false;
+                setButtonsDisabled(false);
             }
-        });
+        }
+
+        if (payBtn) payBtn.addEventListener('click', () => startCartCheckout(false));
+        if (payUpiBtn) payUpiBtn.addEventListener('click', () => startCartCheckout(true));
     }
 
     await loadProducts();

@@ -73,6 +73,9 @@
                                         <button type="button" class="btn btn-sm btn-primary" data-retry-payment="<%= order.id %>">
                                             <i class="fas fa-arrows-rotate me-1"></i><%= order.status === 'failed' ? 'Retry Payment' : 'Complete Payment' %>
                                         </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary" data-retry-payment-upi="<%= order.id %>" title="Pay with UPI">
+                                            <i class="fas fa-qrcode"></i>
+                                        </button>
                                     <% } %>
                                     <% if (order.status === 'paid') { %>
                                         <a href="/account/orders/<%= order.id %>/invoice" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-invoice me-1"></i>Invoice</a>

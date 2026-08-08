@@ -1,16 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
     const payButton = document.getElementById('payNowBtn');
-    if (!payButton || typeof Razorpay === 'undefined') {
+    const payUpiButton = document.getElementById('payUpiBtn');
+    if ((!payButton && !payUpiButton) || typeof Razorpay === 'undefined') {
         return;
     }
 
     const statusBox = document.querySelector('[data-checkout-status]');
+    const productId = (payButton || payUpiButton).dataset.productId;
     let appliedCouponCode = null;
 
     const showStatus = (message, type) => {
         if (!statusBox) return;
         statusBox.textContent = message;
         statusBox.className = `alert alert-${type}`;
+    };
+
+    const setButtonsDisabled = (disabled) => {
+        if (payButton) payButton.disabled = disabled;
+        if (payUpiButton) payUpiButton.disabled = disabled;
     };
 
     const applyCouponBtn = document.getElementById('applyCouponBtn');
@@ -25,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('/api/checkout/apply-coupon', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
-                    body: JSON.stringify({ productId: payButton.dataset.productId, code }),
+                    body: JSON.stringify({ productId, code }),
                 });
                 const result = await response.json();
                 if (!response.ok) {
@@ -42,15 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    payButton.addEventListener('click', async () => {
-        payButton.disabled = true;
+    async function startCheckout(useUpiOnly) {
+        setButtonsDisabled(true);
         showStatus('Preparing your order...', 'info');
 
         try {
             const createResponse = await fetch('/api/checkout/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
-                body: JSON.stringify({ productId: payButton.dataset.productId, couponCode: appliedCouponCode || undefined }),
+                body: JSON.stringify({ productId, couponCode: appliedCouponCode || undefined }),
             });
             const order = await createResponse.json();
 
@@ -58,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(order.error || 'Unable to start checkout.');
             }
 
-            const rzp = new Razorpay({
+            const rzpOptions = {
                 key: order.key,
                 amount: order.amount,
                 currency: order.currency,
@@ -83,22 +90,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         window.location.href = '/account';
                     } catch (error) {
                         showStatus(error.message, 'danger');
-                        payButton.disabled = false;
+                        setButtonsDisabled(false);
                     }
                 },
                 modal: {
                     ondismiss: () => {
-                        payButton.disabled = false;
+                        setButtonsDisabled(false);
                         showStatus('Payment cancelled.', 'warning');
                     },
                 },
-            });
+            };
 
+            if (useUpiOnly) {
+                rzpOptions.method = { upi: '1', card: '0', netbanking: '0', wallet: '0', emi: '0', paylater: '0' };
+            }
+
+            const rzp = new Razorpay(rzpOptions);
             rzp.open();
             showStatus('', 'info');
         } catch (error) {
             showStatus(error.message, 'danger');
-            payButton.disabled = false;
+            setButtonsDisabled(false);
         }
-    });
+    }
+
+    if (payButton) payButton.addEventListener('click', () => startCheckout(false));
+    if (payUpiButton) payUpiButton.addEventListener('click', () => startCheckout(true));
 });
