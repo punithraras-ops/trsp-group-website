@@ -446,7 +446,7 @@ img {
 .service-card {
     position: relative;
     border-radius: 30px !important;
-    background: rgba(255, 255, 255, 0.96);
+    background: color-mix(in srgb, var(--card-bg, #ffffff) 96%, transparent);
     border: 1px solid rgba(17, 41, 61, 0.08) !important;
     box-shadow: var(--shadow-soft) !important;
     overflow: hidden;
@@ -525,7 +525,7 @@ img {
     height: 100%;
     padding: 1.25rem 1.2rem;
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.88);
+    background: color-mix(in srgb, var(--card-bg, #ffffff) 88%, transparent);
     border: 1px solid var(--border-color);
     box-shadow: 0 14px 28px rgba(12, 27, 43, 0.08);
 }
@@ -606,7 +606,7 @@ img {
     height: 100%;
     padding: 2rem 1.6rem;
     border-radius: 28px;
-    background: white;
+    background: var(--card-bg, #ffffff);
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-soft);
 }

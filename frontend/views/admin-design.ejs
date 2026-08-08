@@ -46,6 +46,10 @@
                         <label class="form-label d-block">Headings</label>
                         <input type="color" name="heading_color" class="form-control form-control-color" value="<%= colors.heading_color %>">
                     </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block">Card Background</label>
+                        <input type="color" name="card_background_color" class="form-control form-control-color" value="<%= colors.card_background_color || '#ffffff' %>">
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Save Colors</button>
             </form>
@@ -63,6 +67,8 @@
                     { key: 'hero_background', label: 'Hero Background (homepage banner)', height: 120 },
                     { key: 'team_photo', label: 'Team / About Photo', height: 120 },
                     { key: 'page_background', label: 'Page Background (whole site, behind all pages)', height: 120 },
+                    { key: 'services_background', label: 'Services Section Background', height: 120 },
+                    { key: 'button_background', label: 'Button Background Texture (all primary buttons)', height: 80 },
                 ]; %>
                 <% slots.forEach(slot => { %>
                     <div class="col-md-6">

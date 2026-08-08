@@ -61,6 +61,7 @@
             --light-color: <%= design.colors.light_color %>;
             --text-color: <%= design.colors.text_color %>;
             --heading-color: <%= design.colors.heading_color %>;
+            --card-bg: <%= design.colors.card_background_color || '#ffffff' %>;
         }
         <% if (design.images.hero_background) { %>
         .hero {
@@ -77,6 +78,25 @@
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
+        }
+        <% } %>
+        <% if (design.images.services_background) { %>
+        #services {
+            position: relative;
+            background-image:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.88)),
+                url('<%= design.images.services_background %>');
+            background-size: cover;
+            background-position: center;
+        }
+        <% } %>
+        <% if (design.images.button_background) { %>
+        .btn-primary, .nav-link-cta {
+            background-image:
+                linear-gradient(180deg, color-mix(in srgb, var(--primary-color) 100%, white 18%) 0%, color-mix(in srgb, var(--primary-color) 80%, transparent) 55%, color-mix(in srgb, var(--primary-dark) 80%, transparent) 100%),
+                url('<%= design.images.button_background %>');
+            background-size: cover;
+            background-position: center;
         }
         <% } %>
     </style>
