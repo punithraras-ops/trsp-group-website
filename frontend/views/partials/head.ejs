@@ -99,6 +99,31 @@
             background-position: center;
         }
         <% } %>
+        <%
+        const navButtonImages = [
+            { key: 'nav_home_bg', selector: '.nav-link-home', style: 'dark' },
+            { key: 'nav_services_bg', selector: '.nav-link-services', style: 'dark' },
+            { key: 'nav_store_bg', selector: '.nav-link-store', style: 'dark' },
+            { key: 'nav_contact_bg', selector: '.nav-link-contact', style: 'dark' },
+            { key: 'nav_about_bg', selector: '.nav-link-about', style: 'dark' },
+            { key: 'nav_language_bg', selector: '.lang-dropdown-btn', style: 'dark' },
+            { key: 'nav_login_bg', selector: '.nav-link-login', style: 'primary' },
+            { key: 'service_cta_bg', selector: '.service-card-button', style: 'primary' },
+        ];
+        %>
+        <% navButtonImages.forEach(btn => { %>
+            <% if (design.images[btn.key]) { %>
+            <%= btn.selector %> {
+                <% if (btn.style === 'dark') { %>
+                background-image: linear-gradient(rgba(8, 20, 33, 0.55), rgba(8, 20, 33, 0.55)), url('<%= design.images[btn.key] %>');
+                <% } else { %>
+                background-image: linear-gradient(180deg, color-mix(in srgb, var(--primary-color) 100%, white 18%) 0%, color-mix(in srgb, var(--primary-color) 80%, transparent) 55%, color-mix(in srgb, var(--primary-dark) 80%, transparent) 100%), url('<%= design.images[btn.key] %>');
+                <% } %>
+                background-size: cover;
+                background-position: center;
+            }
+            <% } %>
+        <% }) %>
     </style>
 </head>
 <body data-page="<%= activePage %>">

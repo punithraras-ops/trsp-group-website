@@ -69,7 +69,17 @@
                     { key: 'team_photo', label: 'Team / About Photo', height: 120 },
                     { key: 'page_background', label: 'Page Background (whole site, behind all pages)', height: 120 },
                     { key: 'services_background', label: 'Services Section Background', height: 120 },
-                    { key: 'button_background', label: 'Button Background Texture (all primary buttons)', height: 80 },
+                    { key: 'button_background', label: 'Button Background Texture (all primary buttons, default)', height: 80 },
+                ]; %>
+                <% const navSlots = [
+                    { key: 'nav_home_bg', label: 'Home Button' },
+                    { key: 'nav_services_bg', label: 'Services Button' },
+                    { key: 'nav_store_bg', label: 'Store Button' },
+                    { key: 'nav_contact_bg', label: 'Contact Button' },
+                    { key: 'nav_about_bg', label: 'About Button' },
+                    { key: 'nav_language_bg', label: 'Language Button' },
+                    { key: 'nav_login_bg', label: 'Login / Sign Up Button' },
+                    { key: 'service_cta_bg', label: '"View Detailed Features" Buttons' },
                 ]; %>
                 <% slots.forEach(slot => { %>
                     <div class="col-md-6">
@@ -87,6 +97,36 @@
                                 <form method="POST" action="/admin/design/remove/<%= slot.key %>" onsubmit="return confirm('Remove this image and go back to the default?');">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-outline-danger text-nowrap">Remove</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mt-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1"><i class="fas fa-toolbox me-2" style="color: var(--admin-accent);"></i>Individual Navigation Buttons</h4>
+            <p class="text-muted">Set a background image for one specific button. Overrides the general "Button Background Texture" above for just that button.</p>
+            <div class="row g-4">
+                <% navSlots.forEach(slot => { %>
+                    <div class="col-md-4 col-lg-3">
+                        <h6 class="fw-bold small"><%= slot.label %></h6>
+                        <% if (images[slot.key]) { %>
+                            <img src="<%= images[slot.key] %>" class="img-fluid mb-2 rounded border d-block" style="max-height:60px;">
+                        <% } %>
+                        <div class="d-flex gap-2">
+                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="d-flex gap-2 flex-grow-1">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input type="file" name="file" accept="image/*" class="form-control form-control-sm" required>
+                                <button type="submit" class="btn btn-sm btn-primary text-nowrap">Upload</button>
+                            </form>
+                            <% if (images[slot.key]) { %>
+                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" onsubmit="return confirm('Remove this image and go back to the default?');">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger text-nowrap">Remove</button>
                                 </form>
                             <% } %>
                         </div>

@@ -12,7 +12,10 @@ const DEFAULT_COLORS = {
     card_background_color: '#ffffff',
 };
 
-const IMAGE_SLOTS = ['logo', 'favicon', 'hero_background', 'team_photo', 'page_background', 'services_background', 'button_background'];
+const IMAGE_SLOTS = [
+    'logo', 'favicon', 'hero_background', 'team_photo', 'page_background', 'services_background', 'button_background',
+    'nav_home_bg', 'nav_services_bg', 'nav_store_bg', 'nav_contact_bg', 'nav_about_bg', 'nav_language_bg', 'nav_login_bg', 'service_cta_bg',
+];
 const DEFAULT_ADMIN_BG = '#eef1f5';
 
 async function getDesignSettings() {
