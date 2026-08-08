@@ -56,6 +56,7 @@ router.post('/api/checkout/request-approval', requireAuthApi, async (req, res) =
 
         res.redirect(`/checkout?product=${req.body.productId}`);
     } catch (error) {
+        console.error('request-approval failed:', error.message);
         res.redirect(`/checkout?product=${req.body.productId}`);
     }
 });
@@ -135,6 +136,7 @@ router.post('/api/checkout/apply-coupon', requireAuthApi, async (req, res) => {
             finalAmountPaise: subtotalPaise - result.discountPaise,
         });
     } catch (error) {
+        console.error('apply-coupon failed:', error.message);
         res.status(500).json({ error: 'Unable to apply coupon right now.' });
     }
 });
@@ -230,6 +232,7 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
             productTitle: product.title,
         });
     } catch (error) {
+        console.error('create-order failed:', error.message);
         res.status(500).json({ error: 'Unable to start checkout. Please try again.' });
     }
 });
@@ -298,6 +301,7 @@ router.post('/api/checkout/create-cart-order', requireAuthApi, async (req, res) 
             productTitle: resolved.items.length === 1 ? resolved.items[0].title : `${resolved.items.length} items`,
         });
     } catch (error) {
+        console.error('create-cart-order failed:', error.message);
         res.status(500).json({ error: 'Unable to start checkout. Please try again.' });
     }
 });
@@ -358,6 +362,7 @@ router.post('/api/checkout/verify', requireAuthApi, async (req, res) => {
 
         res.json({ message: 'Payment verified.' });
     } catch (error) {
+        console.error('verify failed:', error.message);
         res.status(500).json({ error: 'Unable to verify payment right now.' });
     }
 });
@@ -382,10 +387,11 @@ router.post('/api/checkout/retry/:orderId', requireAuthApi, async (req, res) => 
 
         // The original Razorpay order was abandoned/failed - start a fresh one
         // with the same amount rather than trying to resume a stale one.
+        // Razorpay caps the receipt field at 40 characters.
         const razorpayOrder = await razorpay.createOrder({
             amountPaise: order.amount_paise,
             currency: order.currency,
-            receipt: `order_${order._id.toString()}_retry_${Date.now()}`,
+            receipt: `retry_${order._id.toString()}_${Date.now().toString().slice(-6)}`,
         });
 
         await db.getDb().collection('orders').updateOne(
@@ -410,6 +416,7 @@ router.post('/api/checkout/retry/:orderId', requireAuthApi, async (req, res) => 
             productTitle: title,
         });
     } catch (error) {
+        console.error('retry payment failed:', error.message);
         res.status(500).json({ error: 'Unable to retry payment right now.' });
     }
 });
