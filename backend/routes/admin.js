@@ -22,7 +22,8 @@ function logAdminAction(req, action, details) {
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 // Deliverable files (project ZIPs, documents) need a much higher limit than product images.
-const uploadDeliverable = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+// Capped at 200MB since multer buffers the whole file in server memory before it's streamed to GridFS.
+const uploadDeliverable = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024 } });
 
 function safeAdminRedirect(value) {
     if (typeof value === 'string' && value.startsWith('/admin')) {

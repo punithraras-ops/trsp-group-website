@@ -93,7 +93,7 @@
                             <img src="<%= images[slot.key] %>" class="img-fluid mb-2 rounded border d-block" style="max-height:<%= slot.height %>px;">
                         <% } %>
                         <div class="d-flex gap-2">
-                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="d-flex gap-2 flex-grow-1">
+                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="d-flex gap-2 flex-grow-1 flex-wrap" data-ajax-upload>
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <input type="file" name="file" accept="image/*" class="form-control" required>
                                 <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
@@ -123,7 +123,7 @@
                             <% if (images[slot.key]) { %>
                                 <img src="<%= images[slot.key] %>" class="img-fluid mb-2 rounded border d-block" style="max-height:60px;">
                             <% } %>
-                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="mb-2">
+                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="mb-2" data-ajax-upload>
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <input type="file" name="file" accept="image/*" class="form-control form-control-sm mb-2" required>
                                 <button type="submit" class="btn btn-sm btn-primary w-100">Upload</button>
@@ -177,7 +177,7 @@
                             <% if (images[slot.key]) { %>
                                 <img src="<%= images[slot.key] %>" class="img-fluid mb-2 rounded border d-block" style="max-height:60px;">
                             <% } %>
-                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="mb-2">
+                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="mb-2" data-ajax-upload>
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <input type="file" name="file" accept="image/*" class="form-control form-control-sm mb-2" required>
                                 <button type="submit" class="btn btn-sm btn-primary w-100">Upload Image</button>
@@ -212,5 +212,6 @@
 </footer>
 <script src="/js/click-sound.js"></script>
 <script src="/js/translate-widget.js"></script>
+<script src="/js/admin-upload.js"></script>
 </body>
 </html>

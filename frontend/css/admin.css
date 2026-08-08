@@ -397,6 +397,18 @@ body.admin-page .badge {
     box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 2px 5px rgba(0, 0, 0, 0.12);
 }
 
+/* Upload progress */
+body.admin-page [data-upload-progress] .progress {
+    border-radius: 999px;
+    background: var(--admin-surface-alt);
+    overflow: hidden;
+}
+
+body.admin-page [data-upload-progress] .progress-bar {
+    background: linear-gradient(90deg, var(--admin-accent), var(--admin-accent-dark));
+    transition: width 0.2s ease;
+}
+
 /* Form controls */
 body.admin-page .form-control,
 body.admin-page .form-select {

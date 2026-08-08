@@ -213,7 +213,7 @@
                                                 </form>
                                             </div>
                                         <% }) %>
-                                        <form method="POST" action="/admin/orders/<%= o.id %>/deliverable" enctype="multipart/form-data" class="d-flex gap-1">
+                                        <form method="POST" action="/admin/orders/<%= o.id %>/deliverable" enctype="multipart/form-data" class="d-flex gap-1 flex-wrap" data-ajax-upload>
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <input type="file" name="files" multiple class="form-control form-control-sm">
                                             <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Add</button>
@@ -266,7 +266,7 @@
                                             <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
                                         </form>
                                     <% } else { %>
-                                        <form method="POST" action="/admin/services/<%= s.id %>/background" enctype="multipart/form-data">
+                                        <form method="POST" action="/admin/services/<%= s.id %>/background" enctype="multipart/form-data" data-ajax-upload>
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <input type="file" name="background" accept="image/*" class="form-control form-control-sm mb-1">
                                             <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
@@ -327,7 +327,7 @@
                                     <% }) %>
                                 </div>
                                 <% if ((p.images || []).length < 10) { %>
-                                    <form method="POST" action="/admin/products/<%= p.id %>/images" enctype="multipart/form-data" class="d-flex gap-2">
+                                    <form method="POST" action="/admin/products/<%= p.id %>/images" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap" data-ajax-upload>
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <input type="file" name="files" accept="image/*" multiple class="form-control form-control-sm">
                                         <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Add</button>
@@ -375,7 +375,7 @@
                                             </form>
                                         </div>
                                     <% } %>
-                                    <form method="POST" action="/admin/products/<%= p.id %>/deliverable" enctype="multipart/form-data" class="d-flex gap-2">
+                                    <form method="POST" action="/admin/products/<%= p.id %>/deliverable" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap" data-ajax-upload>
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <input type="file" name="deliverable" class="form-control form-control-sm">
                                         <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap"><%= p.deliverable_filename ? 'Replace' : 'Upload' %></button>
@@ -388,7 +388,7 @@
             <% }) %>
 
             <h4 class="mb-3 mt-4">Add Product</h4>
-            <form method="POST" action="/admin/products" enctype="multipart/form-data" class="row g-2">
+            <form method="POST" action="/admin/products" enctype="multipart/form-data" class="row g-2" data-ajax-upload>
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="col-md-4"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
                 <div class="col-md-2"><label class="form-label">Price (INR)</label><input type="number" name="price" class="form-control" step="0.01" min="0" required></div>
@@ -543,5 +543,6 @@
 </script>
 <script src="/js/click-sound.js"></script>
 <script src="/js/translate-widget.js"></script>
+<script src="/js/admin-upload.js"></script>
 </body>
 </html>

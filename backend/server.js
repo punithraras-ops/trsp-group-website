@@ -74,6 +74,10 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
+    if (err && err.code === 'LIMIT_FILE_SIZE') {
+        res.status(413).send('That file is too large. Please upload a smaller file.');
+        return;
+    }
     console.error(err);
     res.status(500).send('Something went wrong.');
 });
