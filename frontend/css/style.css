@@ -837,8 +837,10 @@ form .btn-primary {
     display: none !important;
 }
 
+html,
 body {
     top: 0 !important;
+    position: static !important;
 }
 
 #google_translate_element {
