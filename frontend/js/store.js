@@ -75,14 +75,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function openReviewsFor(productId, productTitle) {
+        currentProductId = productId;
+        titleEl.textContent = `Reviews - ${productTitle}`;
+        modal.show();
+        loadReviews(currentProductId);
+    }
+
     document.querySelectorAll('[data-open-reviews]').forEach((btn) => {
         btn.addEventListener('click', () => {
-            currentProductId = btn.dataset.openReviews;
-            titleEl.textContent = `Reviews - ${btn.dataset.productTitle}`;
-            modal.show();
-            loadReviews(currentProductId);
+            openReviewsFor(btn.dataset.openReviews, btn.dataset.productTitle);
         });
     });
+
+    const params = new URLSearchParams(window.location.search);
+    const reviewProductId = params.get('review');
+    if (reviewProductId) {
+        openReviewsFor(reviewProductId, params.get('title') || 'this product');
+        if (window.history.replaceState) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('review');
+            url.searchParams.delete('title');
+            window.history.replaceState({}, '', url);
+        }
+    }
 
     submitBtn.addEventListener('click', async () => {
         if (!currentProductId) return;
