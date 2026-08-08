@@ -256,7 +256,11 @@ router.get('/admin', async (req, res) => {
             }));
             products = productDocs.map(db.withId);
             features = featureDocs.map(db.withId);
-            services = serviceDocs.map(db.withId).map(s => ({ ...s, featuresText: featuresToText(s.features) }));
+            services = serviceDocs.map(db.withId).map(s => ({
+                ...s,
+                featuresText: featuresToText(s.features),
+                background_image: s.background_image_id ? `/uploads/${s.background_image_id}` : null,
+            }));
         } catch (error) {
             // Leave arrays empty if any query fails; the page still renders.
         }
@@ -502,8 +506,43 @@ router.post('/admin/services/:id/update', async (req, res) => {
 
 router.post('/admin/services/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
+        const service = await db.getDb().collection('services').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('services').deleteOne({ _id: db.toId(req.params.id) });
+        if (service && service.background_image_id) {
+            await db.deleteFile(service.background_image_id);
+        }
         await logAdminAction(req, 'service.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=services');
+});
+
+router.post('/admin/services/:id/background', upload.single('background'), csrf.verifyAfterUpload, async (req, res) => {
+    if (db.isDbConfigured() && req.file) {
+        const service = await db.getDb().collection('services').findOne({ _id: db.toId(req.params.id) });
+        if (service && service.background_image_id) {
+            await db.deleteFile(service.background_image_id);
+        }
+        const fileId = await db.uploadBuffer(req.file.buffer, req.file.originalname, req.file.mimetype);
+        await db.getDb().collection('services').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_image_id: fileId.toString() } }
+        );
+        await logAdminAction(req, 'service.background_upload', req.params.id);
+    }
+    res.redirect('/admin?tab=services');
+});
+
+router.post('/admin/services/:id/background/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const service = await db.getDb().collection('services').findOne({ _id: db.toId(req.params.id) });
+        if (service && service.background_image_id) {
+            await db.deleteFile(service.background_image_id);
+            await db.getDb().collection('services').updateOne(
+                { _id: db.toId(req.params.id) },
+                { $unset: { background_image_id: '' } }
+            );
+        }
+        await logAdminAction(req, 'service.background_remove', req.params.id);
     }
     res.redirect('/admin?tab=services');
 });

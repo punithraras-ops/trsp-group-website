@@ -17,7 +17,10 @@ async function getActiveServices() {
             .find({ is_active: true })
             .sort({ sort_order: 1, created_at: 1 })
             .toArray();
-        return docs.map(db.withId);
+        return docs.map(db.withId).map(s => ({
+            ...s,
+            background_image: s.background_image_id ? `/uploads/${s.background_image_id}` : null,
+        }));
     } catch (error) {
         return [];
     }

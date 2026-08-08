@@ -15,7 +15,8 @@ function isKnownMultipartRoute(req) {
     return req.path === '/admin/products'
         || /^\/admin\/products\/[^/]+\/(images|deliverable)$/.test(req.path)
         || /^\/admin\/design\/upload\/[^/]+$/.test(req.path)
-        || /^\/admin\/orders\/[^/]+\/deliverable$/.test(req.path);
+        || /^\/admin\/orders\/[^/]+\/deliverable$/.test(req.path)
+        || /^\/admin\/services\/[^/]+\/background$/.test(req.path);
 }
 
 function ensureToken(req, res, next) {

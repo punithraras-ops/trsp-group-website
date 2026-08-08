@@ -198,7 +198,7 @@
             <p class="text-muted">These are the services shown on the Home and Services pages. Each one gets its own detail page at <code>/services/&lt;slug&gt;</code>. Enter features as one per line: <code>Title :: Description</code>.</p>
             <div class="table-responsive mb-4">
                 <table class="table table-striped align-middle bg-white rounded shadow-sm">
-                    <thead><tr><th style="min-width:160px">Title</th><th>Slug</th><th>Icon (Font Awesome class)</th><th style="min-width:220px">Summary</th><th style="min-width:260px">Features (one per line: Title :: Description)</th><th>Order</th><th>Active</th><th></th></tr></thead>
+                    <thead><tr><th style="min-width:160px">Title</th><th>Slug</th><th>Icon (Font Awesome class)</th><th style="min-width:220px">Summary</th><th style="min-width:260px">Features (one per line: Title :: Description)</th><th>Order</th><th>Active</th><th></th><th style="min-width:180px">Card Background</th></tr></thead>
                     <tbody>
                         <% services.forEach(s => { %>
                             <tr>
@@ -220,6 +220,21 @@
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
+                                </td>
+                                <td>
+                                    <% if (s.background_image) { %>
+                                        <img src="<%= s.background_image %>" class="rounded border d-block mb-1" style="width:70px;height:50px;object-fit:cover;">
+                                        <form method="POST" action="/admin/services/<%= s.id %>/background/remove" onsubmit="return confirm('Remove this background image?');">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
+                                        </form>
+                                    <% } else { %>
+                                        <form method="POST" action="/admin/services/<%= s.id %>/background" enctype="multipart/form-data">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="file" name="background" accept="image/*" class="form-control form-control-sm mb-1">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
+                                        </form>
+                                    <% } %>
                                 </td>
                             </tr>
                         <% }) %>
