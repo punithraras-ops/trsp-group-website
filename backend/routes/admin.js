@@ -19,6 +19,8 @@ function logAdminAction(req, action, details) {
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
+// Deliverable files (project ZIPs, documents) need a much higher limit than product images.
+const uploadDeliverable = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
 function safeAdminRedirect(value) {
     if (typeof value === 'string' && value.startsWith('/admin')) {
@@ -367,7 +369,41 @@ router.post('/admin/products/:id/delete', async (req, res) => {
         for (const fileId of (product && product.images) || []) {
             await db.deleteFile(fileId);
         }
+        if (product && product.deliverable_file_id) {
+            await db.deleteFile(product.deliverable_file_id);
+        }
         await logAdminAction(req, 'product.delete', product && product.title);
+    }
+    res.redirect('/admin?tab=products');
+});
+
+router.post('/admin/products/:id/deliverable', uploadDeliverable.single('deliverable'), async (req, res) => {
+    if (db.isDbConfigured() && req.file) {
+        const product = await db.getDb().collection('products').findOne({ _id: db.toId(req.params.id) });
+        if (product && product.deliverable_file_id) {
+            await db.deleteFile(product.deliverable_file_id);
+        }
+        const fileId = await db.uploadBuffer(req.file.buffer, req.file.originalname, req.file.mimetype);
+        await db.getDb().collection('products').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { deliverable_file_id: fileId.toString(), deliverable_filename: req.file.originalname } }
+        );
+        await logAdminAction(req, 'product.deliverable_upload', req.file.originalname);
+    }
+    res.redirect('/admin?tab=products');
+});
+
+router.post('/admin/products/:id/deliverable/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const product = await db.getDb().collection('products').findOne({ _id: db.toId(req.params.id) });
+        if (product && product.deliverable_file_id) {
+            await db.deleteFile(product.deliverable_file_id);
+            await db.getDb().collection('products').updateOne(
+                { _id: db.toId(req.params.id) },
+                { $unset: { deliverable_file_id: '', deliverable_filename: '' } }
+            );
+            await logAdminAction(req, 'product.deliverable_remove', product.title);
+        }
     }
     res.redirect('/admin?tab=products');
 });
@@ -564,6 +600,34 @@ router.post('/admin/orders/:id/delivery-status', async (req, res) => {
             { $set: { delivery_status: req.body.delivery_status, updated_at: new Date() } }
         );
         await logAdminAction(req, 'order.delivery_status', `${req.params.id} -> ${req.body.delivery_status}`);
+    }
+    res.redirect('/admin?tab=orders');
+});
+
+router.post('/admin/orders/:id/deliverable', uploadDeliverable.array('files', 5), async (req, res) => {
+    if (db.isDbConfigured() && req.files && req.files.length > 0) {
+        const newFiles = [];
+        for (const file of req.files) {
+            const fileId = await db.uploadBuffer(file.buffer, file.originalname, file.mimetype);
+            newFiles.push({ id: fileId.toString(), filename: file.originalname, uploaded_at: new Date() });
+        }
+        await db.getDb().collection('orders').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $push: { deliverable_files: { $each: newFiles } } }
+        );
+        await logAdminAction(req, 'order.deliverable_upload', `${req.params.id}: ${newFiles.map(f => f.filename).join(', ')}`);
+    }
+    res.redirect('/admin?tab=orders');
+});
+
+router.post('/admin/orders/:id/deliverable/:fileId/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('orders').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $pull: { deliverable_files: { id: req.params.fileId } } }
+        );
+        await db.deleteFile(req.params.fileId);
+        await logAdminAction(req, 'order.deliverable_remove', req.params.id);
     }
     res.redirect('/admin?tab=orders');
 });

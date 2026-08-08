@@ -300,14 +300,27 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
                     },
                 },
                 { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
-                { $addFields: { product_title: '$product.title' } },
+                {
+                    $addFields: {
+                        product_title: '$product.title',
+                        product_deliverable_file_id: '$product.deliverable_file_id',
+                        product_deliverable_filename: '$product.deliverable_filename',
+                    },
+                },
             ]).toArray();
-            orders = docs.map(db.withId).map(order => ({
-                ...order,
-                display_title: order.items && order.items.length > 0
-                    ? order.items.map(i => `${i.title}${i.quantity > 1 ? ' x' + i.quantity : ''}`).join(', ')
-                    : order.product_title,
-            }));
+            orders = docs.map(db.withId).map(order => {
+                const files = [...(order.deliverable_files || [])];
+                if (order.product_deliverable_file_id) {
+                    files.push({ id: order.product_deliverable_file_id, filename: order.product_deliverable_filename || 'download' });
+                }
+                return {
+                    ...order,
+                    display_title: order.items && order.items.length > 0
+                        ? order.items.map(i => `${i.title}${i.quantity > 1 ? ' x' + i.quantity : ''}`).join(', ')
+                        : order.product_title,
+                    downloadableFiles: order.status === 'paid' ? files : [],
+                };
+            });
         } catch (error) {
             orders = [];
         }
@@ -321,6 +334,53 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
         verified: req.query.verified === '1',
         resent: req.query.resent === '1',
     });
+});
+
+router.get('/account/orders/:id/download/:fileId', requireAuthPage(), async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(404).send('Not available.');
+        return;
+    }
+    try {
+        const order = await db.getDb().collection('orders').findOne({
+            _id: db.toId(req.params.id),
+            user_id: db.toId(req.user.id),
+            status: 'paid',
+        });
+        if (!order) {
+            res.status(404).send('File not available.');
+            return;
+        }
+
+        const orderFile = (order.deliverable_files || []).find(f => f.id === req.params.fileId);
+        let filename = orderFile ? orderFile.filename : null;
+
+        if (!filename) {
+            const productIds = order.items && order.items.length > 0
+                ? order.items.map(i => i.product_id)
+                : (order.product_id ? [order.product_id] : []);
+            const products = await db.getDb().collection('products').find({ _id: { $in: productIds } }).toArray();
+            const match = products.find(p => p.deliverable_file_id === req.params.fileId);
+            if (match) filename = match.deliverable_filename || 'download';
+        }
+
+        if (!filename) {
+            res.status(404).send('File not available.');
+            return;
+        }
+
+        const fileDoc = await db.getDb().collection('uploads.files').findOne({ _id: db.toId(req.params.fileId) });
+        if (!fileDoc) {
+            res.status(404).send('File not found.');
+            return;
+        }
+
+        res.set('Content-Type', fileDoc.contentType || 'application/octet-stream');
+        res.set('Content-Disposition', `attachment; filename="${filename.replace(/"/g, '')}"`);
+        db.getBucket().openDownloadStream(db.toId(req.params.fileId)).pipe(res);
+    } catch (error) {
+        res.status(404).send('File not available.');
+    }
 });
 
 router.get('/account/orders/:id/invoice', requireAuthPage(), async (req, res) => {
