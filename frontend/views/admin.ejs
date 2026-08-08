@@ -140,14 +140,17 @@
                                     <% if (o.status === 'pending_approval') { %>
                                         <div class="d-flex gap-2">
                                             <form method="POST" action="/admin/orders/<%= o.id %>/approve">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-sm btn-success">Approve</button>
                                             </form>
                                             <form method="POST" action="/admin/orders/<%= o.id %>/reject">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
                                             </form>
                                         </div>
                                     <% } else if (o.status === 'paid') { %>
                                         <form method="POST" action="/admin/orders/<%= o.id %>/delivery-status" class="d-flex gap-2">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <select name="delivery_status" class="form-select form-select-sm">
                                                 <% ['processing','shipped','delivered','cancelled'].forEach(s => { %>
                                                     <option value="<%= s %>" <%= (o.delivery_status || 'processing') === s ? 'selected' : '' %>><%= s %></option>
@@ -180,6 +183,7 @@
                         <% services.forEach(s => { %>
                             <tr>
                                 <form method="POST" action="/admin/services/<%= s.id %>/update">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <td><input type="text" name="title" class="form-control" value="<%= s.title %>" required></td>
                                     <td><input type="text" name="slug" class="form-control" value="<%= s.slug %>" required></td>
                                     <td><input type="text" name="icon" class="form-control" value="<%= s.icon %>" placeholder="fas fa-briefcase"></td>
@@ -193,6 +197,7 @@
                                 </form>
                                 <td>
                                     <form method="POST" action="/admin/services/<%= s.id %>/delete" onsubmit="return confirm('Delete this service?');">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
                                 </td>
@@ -204,6 +209,7 @@
 
             <h4 class="mb-3">Add Service</h4>
             <form method="POST" action="/admin/services" class="row g-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="col-md-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
                 <div class="col-md-3"><label class="form-label">Slug (URL, optional)</label><input type="text" name="slug" class="form-control" placeholder="auto from title"></div>
                 <div class="col-md-2"><label class="form-label">Icon (Font Awesome)</label><input type="text" name="icon" class="form-control" placeholder="fas fa-briefcase"></div>
@@ -231,6 +237,7 @@
                                         <div class="text-center">
                                             <img src="/uploads/<%= fileId %>" class="rounded border d-block mb-1" style="width:70px;height:70px;object-fit:cover;">
                                             <form method="POST" action="/admin/products/<%= p.id %>/images/remove" onsubmit="return confirm('Remove this image?');">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <input type="hidden" name="fileId" value="<%= fileId %>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
                                             </form>
@@ -239,6 +246,7 @@
                                 </div>
                                 <% if ((p.images || []).length < 10) { %>
                                     <form method="POST" action="/admin/products/<%= p.id %>/images" enctype="multipart/form-data" class="d-flex gap-2">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <input type="file" name="files" accept="image/*" multiple class="form-control form-control-sm">
                                         <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Add</button>
                                     </form>
@@ -246,6 +254,7 @@
                             </div>
                             <div class="col-md-8">
                                 <form method="POST" action="/admin/products/<%= p.id %>/update">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <div class="row g-2 mb-2">
                                         <div class="col-md-5"><label class="form-label">Title</label><input type="text" name="title" class="form-control" value="<%= p.title %>" required></div>
                                         <div class="col-md-3"><label class="form-label">Price (INR)</label><input type="number" name="price" class="form-control" value="<%= (p.price_paise / 100).toFixed(2) %>" step="0.01" min="0" required></div>
@@ -265,6 +274,7 @@
                                     <button type="submit" class="btn btn-sm btn-primary">Save</button>
                                 </form>
                                 <form method="POST" action="/admin/products/<%= p.id %>/delete" onsubmit="return confirm('Delete this product?');" class="d-inline">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger mt-2">Delete Product</button>
                                 </form>
                             </div>
@@ -275,6 +285,7 @@
 
             <h4 class="mb-3 mt-4">Add Product</h4>
             <form method="POST" action="/admin/products" enctype="multipart/form-data" class="row g-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="col-md-4"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
                 <div class="col-md-2"><label class="form-label">Price (INR)</label><input type="number" name="price" class="form-control" step="0.01" min="0" required></div>
                 <div class="col-md-2"><label class="form-label">Category</label><input type="text" name="category" class="form-control" placeholder="e.g. Software"></div>
@@ -302,6 +313,7 @@
                         <% features.forEach(f => { %>
                             <tr>
                                 <form method="POST" action="/admin/features/<%= f.id %>/update">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <td><input type="text" name="title" class="form-control" value="<%= f.title %>" required></td>
                                     <td><input type="text" name="description" class="form-control" value="<%= f.description %>"></td>
                                     <td>
@@ -319,6 +331,7 @@
                                 </form>
                                 <td>
                                     <form method="POST" action="/admin/features/<%= f.id %>/delete" onsubmit="return confirm('Delete this feature?');">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
                                 </td>
@@ -330,6 +343,7 @@
 
             <h4 class="mb-3">Add Upcoming Feature</h4>
             <form method="POST" action="/admin/features" class="row g-2 align-items-end">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="col-md-3"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
                 <div class="col-md-4"><label class="form-label">Description</label><input type="text" name="description" class="form-control"></div>
                 <div class="col-md-2">
@@ -369,6 +383,7 @@
                                     <td class="text-nowrap"><%= new Date(r.created_at).toLocaleDateString('en-IN') %></td>
                                     <td>
                                         <form method="POST" action="/admin/reviews/<%= r.id %>/delete" onsubmit="return confirm('Delete this review?');">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                         </form>
                                     </td>

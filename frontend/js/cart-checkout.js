@@ -124,7 +124,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('/api/checkout/apply-coupon', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
                     body: JSON.stringify({ items: TrspCart.getCart(), code }),
                 });
                 const result = await response.json();
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const createResponse = await fetch('/api/checkout/create-cart-order', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
                     body: JSON.stringify({ items: TrspCart.getCart(), couponCode: appliedCoupon ? appliedCoupon.code : undefined }),
                 });
                 const order = await createResponse.json();
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         try {
                             const verifyResponse = await fetch('/api/checkout/verify', {
                                 method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
+                                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
                                 body: JSON.stringify(response),
                             });
                             const result = await verifyResponse.json();

@@ -34,6 +34,7 @@
                                     <td><%= c.used_count %><%= c.usage_limit ? ' / ' + c.usage_limit : '' %></td>
                                     <td class="text-nowrap">
                                         <form method="POST" action="/admin/coupons/<%= c.id %>/update" class="d-inline">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <input type="hidden" name="code" value="<%= c.code %>">
                                             <input type="hidden" name="discount_type" value="<%= c.discount_type %>">
                                             <input type="hidden" name="value" value="<%= c.discount_type === 'percent' ? c.value : (c.value / 100) %>">
@@ -43,6 +44,7 @@
                                             <button type="submit" class="btn btn-sm btn-outline-secondary"><%= c.active ? 'Deactivate' : 'Activate' %></button>
                                         </form>
                                         <form method="POST" action="/admin/coupons/<%= c.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this coupon?');">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                         </form>
                                     </td>
@@ -59,6 +61,7 @@
         <div class="card-body p-4">
             <h4 class="fw-bold mb-3">Create Coupon</h4>
             <form method="POST" action="/admin/coupons" class="row g-3">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="col-md-3">
                     <label class="form-label">Code</label>
                     <input type="text" name="code" class="form-control text-uppercase" placeholder="WELCOME10" required>

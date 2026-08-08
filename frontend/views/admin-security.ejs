@@ -19,6 +19,7 @@
         <div class="card-body p-4">
             <h4 class="fw-bold mb-3"><i class="fas fa-key me-2" style="color: var(--admin-accent);"></i>Change Password</h4>
             <form method="POST" action="/admin/security/change-password">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="mb-3">
                     <label class="form-label">New Password</label>
                     <input type="password" name="password" class="form-control" minlength="8" required>
@@ -40,6 +41,7 @@
                 <p class="text-success fw-bold">&#10003; Enabled</p>
                 <p class="text-muted">Logging in now requires a code from your authenticator app. This is also what lets you recover your password if you forget it.</p>
                 <form method="POST" action="/admin/security/disable">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="mb-3" style="max-width: 240px;">
                         <label class="form-label">Enter current code to disable</label>
                         <input type="text" name="code" class="form-control text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
@@ -54,6 +56,7 @@
                 <p>Or enter this code manually: <code><%= enrollment.secret %></code></p>
                 <p class="mt-3">2. Enter the 6-digit code your app shows to confirm:</p>
                 <form method="POST" action="/admin/security/confirm-enrollment" style="max-width: 240px;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <div class="mb-3">
                         <input type="text" name="code" class="form-control text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autofocus>
                     </div>
@@ -62,6 +65,7 @@
             <% } else { %>
                 <p class="text-muted">Not enabled. Add an authenticator app for a second layer of login security, and to be able to reset your password yourself if you ever forget it.</p>
                 <form method="POST" action="/admin/security/start-enrollment">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <button type="submit" class="btn btn-primary">Enable 2FA</button>
                 </form>
             <% } %>

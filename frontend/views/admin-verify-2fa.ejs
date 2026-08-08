@@ -11,6 +11,7 @@
             <div class="alert alert-danger"><%= error %></div>
         <% } %>
         <form method="POST" action="/admin/verify-2fa">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <div class="mb-4">
                 <input type="text" name="code" class="form-control form-control-lg text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autofocus>
             </div>

@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`/api/products/${currentProductId}/reviews`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
                 body: JSON.stringify({ rating: selectedRating, comment: commentEl.value }),
             });
             const result = await response.json();

@@ -30,6 +30,7 @@
                 <div class="card-body p-4">
                     <p class="text-muted">This text is shown publicly at <a href="/terms" target="_blank">/terms</a> and linked from the site footer on every page. Covers website usage and payment terms - edit freely as plain text; line breaks are preserved exactly as typed.</p>
                     <form method="POST" action="/admin/legal">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <textarea name="terms" class="form-control" rows="28" style="font-family: 'Inter', monospace; font-size: 0.92rem;" required><%= terms %></textarea>
                         <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-floppy-disk me-2"></i>Save Terms &amp; Conditions</button>
                     </form>
@@ -41,6 +42,7 @@
                 <div class="card-body p-4">
                     <p class="text-muted">This text is shown publicly at <a href="/privacy" target="_blank">/privacy</a> and linked from the site footer on every page. Covers how customer data is collected and used - edit freely as plain text; line breaks are preserved exactly as typed.</p>
                     <form method="POST" action="/admin/legal/privacy">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <textarea name="privacy" class="form-control" rows="28" style="font-family: 'Inter', monospace; font-size: 0.92rem;" required><%= privacy %></textarea>
                         <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-floppy-disk me-2"></i>Save Privacy Policy</button>
                     </form>

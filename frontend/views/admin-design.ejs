@@ -20,6 +20,7 @@
             <h4 class="fw-bold mb-3"><i class="fas fa-fill-drip me-2" style="color: var(--admin-accent);"></i>Colors</h4>
             <p class="text-muted">Controls buttons, links, dark backgrounds (navbar, footer, hero), body text, headings, and the page background across the whole site.</p>
             <form method="POST" action="/admin/design/colors">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div class="row g-3 mb-3">
                     <div class="col-6 col-md-3">
                         <label class="form-label d-block">Primary (buttons/links)</label>
@@ -70,11 +71,13 @@
                         <% } %>
                         <div class="d-flex gap-2">
                             <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="d-flex gap-2 flex-grow-1">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <input type="file" name="file" accept="image/*" class="form-control" required>
                                 <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
                             </form>
                             <% if (images[slot.key]) { %>
                                 <form method="POST" action="/admin/design/remove/<%= slot.key %>" onsubmit="return confirm('Remove this image and go back to the default?');">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-outline-danger text-nowrap">Remove</button>
                                 </form>
                             <% } %>
@@ -90,6 +93,7 @@
             <h4 class="fw-bold mb-3"><i class="fas fa-toolbox me-2" style="color: var(--admin-accent);"></i>Admin Panel Appearance</h4>
             <p class="text-muted">This only affects the background of admin pages like this one — it's separate from the public site's colors above, so the admin tool stays legible no matter what theme the public site uses.</p>
             <form method="POST" action="/admin/design/admin-theme" class="d-flex align-items-end gap-3">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div>
                     <label class="form-label d-block">Admin Panel Background</label>
                     <input type="color" name="admin_bg_color" class="form-control form-control-color" value="<%= design.adminBackground %>">

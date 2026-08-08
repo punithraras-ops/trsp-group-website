@@ -9,6 +9,7 @@ const { attachUser } = require('./lib/auth');
 const { google, github } = require('./lib/oauth');
 const { getDesignSettings, DEFAULT_COLORS, DEFAULT_ADMIN_BG } = require('./lib/design');
 const { getMergedSite } = require('./lib/siteInfo');
+const csrf = require('./lib/csrf');
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
@@ -31,6 +32,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(frontendDir, { index: false }));
+
+app.use(csrf.ensureToken);
+app.use(csrf.verify);
 
 app.use(attachUser);
 
