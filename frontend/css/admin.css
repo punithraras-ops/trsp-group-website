@@ -71,6 +71,13 @@ body.admin-page h6 {
     margin: 0;
 }
 
+.admin-logo-mark {
+    height: 42px;
+    width: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
 .admin-topbar .badge-live {
     display: inline-flex;
     align-items: center;

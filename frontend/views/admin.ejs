@@ -3,8 +3,11 @@
 
 <div class="admin-topbar">
     <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-            <h1><i class="fas fa-gauge-high me-2 text-primary" style="color: var(--admin-accent) !important;"></i>Admin Dashboard<span class="badge-live"><i class="fas fa-circle"></i>Live</span></h1>
+        <div class="d-flex align-items-center gap-3">
+            <% if (design.images.logo || site.icon_path) { %>
+                <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="admin-logo-mark">
+            <% } %>
+            <h1 class="mb-0"><i class="fas fa-gauge-high me-2 text-primary" style="color: var(--admin-accent) !important;"></i>Admin Dashboard<span class="badge-live"><i class="fas fa-circle"></i>Live</span></h1>
         </div>
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <%- include('partials/language-switcher') %>

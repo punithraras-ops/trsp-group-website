@@ -3,7 +3,12 @@
 
 <div class="admin-topbar">
     <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <h1><i class="fas fa-building me-2" style="color: var(--admin-accent);"></i>Site Info</h1>
+        <div class="d-flex align-items-center gap-3">
+            <% if (design.images.logo || site.icon_path) { %>
+                <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="admin-logo-mark">
+            <% } %>
+            <h1 class="mb-0"><i class="fas fa-building me-2" style="color: var(--admin-accent);"></i>Site Info</h1>
+        </div>
         <div class="me-2"><%- include('partials/language-switcher') %></div>
         <a href="/admin" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Dashboard</a>
     </div>
