@@ -37,10 +37,12 @@ router.post('/signup', async (req, res) => {
     const name = String(req.body.name || '').trim();
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
+    const phone = String(req.body.phone || '').trim();
+    const address = String(req.body.address || '').trim();
     const redirect = req.body.redirect;
 
-    if (!name || !email || password.length < 8) {
-        return back(res, redirect, 'Please enter a name, valid email, and a password of at least 8 characters.');
+    if (!name || !email || password.length < 8 || !phone || !address) {
+        return back(res, redirect, 'Please enter a name, valid email, phone number, address, and a password of at least 8 characters.');
     }
 
     try {
@@ -56,6 +58,8 @@ router.post('/signup', async (req, res) => {
             name,
             email,
             password_hash: passwordHash,
+            phone,
+            address,
             email_verified: false,
             verify_token: verifyToken,
             verify_token_expires: new Date(Date.now() + VERIFY_TOKEN_HOURS * 60 * 60 * 1000),
@@ -161,12 +165,18 @@ router.post('/account/update-profile', requireAuthPage(), async (req, res) => {
         return;
     }
     const name = String(req.body.name || '').trim();
-    if (name) {
-        await db.getDb().collection('users').updateOne(
-            { _id: db.toId(req.user.id) },
-            { $set: { name } }
-        );
-    }
+    const phone = String(req.body.phone || '').trim();
+    const address = String(req.body.address || '').trim();
+
+    const update = {};
+    if (name) update.name = name;
+    update.phone = phone;
+    update.address = address;
+
+    await db.getDb().collection('users').updateOne(
+        { _id: db.toId(req.user.id) },
+        { $set: update }
+    );
     res.redirect('/account?profileUpdated=1');
 });
 

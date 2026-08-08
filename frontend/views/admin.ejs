@@ -68,15 +68,19 @@
         </div>
     </div>
 
-    <ul class="nav nav-tabs mb-4" id="adminTab" role="tablist">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-submissions" type="button"><i class="fas fa-envelope me-1"></i>Submissions (<%= submissions.length %>)</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-users" type="button"><i class="fas fa-users me-1"></i>Users (<%= users.length %>)</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-orders" type="button"><i class="fas fa-bag-shopping me-1"></i>Orders (<%= orders.length %>)</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-services" type="button"><i class="fas fa-briefcase me-1"></i>Services (<%= services.length %>)</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-products" type="button"><i class="fas fa-box me-1"></i>Products (<%= products.length %>)</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-features" type="button"><i class="fas fa-rocket me-1"></i>Upcoming Features (<%= features.length %>)</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button"><i class="fas fa-star me-1"></i>Reviews (<%= productReviews.length %>)</button></li>
-    </ul>
+    <div class="admin-tabs-scroll-wrapper mb-4">
+        <button type="button" class="admin-tabs-scroll-btn admin-tabs-scroll-left" aria-label="Scroll tabs left"><i class="fas fa-chevron-left"></i></button>
+        <ul class="nav nav-tabs" id="adminTab" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-submissions" type="button"><i class="fas fa-envelope me-1"></i>Submissions (<%= submissions.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-users" type="button"><i class="fas fa-users me-1"></i>Users (<%= users.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-orders" type="button"><i class="fas fa-bag-shopping me-1"></i>Orders (<%= orders.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-services" type="button"><i class="fas fa-briefcase me-1"></i>Services (<%= services.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-products" type="button"><i class="fas fa-box me-1"></i>Products (<%= products.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-features" type="button"><i class="fas fa-rocket me-1"></i>Upcoming Features (<%= features.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button"><i class="fas fa-star me-1"></i>Reviews (<%= productReviews.length %>)</button></li>
+        </ul>
+        <button type="button" class="admin-tabs-scroll-btn admin-tabs-scroll-right" aria-label="Scroll tabs right"><i class="fas fa-chevron-right"></i></button>
+    </div>
 
     <div class="tab-content">
 
@@ -112,13 +116,15 @@
             <% } else { %>
             <div class="table-responsive">
                 <table class="table table-striped align-middle bg-white rounded shadow-sm">
-                    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Sign-in Method</th><th>Joined</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Address</th><th>Sign-in Method</th><th>Joined</th></tr></thead>
                     <tbody>
                         <% users.forEach(u => { %>
                             <tr>
                                 <td><%= u.id %></td>
                                 <td><%= u.name %></td>
                                 <td><%= u.email %></td>
+                                <td><%= u.phone || '—' %></td>
+                                <td><%= u.address || '—' %></td>
                                 <td><%= u.google_id ? 'Google' : (u.github_id ? 'GitHub' : 'Email/Password') %></td>
                                 <td class="text-nowrap"><%= new Date(u.created_at).toLocaleString('en-IN') %></td>
                             </tr>
@@ -513,6 +519,23 @@
     var upiToast = document.querySelector('[data-admin-upi-toast]');
     if (upiToast) {
         setTimeout(function () { upiToast.remove(); }, 5000);
+    }
+
+    var adminTabsList = document.getElementById('adminTab');
+    var tabsScrollLeft = document.querySelector('.admin-tabs-scroll-left');
+    var tabsScrollRight = document.querySelector('.admin-tabs-scroll-right');
+    if (adminTabsList && tabsScrollLeft && tabsScrollRight) {
+        tabsScrollLeft.addEventListener('click', function () {
+            adminTabsList.scrollBy({ left: -150, behavior: 'smooth' });
+        });
+        tabsScrollRight.addEventListener('click', function () {
+            adminTabsList.scrollBy({ left: 150, behavior: 'smooth' });
+        });
+        adminTabsList.querySelectorAll('.nav-link').forEach(function (link) {
+            link.addEventListener('shown.bs.tab', function () {
+                link.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            });
+        });
     }
 </script>
 <script src="/js/click-sound.js"></script>

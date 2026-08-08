@@ -236,6 +236,32 @@ body.admin-page .btn-outline-secondary:hover {
 }
 
 /* Tabs -> segmented pill control */
+.admin-tabs-scroll-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-tabs-scroll-btn {
+    display: none;
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--admin-border);
+    background: var(--admin-surface);
+    color: var(--admin-accent);
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--admin-shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.admin-tabs-scroll-btn:hover {
+    box-shadow: var(--admin-shadow-hover);
+    transform: translateY(-1px);
+}
+
 body.admin-page .nav-tabs {
     border-bottom: none;
     background: var(--admin-surface);
@@ -246,7 +272,31 @@ body.admin-page .nav-tabs {
     flex-wrap: wrap;
     gap: 0.25rem;
     box-shadow: var(--admin-shadow);
-    margin-bottom: 1.75rem !important;
+    min-width: 0;
+}
+
+@media (max-width: 768px) {
+    body.admin-page .nav-tabs {
+        display: flex;
+        flex-wrap: nowrap;
+        flex: 1;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+        scrollbar-width: none;
+    }
+
+    body.admin-page .nav-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    body.admin-page .nav-tabs .nav-item {
+        flex-shrink: 0;
+    }
+
+    .admin-tabs-scroll-btn {
+        display: inline-flex;
+    }
 }
 
 body.admin-page .nav-tabs .nav-link {
