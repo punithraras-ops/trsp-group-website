@@ -336,7 +336,10 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
     });
 });
 
-router.get('/account/orders/:id/download/:fileId', requireAuthPage(), async (req, res) => {
+router.get('/account/orders/:id/download/:fileId', (req, res, next) => {
+    console.log('DIAGNOSTIC: download route MATCHED, params=', req.params);
+    next();
+}, requireAuthPage(), async (req, res) => {
     if (!db.isDbConfigured()) {
         res.status(404).send('Not available.');
         return;
