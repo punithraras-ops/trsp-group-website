@@ -713,8 +713,9 @@ form .btn-primary {
     }
 }
 
-/* Google Translate widget: suppress default banner/branding, style to match navbar */
-.goog-te-banner-frame {
+/* Google Translate: engine stays hidden; suppress its default banner/UI entirely */
+.goog-te-banner-frame,
+.skiptranslate > iframe {
     display: none !important;
 }
 
@@ -722,27 +723,7 @@ body {
     top: 0 !important;
 }
 
-#google_translate_element .goog-te-gadget {
-    font-size: 0 !important;
-    color: transparent !important;
-}
-
-#google_translate_element .goog-te-gadget-simple {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 999px;
-    padding: 0.35rem 0.7rem;
-    display: inline-flex;
-    align-items: center;
-}
-
-#google_translate_element .goog-te-gadget-simple .goog-te-menu-value {
-    font-size: 0.85rem !important;
-    color: rgba(255, 255, 255, 0.85) !important;
-    font-weight: 600;
-}
-
-#google_translate_element img {
+#google_translate_element {
     display: none !important;
 }
 
@@ -751,4 +732,57 @@ body {
 .goog-text-highlight {
     background-color: transparent !important;
     box-shadow: none !important;
+}
+
+/* Custom language switcher UI (drives the hidden Google Translate engine) */
+.lang-dropdown-btn {
+    color: rgba(255, 255, 255, 0.82) !important;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 0.55rem 1.1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin: 0 0.15rem;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+.lang-dropdown-btn:hover,
+.lang-dropdown-btn:focus {
+    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.16);
+    transform: translateY(-1px);
+}
+
+.lang-dropdown-btn::after {
+    margin-left: 0.5rem;
+    vertical-align: 0.1em;
+}
+
+.lang-dropdown-menu {
+    max-height: 22rem;
+    overflow-y: auto;
+    min-width: 15rem;
+    border: none;
+    border-radius: 14px;
+    padding: 0.5rem;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22), 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+
+.lang-dropdown-menu .dropdown-item {
+    border-radius: 8px;
+    padding: 0.5rem 0.85rem;
+    font-weight: 500;
+    font-size: 0.92rem;
+}
+
+.lang-dropdown-menu .dropdown-item:hover,
+.lang-dropdown-menu .dropdown-item:focus {
+    background: color-mix(in srgb, var(--primary-color) 12%, white);
+    color: var(--primary-dark);
+}
+
+.lang-dropdown-menu .dropdown-item.active {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary-color) 100%, white 20%), var(--primary-color));
+    color: #ffffff;
 }
