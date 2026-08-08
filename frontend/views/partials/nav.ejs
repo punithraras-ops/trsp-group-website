@@ -1,18 +1,28 @@
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top shadow-sm transition-all">
+    <nav class="navbar navbar-expand-xl navbar-dark fixed-top shadow-sm transition-all">
         <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="<%= site.routes.home %>">
-                <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="navbar-logo-mark">
-                <span class="brand-full"><%= site.legal_name %></span>
-            </a>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                <a class="navbar-brand fw-bold d-flex align-items-center gap-2 mb-0" href="<%= site.routes.home %>">
+                    <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="navbar-logo-mark">
+                    <span class="brand-full"><%= site.legal_name %></span>
+                    <span class="badge-live-public d-none d-md-inline-flex"><i class="fas fa-circle"></i>Live</span>
+                </a>
+                <a class="nav-link position-relative px-2 <%= activePage === 'cart' ? 'active' : '' %>" href="/cart" title="Cart">
+                    <i class="fas fa-cart-shopping"></i><span class="cart-badge d-none" data-cart-count></span>
+                </a>
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <a class="nav-link nav-link-cta" href="/logout"><i class="fas fa-arrow-right-from-bracket me-1"></i><span class="d-none d-sm-inline">Logout</span></a>
+                <% } else { %>
+                    <a class="nav-link nav-link-cta" href="#" data-open-login><i class="fas fa-right-to-bracket me-1"></i><span class="d-none d-sm-inline">Login / Sign Up</span></a>
+                <% } %>
+            </div>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-lg-center">
+                <ul class="navbar-nav ms-xl-auto align-items-xl-center">
                     <li class="nav-item"><a class="nav-link <%= activePage === 'home' ? 'active' : '' %>" href="<%= site.routes.home %>">Home</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'services' ? 'active' : '' %>" href="<%= site.routes.services %>">Services</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'store' ? 'active' : '' %>" href="/store">Store</a></li>
-                    <li class="nav-item"><a class="nav-link position-relative <%= activePage === 'cart' ? 'active' : '' %>" href="/cart"><i class="fas fa-cart-shopping"></i><span class="cart-badge d-none" data-cart-count></span></a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'contact' ? 'active' : '' %>" href="<%= site.routes.contact %>">Contact</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'about' ? 'active' : '' %>" href="<%= site.routes.about %>">About</a></li>
                     <li class="nav-item d-flex align-items-center">
@@ -20,9 +30,6 @@
                     </li>
                     <% if (typeof user !== 'undefined' && user) { %>
                         <li class="nav-item"><a class="nav-link <%= activePage === 'account' ? 'active' : '' %>" href="/account"><i class="fas fa-user-circle me-1"></i><%= user.name %></a></li>
-                        <li class="nav-item"><a class="nav-link nav-link-cta" href="/logout"><i class="fas fa-arrow-right-from-bracket me-1"></i>Logout</a></li>
-                    <% } else { %>
-                        <li class="nav-item"><a class="nav-link nav-link-cta" href="#" data-open-login><i class="fas fa-right-to-bracket me-1"></i>Login / Sign Up</a></li>
                     <% } %>
                 </ul>
             </div>

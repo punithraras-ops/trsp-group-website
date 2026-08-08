@@ -72,6 +72,54 @@ img {
     box-shadow: 0 10px 30px rgba(6, 16, 27, 0.22);
 }
 
+/* Above the collapse breakpoint: keep the row from ever wrapping mid-line.
+   If it doesn't fit, it collapses to the hamburger menu instead of breaking. */
+@media (min-width: 1200px) {
+    .navbar-nav {
+        flex-wrap: nowrap;
+    }
+
+    .navbar-nav .nav-item {
+        white-space: nowrap;
+    }
+}
+
+/* Below the collapse breakpoint: the open menu needs its own spacing since
+   items stack vertically instead of sitting in a single centered row. */
+@media (max-width: 1199.98px) {
+    .navbar-collapse {
+        padding: 1rem 0 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        margin-top: 0.75rem;
+    }
+
+    .navbar-nav .nav-item {
+        margin-bottom: 0.35rem;
+    }
+
+    .navbar-nav .nav-item.d-flex {
+        justify-content: flex-start;
+    }
+
+    .nav-link-cta {
+        margin-left: 0 !important;
+        display: inline-block;
+    }
+
+    .navbar-collapse .lang-dropdown {
+        width: 100%;
+    }
+
+    .navbar-collapse .lang-dropdown-btn {
+        width: 100%;
+        text-align: left;
+    }
+
+    .navbar-collapse .lang-dropdown-btn span {
+        display: inline !important;
+    }
+}
+
 .navbar-brand {
     font-size: 1.55rem;
     font-weight: 700;
@@ -86,6 +134,31 @@ img {
 .brand-full {
     font-size: 1.15rem;
     line-height: 1.15;
+}
+
+.badge-live-public {
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    line-height: 1;
+}
+
+.badge-live-public i {
+    font-size: 0.5rem;
+    animation: publicLivePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes publicLivePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 
 .nav-link {
