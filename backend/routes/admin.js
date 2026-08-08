@@ -11,6 +11,7 @@ const auditLog = require('../lib/auditLog');
 const coupons = require('../lib/coupons');
 const invoices = require('../lib/invoices');
 const reviews = require('../lib/reviews');
+const { markOrderPaid } = require('../lib/orders');
 const { adminLoginLimiter } = require('../lib/rateLimiters');
 const csrf = require('../lib/csrf');
 
@@ -630,6 +631,35 @@ router.post('/admin/orders/:id/approve', async (req, res) => {
             { $set: { status: 'approved_awaiting_payment', updated_at: new Date() } }
         );
         await logAdminAction(req, 'order.approve', req.params.id);
+    }
+    res.redirect('/admin?tab=orders');
+});
+
+router.post('/admin/orders/:id/confirm-manual-upi', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const order = await db.getDb().collection('orders').findOneAndUpdate(
+            { _id: db.toId(req.params.id), status: 'awaiting_upi_confirmation' },
+            { $set: { status: 'paid', updated_at: new Date() } },
+            { returnDocument: 'after' }
+        );
+        if (order) {
+            const user = await db.getDb().collection('users').findOne({ _id: order.user_id });
+            if (user) {
+                await markOrderPaid(order, { email: user.email, name: user.name, site: res.locals.site });
+            }
+            await logAdminAction(req, 'order.confirm_manual_upi', req.params.id);
+        }
+    }
+    res.redirect('/admin?tab=orders');
+});
+
+router.post('/admin/orders/:id/reject-manual-upi', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('orders').updateOne(
+            { _id: db.toId(req.params.id), status: 'awaiting_upi_confirmation' },
+            { $set: { status: 'failed', updated_at: new Date() } }
+        );
+        await logAdminAction(req, 'order.reject_manual_upi', req.params.id);
     }
     res.redirect('/admin?tab=orders');
 });

@@ -1,13 +1,31 @@
 const express = require('express');
+const QRCode = require('qrcode');
 const db = require('../db');
 const razorpay = require('../lib/razorpay');
 const { requireAuthApi } = require('../lib/auth');
-const mailer = require('../lib/mailer');
 const coupons = require('../lib/coupons');
+const { markOrderPaid } = require('../lib/orders');
 const { checkoutLimiter } = require('../lib/rateLimiters');
 
 const router = express.Router();
 router.use('/api/checkout', checkoutLimiter);
+
+// Personal UPI VPA for the manual-confirmation QR flow. A payment made to this
+// ID never touches this server or Razorpay, so it can't be auto-verified -
+// the customer submits their UTR reference and an admin manually confirms it
+// against their bank statement before the order is marked paid.
+const MANUAL_UPI_ID = 'punithraras-2@okhdfcbank';
+
+function buildUpiUri({ amountPaise, orderId, companyName }) {
+    const params = new URLSearchParams({
+        pa: MANUAL_UPI_ID,
+        pn: companyName || 'Technical of RSP Groups',
+        am: (amountPaise / 100).toFixed(2),
+        cu: 'INR',
+        tn: `Order ${orderId}`,
+    });
+    return `upi://pay?${params.toString()}`;
+}
 
 router.post('/api/checkout/request-approval', requireAuthApi, async (req, res) => {
     if (!db.isDbConfigured()) {
@@ -343,29 +361,167 @@ router.post('/api/checkout/verify', requireAuthApi, async (req, res) => {
         }, { returnDocument: 'after' });
 
         if (order) {
-            if (order.coupon_code) {
-                coupons.incrementUsageByCode(order.coupon_code).catch(() => {});
-            }
-            let items = order.items;
-            if (!items && order.product_id) {
-                const product = await db.getDb().collection('products').findOne({ _id: order.product_id });
-                items = [{ title: product ? product.title : 'Product', quantity: order.quantity || 1, amount_paise: order.amount_paise }];
-            }
-            mailer.sendOrderConfirmation({
-                to: req.user.email,
-                name: req.user.name,
-                items: items || [],
-                totalPaise: order.amount_paise,
-                currency: order.currency,
-                orderId: order._id.toString(),
-                site: res.locals.site,
-            }).catch(() => {});
+            await markOrderPaid(order, { email: req.user.email, name: req.user.name, site: res.locals.site });
         }
 
         res.json({ message: 'Payment verified.' });
     } catch (error) {
         console.error('verify failed:', error.message);
         res.status(500).json({ error: 'Unable to verify payment right now.' });
+    }
+});
+
+router.post('/api/checkout/create-manual-upi-order', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'The store is not enabled yet.' });
+        return;
+    }
+
+    try {
+        let finalAmountPaise;
+        let currency;
+        let localOrderId;
+        let title;
+
+        if (Array.isArray(req.body.items)) {
+            const resolved = await resolveCartItems(req.body.items);
+            if (resolved.error) {
+                res.status(422).json({ error: resolved.error });
+                return;
+            }
+
+            let couponCode = null;
+            let discountPaise = 0;
+            finalAmountPaise = resolved.subtotalPaise;
+            if (req.body.couponCode) {
+                const result = await coupons.validateCoupon(req.body.couponCode, resolved.subtotalPaise);
+                if (result.valid) {
+                    couponCode = result.coupon.code;
+                    discountPaise = result.discountPaise;
+                    finalAmountPaise = Math.max(0, resolved.subtotalPaise - discountPaise);
+                }
+            }
+
+            const orderResult = await db.getDb().collection('orders').insertOne({
+                user_id: db.toId(req.user.id),
+                items: resolved.items,
+                amount_paise: finalAmountPaise,
+                subtotal_paise: resolved.subtotalPaise,
+                discount_paise: discountPaise,
+                coupon_code: couponCode,
+                currency: 'INR',
+                status: 'awaiting_upi_confirmation',
+                payment_method: 'manual_upi',
+                utr_reference: null,
+                delivery_status: 'processing',
+                razorpay_order_id: null,
+                razorpay_payment_id: null,
+                razorpay_signature: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+            });
+            localOrderId = orderResult.insertedId.toString();
+            currency = 'INR';
+            title = resolved.items.length === 1 ? resolved.items[0].title : `${resolved.items.length} items`;
+        } else if (req.body.productId) {
+            const product = await db.getDb().collection('products').findOne({
+                _id: db.toId(req.body.productId),
+                is_active: true,
+            });
+
+            if (!product) {
+                res.status(404).json({ error: 'Product not found.' });
+                return;
+            }
+            if (product.requires_approval) {
+                res.status(422).json({ error: 'This product requires approval before purchase.' });
+                return;
+            }
+
+            let couponCode = null;
+            let discountPaise = 0;
+            finalAmountPaise = product.price_paise;
+            if (req.body.couponCode) {
+                const result = await coupons.validateCoupon(req.body.couponCode, product.price_paise);
+                if (result.valid) {
+                    couponCode = result.coupon.code;
+                    discountPaise = result.discountPaise;
+                    finalAmountPaise = Math.max(0, product.price_paise - discountPaise);
+                }
+            }
+
+            const orderResult = await db.getDb().collection('orders').insertOne({
+                user_id: db.toId(req.user.id),
+                product_id: product._id,
+                quantity: 1,
+                amount_paise: finalAmountPaise,
+                subtotal_paise: product.price_paise,
+                discount_paise: discountPaise,
+                coupon_code: couponCode,
+                currency: product.currency,
+                status: 'awaiting_upi_confirmation',
+                payment_method: 'manual_upi',
+                utr_reference: null,
+                delivery_status: 'processing',
+                razorpay_order_id: null,
+                razorpay_payment_id: null,
+                razorpay_signature: null,
+                created_at: new Date(),
+                updated_at: new Date(),
+            });
+            localOrderId = orderResult.insertedId.toString();
+            currency = product.currency;
+            title = product.title;
+        } else {
+            res.status(422).json({ error: 'Nothing to check out.' });
+            return;
+        }
+
+        const upiUri = buildUpiUri({ amountPaise: finalAmountPaise, orderId: localOrderId, companyName: res.locals.site.company_name });
+        const qrDataUrl = await QRCode.toDataURL(upiUri);
+
+        res.json({
+            orderId: localOrderId,
+            amount: finalAmountPaise,
+            currency,
+            productTitle: title,
+            upiId: MANUAL_UPI_ID,
+            upiUri,
+            qrDataUrl,
+        });
+    } catch (error) {
+        console.error('create-manual-upi-order failed:', error.message);
+        res.status(500).json({ error: 'Unable to start UPI checkout. Please try again.' });
+    }
+});
+
+router.post('/api/checkout/manual-upi/:orderId/submit-utr', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'The store is not enabled yet.' });
+        return;
+    }
+
+    const utr = String(req.body.utr || '').trim();
+    if (!utr || utr.length < 4 || utr.length > 40) {
+        res.status(422).json({ error: 'Enter a valid UPI transaction / UTR reference number.' });
+        return;
+    }
+
+    try {
+        const result = await db.getDb().collection('orders').updateOne(
+            { _id: db.toId(req.params.orderId), user_id: db.toId(req.user.id), status: 'awaiting_upi_confirmation' },
+            { $set: { utr_reference: utr, updated_at: new Date() } }
+        );
+
+        if (result.matchedCount === 0) {
+            res.status(404).json({ error: 'Order not found or already processed.' });
+            return;
+        }
+
+        res.json({ message: "Reference submitted. We'll confirm your payment shortly." });
+    } catch (error) {
+        console.error('submit-utr failed:', error.message);
+        res.status(500).json({ error: 'Unable to submit reference right now.' });
     }
 });
 

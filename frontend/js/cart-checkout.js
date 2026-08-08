@@ -144,6 +144,82 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const payManualUpiBtn = document.getElementById('cartPayManualUpiBtn');
+    const manualUpiPanel = document.getElementById('manualUpiPanel');
+    if (payManualUpiBtn && manualUpiPanel) {
+        const statusBox = document.querySelector('[data-checkout-status]');
+        const showManualStatus = (message, type) => {
+            if (!statusBox) return;
+            statusBox.textContent = message;
+            statusBox.className = `alert alert-${type}`;
+        };
+
+        payManualUpiBtn.addEventListener('click', async () => {
+            payManualUpiBtn.disabled = true;
+            showManualStatus('Generating your UPI QR code...', 'info');
+            try {
+                const createResponse = await fetch('/api/checkout/create-manual-upi-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                    body: JSON.stringify({ items: TrspCart.getCart(), couponCode: appliedCoupon ? appliedCoupon.code : undefined }),
+                });
+                const order = await createResponse.json();
+                if (!createResponse.ok) {
+                    throw new Error(order.error || 'Unable to generate UPI QR code.');
+                }
+
+                manualUpiPanel.classList.remove('d-none');
+                manualUpiPanel.innerHTML = `
+                    <img src="${order.qrDataUrl}" alt="UPI QR Code" style="width:220px;height:220px;">
+                    <p class="mt-2 mb-1"><strong>Scan with any UPI app</strong></p>
+                    <p class="text-muted small mb-1">UPI ID: ${order.upiId}</p>
+                    <p class="fw-bold mb-3">Amount: &#8377;${(order.amount / 100).toLocaleString('en-IN')}</p>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="utrInput" placeholder="Enter UPI transaction / UTR number after paying">
+                        <button class="btn btn-primary" id="submitUtrBtn" type="button">Submit</button>
+                    </div>
+                    <div class="small" id="utrStatus"></div>
+                `;
+                showManualStatus('', 'info');
+
+                document.getElementById('submitUtrBtn').addEventListener('click', async () => {
+                    const utr = document.getElementById('utrInput').value.trim();
+                    const utrStatus = document.getElementById('utrStatus');
+                    if (!utr) {
+                        utrStatus.textContent = 'Please enter your transaction reference number.';
+                        utrStatus.className = 'small text-danger';
+                        return;
+                    }
+                    utrStatus.textContent = 'Submitting...';
+                    utrStatus.className = 'small text-muted';
+                    try {
+                        const submitResponse = await fetch(`/api/checkout/manual-upi/${order.orderId}/submit-utr`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                            body: JSON.stringify({ utr }),
+                        });
+                        const result = await submitResponse.json();
+                        if (!submitResponse.ok) {
+                            throw new Error(result.error || 'Unable to submit reference.');
+                        }
+                        utrStatus.textContent = "Reference submitted! We'll confirm your payment shortly — check your Account page for updates.";
+                        utrStatus.className = 'small text-success';
+                        document.getElementById('utrInput').disabled = true;
+                        document.getElementById('submitUtrBtn').disabled = true;
+                        TrspCart.clearCart();
+                    } catch (error) {
+                        utrStatus.textContent = error.message;
+                        utrStatus.className = 'small text-danger';
+                    }
+                });
+            } catch (error) {
+                showManualStatus(error.message, 'danger');
+            } finally {
+                payManualUpiBtn.disabled = false;
+            }
+        });
+    }
+
     const payBtn = document.getElementById('cartPayBtn');
     const payUpiBtn = document.getElementById('cartPayUpiBtn');
     if ((payBtn || payUpiBtn) && typeof Razorpay !== 'undefined') {

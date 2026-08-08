@@ -27,6 +27,7 @@
     <% } %>
 
     <% const pendingApprovalCount = orders.filter(o => o.status === 'pending_approval').length; %>
+    <% const pendingUpiCount = orders.filter(o => o.status === 'awaiting_upi_confirmation').length; %>
     <% const revenuePaise = orders.filter(o => o.status === 'paid').reduce((sum, o) => sum + (o.amount_paise || 0), 0); %>
     <div class="admin-stats">
         <div class="admin-stat-card" style="animation-delay: 0.02s;">
@@ -50,6 +51,11 @@
             <div class="stat-label">Pending Approvals</div>
         </div>
         <div class="admin-stat-card" style="animation-delay: 0.18s;">
+            <div class="stat-icon"><i class="fas fa-qrcode"></i></div>
+            <div class="stat-value"><%= pendingUpiCount %></div>
+            <div class="stat-label">Pending UPI Confirmations</div>
+        </div>
+        <div class="admin-stat-card" style="animation-delay: 0.22s;">
             <div class="stat-icon"><i class="fas fa-indian-rupee-sign"></i></div>
             <div class="stat-value">&#8377;<%= (revenuePaise / 100).toLocaleString('en-IN') %></div>
             <div class="stat-label">Revenue (Paid)</div>
@@ -133,7 +139,7 @@
                                 <td><%= o.display_title %></td>
                                 <td>&#8377;<%= (o.amount_paise / 100).toLocaleString('en-IN') %></td>
                                 <td>
-                                    <span class="badge bg-<%= o.status === 'paid' ? 'success' : (o.status === 'failed' || o.status === 'rejected' ? 'danger' : (o.status === 'pending_approval' ? 'warning text-dark' : 'secondary')) %>"><%= o.status.replace(/_/g, ' ') %></span>
+                                    <span class="badge bg-<%= o.status === 'paid' ? 'success' : (o.status === 'failed' || o.status === 'rejected' ? 'danger' : ((o.status === 'pending_approval' || o.status === 'awaiting_upi_confirmation') ? 'warning text-dark' : 'secondary')) %>"><%= o.status.replace(/_/g, ' ') %></span>
                                 </td>
                                 <td class="text-nowrap"><%= new Date(o.created_at).toLocaleString('en-IN') %></td>
                                 <td>
@@ -144,6 +150,22 @@
                                                 <button type="submit" class="btn btn-sm btn-success">Approve</button>
                                             </form>
                                             <form method="POST" action="/admin/orders/<%= o.id %>/reject">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                            </form>
+                                        </div>
+                                    <% } else if (o.status === 'awaiting_upi_confirmation') { %>
+                                        <% if (o.utr_reference) { %>
+                                            <div class="small mb-2">UTR: <strong><%= o.utr_reference %></strong> &mdash; check your bank app before confirming.</div>
+                                        <% } else { %>
+                                            <div class="small text-muted mb-2">Customer hasn't submitted a UTR reference yet.</div>
+                                        <% } %>
+                                        <div class="d-flex gap-2">
+                                            <form method="POST" action="/admin/orders/<%= o.id %>/confirm-manual-upi" onsubmit="return confirm('Confirm you have verified this UPI payment in your bank/UPI app? This will mark the order paid and deliver the product.');">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-success">Confirm Paid</button>
+                                            </form>
+                                            <form method="POST" action="/admin/orders/<%= o.id %>/reject-manual-upi" onsubmit="return confirm('Reject this UPI payment claim?');">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
                                             </form>

@@ -105,4 +105,42 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-retry-payment-upi]').forEach((btn) => {
         btn.addEventListener('click', () => retryPayment(btn, btn.dataset.retryPaymentUpi, true));
     });
+
+    document.querySelectorAll('[data-utr-submit-form]').forEach((form) => {
+        const orderId = form.dataset.orderId;
+        const input = form.querySelector('[data-utr-input]');
+        const btn = form.querySelector('[data-utr-submit-btn]');
+        const statusEl = form.parentElement.querySelector('[data-utr-submit-status]');
+
+        btn.addEventListener('click', async () => {
+            const utr = input.value.trim();
+            if (!utr) {
+                statusEl.textContent = 'Please enter your transaction reference number.';
+                statusEl.className = 'small mt-1 text-danger';
+                return;
+            }
+            btn.disabled = true;
+            statusEl.textContent = 'Submitting...';
+            statusEl.className = 'small mt-1 text-muted';
+            try {
+                const response = await fetch(`/api/checkout/manual-upi/${orderId}/submit-utr`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                    body: JSON.stringify({ utr }),
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || 'Unable to submit reference.');
+                }
+                statusEl.textContent = "Reference submitted! We'll confirm your payment shortly.";
+                statusEl.className = 'small mt-1 text-success';
+                input.disabled = true;
+                btn.disabled = true;
+            } catch (error) {
+                statusEl.textContent = error.message;
+                statusEl.className = 'small mt-1 text-danger';
+                btn.disabled = false;
+            }
+        });
+    });
 });

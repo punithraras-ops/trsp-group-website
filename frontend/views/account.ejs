@@ -56,7 +56,7 @@
                                 <td><%= order.display_title %></td>
                                 <td>&#8377;<%= (order.amount_paise / 100).toLocaleString('en-IN') %></td>
                                 <td>
-                                    <span class="badge bg-<%= order.status === 'paid' ? 'success' : (order.status === 'failed' || order.status === 'rejected' ? 'danger' : (order.status === 'pending_approval' ? 'warning text-dark' : 'secondary')) %>"><%= order.status.replace(/_/g, ' ') %></span>
+                                    <span class="badge bg-<%= order.status === 'paid' ? 'success' : (order.status === 'failed' || order.status === 'rejected' ? 'danger' : ((order.status === 'pending_approval' || order.status === 'awaiting_upi_confirmation') ? 'warning text-dark' : 'secondary')) %>"><%= order.status.replace(/_/g, ' ') %></span>
                                 </td>
                                 <td>
                                     <% if (order.status === 'paid') { %>
@@ -76,6 +76,17 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary" data-retry-payment-upi="<%= order.id %>" title="Pay with UPI">
                                             <i class="fas fa-qrcode"></i>
                                         </button>
+                                    <% } %>
+                                    <% if (order.status === 'awaiting_upi_confirmation') { %>
+                                        <% if (order.utr_reference) { %>
+                                            <span class="small text-muted">UTR submitted &mdash; awaiting confirmation</span>
+                                        <% } else { %>
+                                            <div class="input-group input-group-sm" style="max-width: 260px;" data-utr-submit-form data-order-id="<%= order.id %>">
+                                                <input type="text" class="form-control" placeholder="Enter UPI UTR / transaction ID" data-utr-input>
+                                                <button class="btn btn-outline-primary" type="button" data-utr-submit-btn>Submit</button>
+                                            </div>
+                                            <div class="small mt-1" data-utr-submit-status></div>
+                                        <% } %>
                                     <% } %>
                                     <% if (order.status === 'paid') { %>
                                         <a href="/account/orders/<%= order.id %>/invoice" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
