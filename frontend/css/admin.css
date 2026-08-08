@@ -364,8 +364,21 @@ body.admin-page .table tbody tr {
 
 body.admin-page .table-responsive {
     border-radius: var(--admin-radius);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
     box-shadow: var(--admin-shadow);
+}
+
+@media (max-width: 768px) {
+    body.admin-page .table-responsive {
+        border: 1px solid var(--admin-border);
+    }
+
+    body.admin-page .table-responsive table {
+        min-width: 640px;
+    }
 }
 
 /* Badges */
