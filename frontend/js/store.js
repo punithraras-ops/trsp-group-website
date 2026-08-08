@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openReviewsFor(productId, productTitle) {
         currentProductId = productId;
-        titleEl.textContent = `Reviews - ${productTitle}`;
+        titleEl.textContent = `Project Quality Rating - ${productTitle}`;
         modal.show();
         loadReviews(currentProductId);
     }

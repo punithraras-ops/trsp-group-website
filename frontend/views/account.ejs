@@ -91,8 +91,8 @@
                                     <% if (order.status === 'paid') { %>
                                         <a href="/account/orders/<%= order.id %>/invoice" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
                                     <% } %>
-                                    <% if (order.status === 'paid' && order.product_id) { %>
-                                        <a href="/store?review=<%= order.product_id %>&title=<%= encodeURIComponent(order.display_title) %>" class="btn btn-sm btn-outline-warning"><i class="fas fa-star me-1"></i>Review</a>
+                                    <% if (order.status === 'paid' && order.product_id && order.delivery_status === 'delivered') { %>
+                                        <a href="/store?review=<%= order.product_id %>&title=<%= encodeURIComponent(order.display_title) %>" class="btn btn-sm btn-outline-warning"><i class="fas fa-star me-1"></i>Rate this Project</a>
                                     <% } %>
                                     <% if (order.downloadableFiles && order.downloadableFiles.length > 0) { %>
                                         <div class="dropdown d-inline-block">
