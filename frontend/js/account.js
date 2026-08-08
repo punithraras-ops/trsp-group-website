@@ -45,17 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     name: order.companyName,
                     description: order.productTitle,
                     order_id: order.razorpayOrderId,
-                    config: {
-                        display: {
-                            blocks: {
-                                upi: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] },
-                                other: { name: 'Other ways to pay', instruments: [{ method: 'card' }, { method: 'netbanking' }, { method: 'wallet' }] },
-                            },
-                            sequence: ['block.upi', 'block.other'],
-                            preferences: { show_default_blocks: false },
-                        },
-                    },
-                    method: { upi: true, card: true, netbanking: true, wallet: true },
                     handler: async (response) => {
                         showStatus('Verifying payment...', 'info');
                         try {
