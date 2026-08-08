@@ -19,6 +19,8 @@
             </div>
         <% } %>
 
+        <div class="alert d-none" data-retry-status role="status"></div>
+
         <h3 class="fw-bold mt-5 mb-3">My Orders</h3>
         <% if (orders.length === 0) { %>
             <p class="text-muted">You have not placed any orders yet. <a href="/store">Browse the store</a>.</p>
@@ -55,6 +57,11 @@
                                     <% if (order.status === 'approved_awaiting_payment') { %>
                                         <a href="/checkout?product=<%= order.product_id %>" class="btn btn-sm btn-primary">Pay Now</a>
                                     <% } %>
+                                    <% if ((order.status === 'created' || order.status === 'failed') && razorpayConfigured) { %>
+                                        <button type="button" class="btn btn-sm btn-primary" data-retry-payment="<%= order.id %>">
+                                            <i class="fas fa-arrows-rotate me-1"></i><%= order.status === 'failed' ? 'Retry Payment' : 'Complete Payment' %>
+                                        </button>
+                                    <% } %>
                                     <% if (order.status === 'paid') { %>
                                         <a href="/account/orders/<%= order.id %>/invoice" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
                                     <% } %>
@@ -75,7 +82,72 @@
                 </table>
             </div>
         <% } %>
+
+        <h3 class="fw-bold mt-5 mb-3">Account Settings</h3>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Profile</h5>
+                        <% if (typeof profileUpdated !== 'undefined' && profileUpdated) { %>
+                            <div class="alert alert-success py-2">Profile updated.</div>
+                        <% } %>
+                        <form method="POST" action="/account/update-profile">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" name="name" class="form-control" value="<%= user.name %>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" value="<%= user.email %>" disabled>
+                                <div class="form-text">Contact us to change your email address.</div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Save Profile</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Password</h5>
+                        <% if (typeof pwSuccess !== 'undefined' && pwSuccess) { %>
+                            <div class="alert alert-success py-2">Password updated.</div>
+                        <% } %>
+                        <% if (typeof pwError !== 'undefined' && pwError) { %>
+                            <div class="alert alert-danger py-2"><%= pwError %></div>
+                        <% } %>
+                        <% if (user.has_password) { %>
+                            <form method="POST" action="/account/change-password">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <div class="mb-3">
+                                    <label class="form-label">Current Password</label>
+                                    <input type="password" name="current_password" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">New Password</label>
+                                    <input type="password" name="new_password" class="form-control" minlength="8" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Confirm New Password</label>
+                                    <input type="password" name="confirm_password" class="form-control" minlength="8" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Password</button>
+                            </form>
+                        <% } else { %>
+                            <p class="text-muted mb-0">You signed in with Google/GitHub, so there's no password to manage here.</p>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
+
+<% if (razorpayConfigured) { %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<% } %>
+<script src="/js/account.js"></script>
 
 <%- include('partials/footer') %>

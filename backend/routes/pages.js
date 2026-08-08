@@ -333,6 +333,10 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
         orders,
         verified: req.query.verified === '1',
         resent: req.query.resent === '1',
+        profileUpdated: req.query.profileUpdated === '1',
+        pwSuccess: req.query.pwSuccess === '1',
+        pwError: req.query.pwError || '',
+        razorpayConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
     });
 });
 

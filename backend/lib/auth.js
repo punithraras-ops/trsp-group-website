@@ -76,9 +76,9 @@ async function attachUser(req, res, next) {
         if (session) {
             const user = await db.getDb().collection('users').findOne(
                 { _id: session.user_id },
-                { projection: { name: 1, email: 1, email_verified: 1 } }
+                { projection: { name: 1, email: 1, email_verified: 1, password_hash: 1 } }
             );
-            req.user = user ? db.withId(user) : null;
+            req.user = user ? { ...db.withId(user), has_password: Boolean(user.password_hash), password_hash: undefined } : null;
         }
     } catch (error) {
         req.user = null;

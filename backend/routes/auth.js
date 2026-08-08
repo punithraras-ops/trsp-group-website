@@ -1,7 +1,7 @@
 const crypto = require('node:crypto');
 const express = require('express');
 const db = require('../db');
-const { hashPassword, verifyPassword, createSession, destroySession } = require('../lib/auth');
+const { hashPassword, verifyPassword, createSession, destroySession, requireAuthPage } = require('../lib/auth');
 const { google, github, randomState } = require('../lib/oauth');
 const mailer = require('../lib/mailer');
 const { authLimiter } = require('../lib/rateLimiters');
@@ -106,6 +106,56 @@ router.post('/login', async (req, res) => {
 router.get('/logout', async (req, res) => {
     await destroySession(req, res);
     res.redirect('/');
+});
+
+router.post('/account/update-profile', requireAuthPage(), async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.redirect('/account');
+        return;
+    }
+    const name = String(req.body.name || '').trim();
+    if (name) {
+        await db.getDb().collection('users').updateOne(
+            { _id: db.toId(req.user.id) },
+            { $set: { name } }
+        );
+    }
+    res.redirect('/account?profileUpdated=1');
+});
+
+router.post('/account/change-password', requireAuthPage(), async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.redirect('/account');
+        return;
+    }
+
+    const currentPassword = String(req.body.current_password || '');
+    const newPassword = String(req.body.new_password || '');
+    const confirmPassword = String(req.body.confirm_password || '');
+
+    const users = db.getDb().collection('users');
+    const user = await users.findOne({ _id: db.toId(req.user.id) });
+
+    if (!user || !user.password_hash) {
+        res.redirect('/account?pwError=' + encodeURIComponent('Password change is not available for this account.'));
+        return;
+    }
+
+    const valid = await verifyPassword(currentPassword, user.password_hash);
+    if (!valid) {
+        res.redirect('/account?pwError=' + encodeURIComponent('Current password is incorrect.'));
+        return;
+    }
+
+    if (newPassword.length < 8 || newPassword !== confirmPassword) {
+        res.redirect('/account?pwError=' + encodeURIComponent('New passwords must match and be at least 8 characters.'));
+        return;
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+    await users.updateOne({ _id: user._id }, { $set: { password_hash: passwordHash } });
+
+    res.redirect('/account?pwSuccess=1');
 });
 
 router.get('/verify-email/:token', async (req, res) => {

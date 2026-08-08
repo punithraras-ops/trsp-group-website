@@ -362,4 +362,56 @@ router.post('/api/checkout/verify', requireAuthApi, async (req, res) => {
     }
 });
 
+router.post('/api/checkout/retry/:orderId', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured() || !razorpay.isConfigured()) {
+        res.status(503).json({ error: 'Payments are not enabled yet.' });
+        return;
+    }
+
+    try {
+        const order = await db.getDb().collection('orders').findOne({
+            _id: db.toId(req.params.orderId),
+            user_id: db.toId(req.user.id),
+            status: { $in: ['created', 'failed'] },
+        });
+
+        if (!order) {
+            res.status(404).json({ error: 'This order can no longer be retried.' });
+            return;
+        }
+
+        // The original Razorpay order was abandoned/failed - start a fresh one
+        // with the same amount rather than trying to resume a stale one.
+        const razorpayOrder = await razorpay.createOrder({
+            amountPaise: order.amount_paise,
+            currency: order.currency,
+            receipt: `order_${order._id.toString()}_retry_${Date.now()}`,
+        });
+
+        await db.getDb().collection('orders').updateOne(
+            { _id: order._id },
+            { $set: { razorpay_order_id: razorpayOrder.id, status: 'created', updated_at: new Date() } }
+        );
+
+        let title;
+        if (order.items && order.items.length > 0) {
+            title = order.items.length === 1 ? order.items[0].title : `${order.items.length} items`;
+        } else {
+            const product = await db.getDb().collection('products').findOne({ _id: order.product_id });
+            title = product ? product.title : 'Order';
+        }
+
+        res.json({
+            razorpayOrderId: razorpayOrder.id,
+            amount: order.amount_paise,
+            currency: order.currency,
+            key: process.env.RAZORPAY_KEY_ID,
+            companyName: res.locals.site.company_name,
+            productTitle: title,
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Unable to retry payment right now.' });
+    }
+});
+
 module.exports = router;
