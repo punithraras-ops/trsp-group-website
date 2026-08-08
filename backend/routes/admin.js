@@ -337,6 +337,17 @@ router.post('/admin/products/:id/update', async (req, res) => {
     res.redirect('/admin?tab=products');
 });
 
+router.post('/admin/products/bulk-disable-approval', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const result = await db.getDb().collection('products').updateMany(
+            {},
+            { $set: { requires_approval: false } }
+        );
+        await logAdminAction(req, 'product.bulk_disable_approval', `${result.modifiedCount} products`);
+    }
+    res.redirect('/admin?tab=products');
+});
+
 router.post('/admin/products/:id/images', upload.array('files', 10), csrf.verifyAfterUpload, async (req, res) => {
     if (db.isDbConfigured() && req.files && req.files.length > 0) {
         const products = db.getDb().collection('products');

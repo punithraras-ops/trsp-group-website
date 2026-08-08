@@ -2,7 +2,7 @@
 <body class="admin-page" style="--admin-bg: <%= design.adminBackground %>;">
 
 <div class="admin-topbar">
-    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
             <h1><i class="fas fa-gauge-high me-2 text-primary" style="color: var(--admin-accent) !important;"></i>Admin Dashboard<span class="badge-live"><i class="fas fa-circle"></i>Live</span></h1>
         </div>
@@ -20,7 +20,7 @@
 </div>
 
 <main class="admin-page-main">
-<div class="container pb-5">
+<div class="container-fluid px-4 pb-5">
 
     <% if (!dbConfigured) { %>
         <div class="alert alert-warning">MONGODB_URI is not configured. User accounts, orders, products, and upcoming features are unavailable until it is set. Contact submissions below are read from the database once it is configured.</div>
@@ -260,6 +260,16 @@
         <div class="tab-pane fade" id="tab-products">
             <h3 class="mb-3">Products</h3>
             <p class="text-muted">Each product can have up to 10 images. Uploading images is optional — add as many or as few as you need.</p>
+
+            <% if (products.some(p => p.requires_approval)) { %>
+                <div class="alert alert-secondary d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+                    <span><i class="fas fa-bolt me-2"></i>Skip manual approval for every product (any price) so customers go straight to payment.</span>
+                    <form method="POST" action="/admin/products/bulk-disable-approval" onsubmit="return confirm('Turn off \'Requires Approval\' for ALL products, regardless of price? Customers will be able to buy instantly.');">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-sm btn-primary">Enable instant checkout for all products</button>
+                    </form>
+                </div>
+            <% } %>
 
             <% products.forEach(p => { %>
                 <div class="card mb-3 border-0 shadow-sm rounded-4">
