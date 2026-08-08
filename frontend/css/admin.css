@@ -10,8 +10,8 @@ body.admin-page {
     --admin-text: #1e293b;
     --admin-text-muted: #64748b;
     --admin-radius: 16px;
-    --admin-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.05);
-    --admin-shadow-hover: 0 4px 10px rgba(79, 70, 229, 0.08), 0 20px 40px rgba(79, 70, 229, 0.14);
+    --admin-shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 26px rgba(15, 23, 42, 0.07);
+    --admin-shadow-hover: 0 6px 14px rgba(79, 70, 229, 0.12), 0 26px 48px rgba(79, 70, 229, 0.2);
 
     background:
         radial-gradient(circle at 12% 8%, color-mix(in srgb, var(--admin-bg, #eef1f5) 55%, white 45%), transparent 32%),
@@ -96,61 +96,86 @@ body.admin-page h6 {
     50% { opacity: 0.35; }
 }
 
-/* Buttons */
+/* Buttons — bold 3D depth, matching the public site's button treatment */
 .admin-btn,
 body.admin-page .btn {
     border-radius: 10px;
     font-weight: 600;
     letter-spacing: 0.01em;
-    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, filter 0.15s ease;
 }
 
 body.admin-page .btn:hover {
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 body.admin-page .btn:active {
     transform: translateY(1px);
+    filter: brightness(0.97);
 }
 
 body.admin-page .btn-primary {
     background: linear-gradient(180deg, color-mix(in srgb, var(--admin-accent) 100%, white 22%), var(--admin-accent) 60%, var(--admin-accent-dark));
     border-color: var(--admin-accent-dark);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 -2px 4px rgba(0, 0, 0, 0.15) inset, 0 4px 10px rgba(79, 70, 229, 0.22);
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.4) inset, 0 -3px 6px rgba(0, 0, 0, 0.18) inset, 0 14px 28px rgba(79, 70, 229, 0.3);
 }
 
 body.admin-page .btn-primary:hover {
     background: linear-gradient(180deg, color-mix(in srgb, var(--admin-accent-dark) 100%, white 15%), var(--admin-accent-dark));
     border-color: var(--admin-accent-dark);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 6px 16px rgba(79, 70, 229, 0.32);
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.35) inset, 0 -3px 6px rgba(0, 0, 0, 0.2) inset, 0 18px 36px rgba(79, 70, 229, 0.4);
 }
 
 body.admin-page .btn-primary:active {
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) inset;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 2px 4px rgba(0, 0, 0, 0.25) inset, 0 6px 14px rgba(79, 70, 229, 0.3);
 }
 
 body.admin-page .btn-outline-primary {
     color: var(--admin-accent);
     border-color: var(--admin-accent);
     background: linear-gradient(180deg, #ffffff, var(--admin-surface-alt));
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
 body.admin-page .btn-outline-primary:hover {
     background: linear-gradient(180deg, color-mix(in srgb, var(--admin-accent) 100%, white 15%), var(--admin-accent));
     border-color: var(--admin-accent);
     color: #fff;
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.25);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 14px 30px rgba(79, 70, 229, 0.32);
+}
+
+body.admin-page .btn-outline-primary:active {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) inset;
 }
 
 body.admin-page .btn-success {
     background: linear-gradient(180deg, #4ade80, #16a34a 60%, #15803d);
     border-color: #15803d;
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35) inset, 0 4px 10px rgba(22, 163, 74, 0.25);
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.4) inset, 0 -3px 6px rgba(0, 0, 0, 0.15) inset, 0 12px 26px rgba(22, 163, 74, 0.32);
+}
+
+body.admin-page .btn-success:hover {
+    box-shadow: 0 2px 0 rgba(255, 255, 255, 0.35) inset, 0 -3px 6px rgba(0, 0, 0, 0.18) inset, 0 16px 34px rgba(22, 163, 74, 0.4);
+}
+
+body.admin-page .btn-success:active {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 2px 4px rgba(0, 0, 0, 0.25) inset, 0 6px 14px rgba(22, 163, 74, 0.3);
+}
+
+body.admin-page .btn-outline-danger {
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.12);
 }
 
 body.admin-page .btn-outline-danger:hover {
-    box-shadow: 0 6px 14px rgba(220, 38, 38, 0.22);
+    box-shadow: 0 14px 28px rgba(220, 38, 38, 0.28);
+}
+
+body.admin-page .btn-outline-secondary {
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset, 0 4px 10px rgba(15, 23, 42, 0.08);
+}
+
+body.admin-page .btn-outline-secondary:hover {
+    box-shadow: 0 14px 26px rgba(15, 23, 42, 0.16);
 }
 
 /* Stat tiles */
@@ -265,6 +290,7 @@ body.admin-page .card {
 
 body.admin-page .card:hover {
     box-shadow: var(--admin-shadow-hover);
+    transform: translateY(-3px);
 }
 
 /* Tables */

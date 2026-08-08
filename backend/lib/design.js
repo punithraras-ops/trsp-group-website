@@ -12,9 +12,15 @@ const DEFAULT_COLORS = {
     card_background_color: '#ffffff',
 };
 
+const ADMIN_BUTTON_SLOTS = [
+    'admin_btn_siteinfo', 'admin_btn_sitedesign', 'admin_btn_legal',
+    'admin_btn_coupons', 'admin_btn_auditlog', 'admin_btn_security', 'admin_btn_logout',
+];
+
 const IMAGE_SLOTS = [
     'logo', 'favicon', 'hero_background', 'team_photo', 'page_background', 'services_background', 'button_background',
     'nav_home_bg', 'nav_services_bg', 'nav_store_bg', 'nav_contact_bg', 'nav_about_bg', 'nav_language_bg', 'nav_login_bg', 'service_cta_bg',
+    ...ADMIN_BUTTON_SLOTS,
 ];
 const DEFAULT_ADMIN_BG = '#eef1f5';
 
@@ -34,8 +40,9 @@ async function getDesignSettings() {
     }
 
     const adminBackground = (doc && doc.admin_bg_color) || DEFAULT_ADMIN_BG;
+    const adminButtonColors = (doc && doc.admin_button_colors) || {};
 
-    return { colors, images, adminBackground };
+    return { colors, images, adminBackground, adminButtonColors };
 }
 
 async function saveAdminBackground(color) {
@@ -57,6 +64,27 @@ async function saveColors(colors) {
         { _id: CONFIG_ID },
         { $set: { ...update, updated_at: new Date() } },
         { upsert: true }
+    );
+}
+
+async function saveAdminButtonColor(slot, color) {
+    if (!ADMIN_BUTTON_SLOTS.includes(slot)) {
+        throw new Error(`Unknown admin button slot: ${slot}`);
+    }
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $set: { [`admin_button_colors.${slot}`]: color, updated_at: new Date() } },
+        { upsert: true }
+    );
+}
+
+async function removeAdminButtonColor(slot) {
+    if (!ADMIN_BUTTON_SLOTS.includes(slot)) {
+        throw new Error(`Unknown admin button slot: ${slot}`);
+    }
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $unset: { [`admin_button_colors.${slot}`]: '' }, $set: { updated_at: new Date() } }
     );
 }
 
@@ -93,4 +121,16 @@ async function removeImage(slot) {
     }
 }
 
-module.exports = { getDesignSettings, saveColors, saveImageRef, removeImage, saveAdminBackground, DEFAULT_COLORS, IMAGE_SLOTS, DEFAULT_ADMIN_BG };
+module.exports = {
+    getDesignSettings,
+    saveColors,
+    saveImageRef,
+    removeImage,
+    saveAdminBackground,
+    saveAdminButtonColor,
+    removeAdminButtonColor,
+    DEFAULT_COLORS,
+    IMAGE_SLOTS,
+    ADMIN_BUTTON_SLOTS,
+    DEFAULT_ADMIN_BG,
+};

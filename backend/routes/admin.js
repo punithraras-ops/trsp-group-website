@@ -724,6 +724,24 @@ router.post('/admin/design/admin-theme', async (req, res) => {
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Admin panel appearance updated.' });
 });
 
+router.post('/admin/design/admin-button-color/:slot', async (req, res) => {
+    if (db.isDbConfigured() && design.ADMIN_BUTTON_SLOTS.includes(req.params.slot) && req.body.color) {
+        await design.saveAdminButtonColor(req.params.slot, req.body.color);
+        await logAdminAction(req, 'design.admin_button_color', req.params.slot);
+    }
+    const settings = await design.getDesignSettings();
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Button color updated.' });
+});
+
+router.post('/admin/design/admin-button-color/:slot/remove', async (req, res) => {
+    if (db.isDbConfigured() && design.ADMIN_BUTTON_SLOTS.includes(req.params.slot)) {
+        await design.removeAdminButtonColor(req.params.slot);
+        await logAdminAction(req, 'design.admin_button_color_remove', req.params.slot);
+    }
+    const settings = await design.getDesignSettings();
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Button color reset.' });
+});
+
 router.get('/admin/site-info', async (req, res) => {
     const currentSite = await siteInfo.getMergedSite();
     res.render('admin-site-info', { site: currentSite, error: '', message: '' });
