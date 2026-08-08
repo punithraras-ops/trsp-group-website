@@ -1,9 +1,19 @@
+const crypto = require('node:crypto');
 const express = require('express');
 const db = require('../db');
 const { hashPassword, verifyPassword, createSession, destroySession } = require('../lib/auth');
 const { google, github, randomState } = require('../lib/oauth');
+const mailer = require('../lib/mailer');
+const { authLimiter } = require('../lib/rateLimiters');
 
 const router = express.Router();
+router.use(['/signup', '/login', '/forgot-password', '/reset-password'], authLimiter);
+const VERIFY_TOKEN_HOURS = 24;
+const RESET_TOKEN_MINUTES = 30;
+
+function makeToken() {
+    return crypto.randomBytes(24).toString('hex');
+}
 
 function safeRedirect(value) {
     if (typeof value === 'string' && value.startsWith('/') && !value.startsWith('//')) {
@@ -40,12 +50,23 @@ router.post('/signup', async (req, res) => {
         }
 
         const passwordHash = await hashPassword(password);
+        const verifyToken = makeToken();
         const result = await users.insertOne({
             name,
             email,
             password_hash: passwordHash,
+            email_verified: false,
+            verify_token: verifyToken,
+            verify_token_expires: new Date(Date.now() + VERIFY_TOKEN_HOURS * 60 * 60 * 1000),
             created_at: new Date(),
         });
+
+        mailer.sendVerificationEmail({
+            to: email,
+            name,
+            verifyUrl: `${res.locals.site.site_url}/verify-email/${verifyToken}`,
+            site: res.locals.site,
+        }).catch(() => {});
 
         await createSession(res, result.insertedId);
         res.redirect(safeRedirect(redirect));
@@ -87,6 +108,149 @@ router.get('/logout', async (req, res) => {
     res.redirect('/');
 });
 
+router.get('/verify-email/:token', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        return back(res, '/account', 'Accounts are not available yet. Please try again later.');
+    }
+    try {
+        const users = db.getDb().collection('users');
+        const user = await users.findOne({ verify_token: req.params.token, verify_token_expires: { $gt: new Date() } });
+        if (!user) {
+            return back(res, '/account', 'That verification link is invalid or has expired. Please request a new one.');
+        }
+        await users.updateOne(
+            { _id: user._id },
+            { $set: { email_verified: true }, $unset: { verify_token: '', verify_token_expires: '' } }
+        );
+        res.redirect('/account?verified=1');
+    } catch (error) {
+        back(res, '/account', 'Something went wrong verifying your email.');
+    }
+});
+
+router.get('/resend-verification', async (req, res) => {
+    if (!req.user || !db.isDbConfigured()) {
+        res.redirect('/');
+        return;
+    }
+    try {
+        const users = db.getDb().collection('users');
+        const user = await users.findOne({ _id: db.toId(req.user.id) });
+        if (user && !user.email_verified) {
+            const verifyToken = makeToken();
+            await users.updateOne(
+                { _id: user._id },
+                { $set: { verify_token: verifyToken, verify_token_expires: new Date(Date.now() + VERIFY_TOKEN_HOURS * 60 * 60 * 1000) } }
+            );
+            mailer.sendVerificationEmail({
+                to: user.email,
+                name: user.name,
+                verifyUrl: `${res.locals.site.site_url}/verify-email/${verifyToken}`,
+                site: res.locals.site,
+            }).catch(() => {});
+        }
+    } catch (error) {
+        // ignore
+    }
+    res.redirect('/account?resent=1');
+});
+
+router.get('/forgot-password', (req, res) => {
+    const site = res.locals.site;
+    res.render('forgot-password', {
+        pageTitle: `${site.short_name} - Forgot Password`,
+        pageDescription: 'Reset your account password.',
+        activePage: '',
+        message: '',
+        error: '',
+    });
+});
+
+router.post('/forgot-password', async (req, res) => {
+    const site = res.locals.site;
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const genericMessage = 'If an account exists for that email, a password reset link has been sent.';
+
+    if (db.isDbConfigured() && email) {
+        try {
+            const users = db.getDb().collection('users');
+            const user = await users.findOne({ email, password_hash: { $exists: true } });
+            if (user) {
+                const resetToken = makeToken();
+                await users.updateOne(
+                    { _id: user._id },
+                    { $set: { reset_token: resetToken, reset_token_expires: new Date(Date.now() + RESET_TOKEN_MINUTES * 60 * 1000) } }
+                );
+                mailer.sendPasswordResetEmail({
+                    to: user.email,
+                    name: user.name,
+                    resetUrl: `${site.site_url}/reset-password/${resetToken}`,
+                    site,
+                }).catch(() => {});
+            }
+        } catch (error) {
+            // fall through to generic message regardless
+        }
+    }
+
+    res.render('forgot-password', {
+        pageTitle: `${site.short_name} - Forgot Password`,
+        pageDescription: 'Reset your account password.',
+        activePage: '',
+        message: genericMessage,
+        error: '',
+    });
+});
+
+router.get('/reset-password/:token', async (req, res) => {
+    const site = res.locals.site;
+    let valid = false;
+    if (db.isDbConfigured()) {
+        const user = await db.getDb().collection('users').findOne({
+            reset_token: req.params.token,
+            reset_token_expires: { $gt: new Date() },
+        });
+        valid = Boolean(user);
+    }
+    res.render('reset-password', {
+        pageTitle: `${site.short_name} - Reset Password`,
+        pageDescription: 'Choose a new password.',
+        activePage: '',
+        token: req.params.token,
+        valid,
+        error: '',
+    });
+});
+
+router.post('/reset-password/:token', async (req, res) => {
+    const site = res.locals.site;
+    const password = String(req.body.password || '');
+    const confirmPassword = String(req.body.confirm_password || '');
+
+    if (!db.isDbConfigured()) {
+        return res.render('reset-password', { pageTitle: `${site.short_name} - Reset Password`, pageDescription: 'Choose a new password.', activePage: '', token: req.params.token, valid: false, error: 'Accounts are not available yet.' });
+    }
+
+    const users = db.getDb().collection('users');
+    const user = await users.findOne({ reset_token: req.params.token, reset_token_expires: { $gt: new Date() } });
+
+    if (!user) {
+        return res.render('reset-password', { pageTitle: `${site.short_name} - Reset Password`, pageDescription: 'Choose a new password.', activePage: '', token: req.params.token, valid: false, error: 'This reset link is invalid or has expired. Please request a new one.' });
+    }
+
+    if (password.length < 8 || password !== confirmPassword) {
+        return res.render('reset-password', { pageTitle: `${site.short_name} - Reset Password`, pageDescription: 'Choose a new password.', activePage: '', token: req.params.token, valid: true, error: 'Passwords must match and be at least 8 characters.' });
+    }
+
+    const passwordHash = await hashPassword(password);
+    await users.updateOne(
+        { _id: user._id },
+        { $set: { password_hash: passwordHash }, $unset: { reset_token: '', reset_token_expires: '' } }
+    );
+
+    res.redirect('/?openLogin=1&authError=' + encodeURIComponent('Password updated. Please log in.'));
+});
+
 async function findOrCreateOAuthUser({ provider, providerId, email, name }) {
     const field = provider === 'google' ? 'google_id' : 'github_id';
     const users = db.getDb().collection('users');
@@ -106,6 +270,7 @@ async function findOrCreateOAuthUser({ provider, providerId, email, name }) {
         name,
         email,
         [field]: providerId,
+        email_verified: true,
         created_at: new Date(),
     });
     return { _id: result.insertedId, name, email, [field]: providerId };

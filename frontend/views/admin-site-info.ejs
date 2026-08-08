@@ -80,6 +80,11 @@
                         <textarea name="default_description" class="form-control" rows="2"><%= site.default_description %></textarea>
                         <div class="form-text">Used by: search engines and social media link previews (not visible on the page itself)</div>
                     </div>
+                    <div class="col-12">
+                        <label class="form-label">Google Analytics Measurement ID (optional)</label>
+                        <input type="text" name="analytics_id" class="form-control" value="<%= site.analytics_id || '' %>" placeholder="G-XXXXXXXXXX">
+                        <div class="form-text">From your Google Analytics 4 property (Admin &rarr; Data Streams). Leave blank to disable visitor tracking.</div>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary mt-4">Save Site Info</button>
             </form>

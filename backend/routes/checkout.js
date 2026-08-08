@@ -2,8 +2,12 @@ const express = require('express');
 const db = require('../db');
 const razorpay = require('../lib/razorpay');
 const { requireAuthApi } = require('../lib/auth');
+const mailer = require('../lib/mailer');
+const coupons = require('../lib/coupons');
+const { checkoutLimiter } = require('../lib/rateLimiters');
 
 const router = express.Router();
+router.use('/api/checkout', checkoutLimiter);
 
 router.post('/api/checkout/request-approval', requireAuthApi, async (req, res) => {
     if (!db.isDbConfigured()) {
@@ -56,6 +60,85 @@ router.post('/api/checkout/request-approval', requireAuthApi, async (req, res) =
     }
 });
 
+// Fetches active products for a set of cart line items and computes the
+// server-verified subtotal - client-supplied prices are never trusted.
+async function resolveCartItems(rawItems) {
+    const ids = rawItems
+        .filter(item => item && item.productId)
+        .map(item => ({ id: item.productId, quantity: Math.max(1, Math.min(20, parseInt(item.quantity, 10) || 1)) }));
+
+    if (ids.length === 0) {
+        return { error: 'Your cart is empty.' };
+    }
+
+    const products = await db.getDb().collection('products')
+        .find({ _id: { $in: ids.map(i => db.toId(i.id)) }, is_active: true })
+        .toArray();
+
+    const byId = new Map(products.map(p => [p._id.toString(), p]));
+    const items = [];
+    let subtotalPaise = 0;
+
+    for (const { id, quantity } of ids) {
+        const product = byId.get(id);
+        if (!product) {
+            return { error: 'One of the items in your cart is no longer available.' };
+        }
+        if (product.requires_approval) {
+            return { error: `"${product.title}" requires approval and can't be bought via the cart. Please purchase it separately from its product page.` };
+        }
+        const lineTotal = product.price_paise * quantity;
+        subtotalPaise += lineTotal;
+        items.push({ product_id: product._id, title: product.title, quantity, amount_paise: lineTotal, unit_price_paise: product.price_paise });
+    }
+
+    return { items, subtotalPaise };
+}
+
+router.post('/api/checkout/apply-coupon', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'The store is not enabled yet.' });
+        return;
+    }
+
+    try {
+        let subtotalPaise;
+
+        if (Array.isArray(req.body.items)) {
+            const resolved = await resolveCartItems(req.body.items);
+            if (resolved.error) {
+                res.status(422).json({ error: resolved.error });
+                return;
+            }
+            subtotalPaise = resolved.subtotalPaise;
+        } else if (req.body.productId) {
+            const product = await db.getDb().collection('products').findOne({ _id: db.toId(req.body.productId), is_active: true });
+            if (!product || product.requires_approval) {
+                res.status(422).json({ error: 'Coupon not applicable to this item.' });
+                return;
+            }
+            subtotalPaise = product.price_paise;
+        } else {
+            res.status(422).json({ error: 'Nothing to apply the coupon to.' });
+            return;
+        }
+
+        const result = await coupons.validateCoupon(req.body.code, subtotalPaise);
+        if (!result.valid) {
+            res.status(422).json({ error: result.error });
+            return;
+        }
+
+        res.json({
+            valid: true,
+            discountPaise: result.discountPaise,
+            finalAmountPaise: subtotalPaise - result.discountPaise,
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Unable to apply coupon right now.' });
+    }
+});
+
 router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
     if (!db.isDbConfigured() || !razorpay.isConfigured()) {
         res.status(503).json({ error: 'Payments are not enabled yet.' });
@@ -79,6 +162,9 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
         }
 
         let localOrderId;
+        let couponCode = null;
+        let discountPaise = 0;
+        let finalAmountPaise = product.price_paise;
 
         if (product.requires_approval) {
             const approved = await db.getDb().collection('orders').findOne({
@@ -93,12 +179,25 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
             }
 
             localOrderId = approved._id.toString();
+            finalAmountPaise = approved.amount_paise;
         } else {
+            if (req.body.couponCode) {
+                const result = await coupons.validateCoupon(req.body.couponCode, product.price_paise);
+                if (result.valid) {
+                    couponCode = result.coupon.code;
+                    discountPaise = result.discountPaise;
+                    finalAmountPaise = Math.max(0, product.price_paise - discountPaise);
+                }
+            }
+
             const orderResult = await db.getDb().collection('orders').insertOne({
                 user_id: db.toId(req.user.id),
                 product_id: product._id,
                 quantity: 1,
-                amount_paise: product.price_paise,
+                amount_paise: finalAmountPaise,
+                subtotal_paise: product.price_paise,
+                discount_paise: discountPaise,
+                coupon_code: couponCode,
                 currency: product.currency,
                 status: 'created',
                 delivery_status: 'processing',
@@ -112,7 +211,7 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
         }
 
         const razorpayOrder = await razorpay.createOrder({
-            amountPaise: product.price_paise,
+            amountPaise: finalAmountPaise,
             currency: product.currency,
             receipt: `order_${localOrderId}`,
         });
@@ -124,11 +223,79 @@ router.post('/api/checkout/create-order', requireAuthApi, async (req, res) => {
 
         res.json({
             razorpayOrderId: razorpayOrder.id,
-            amount: product.price_paise,
+            amount: finalAmountPaise,
             currency: product.currency,
             key: process.env.RAZORPAY_KEY_ID,
             companyName: res.locals.site.company_name,
             productTitle: product.title,
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Unable to start checkout. Please try again.' });
+    }
+});
+
+router.post('/api/checkout/create-cart-order', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured() || !razorpay.isConfigured()) {
+        res.status(503).json({ error: 'Payments are not enabled yet.' });
+        return;
+    }
+
+    try {
+        const resolved = await resolveCartItems(req.body.items);
+        if (resolved.error) {
+            res.status(422).json({ error: resolved.error });
+            return;
+        }
+
+        let couponCode = null;
+        let discountPaise = 0;
+        let finalAmountPaise = resolved.subtotalPaise;
+
+        if (req.body.couponCode) {
+            const result = await coupons.validateCoupon(req.body.couponCode, resolved.subtotalPaise);
+            if (result.valid) {
+                couponCode = result.coupon.code;
+                discountPaise = result.discountPaise;
+                finalAmountPaise = Math.max(0, resolved.subtotalPaise - discountPaise);
+            }
+        }
+
+        const orderResult = await db.getDb().collection('orders').insertOne({
+            user_id: db.toId(req.user.id),
+            items: resolved.items,
+            amount_paise: finalAmountPaise,
+            subtotal_paise: resolved.subtotalPaise,
+            discount_paise: discountPaise,
+            coupon_code: couponCode,
+            currency: 'INR',
+            status: 'created',
+            delivery_status: 'processing',
+            razorpay_order_id: null,
+            razorpay_payment_id: null,
+            razorpay_signature: null,
+            created_at: new Date(),
+            updated_at: new Date(),
+        });
+        const localOrderId = orderResult.insertedId.toString();
+
+        const razorpayOrder = await razorpay.createOrder({
+            amountPaise: finalAmountPaise,
+            currency: 'INR',
+            receipt: `order_${localOrderId}`,
+        });
+
+        await db.getDb().collection('orders').updateOne(
+            { _id: orderResult.insertedId },
+            { $set: { razorpay_order_id: razorpayOrder.id, updated_at: new Date() } }
+        );
+
+        res.json({
+            razorpayOrderId: razorpayOrder.id,
+            amount: finalAmountPaise,
+            currency: 'INR',
+            key: process.env.RAZORPAY_KEY_ID,
+            companyName: res.locals.site.company_name,
+            productTitle: resolved.items.length === 1 ? resolved.items[0].title : `${resolved.items.length} items`,
         });
     } catch (error) {
         res.status(500).json({ error: 'Unable to start checkout. Please try again.' });
@@ -160,14 +327,34 @@ router.post('/api/checkout/verify', requireAuthApi, async (req, res) => {
             return;
         }
 
-        await orders.updateOne(filter, {
+        const order = await orders.findOneAndUpdate(filter, {
             $set: {
                 status: 'paid',
                 razorpay_payment_id: paymentId,
                 razorpay_signature: signature,
                 updated_at: new Date(),
             },
-        });
+        }, { returnDocument: 'after' });
+
+        if (order) {
+            if (order.coupon_code) {
+                coupons.incrementUsageByCode(order.coupon_code).catch(() => {});
+            }
+            let items = order.items;
+            if (!items && order.product_id) {
+                const product = await db.getDb().collection('products').findOne({ _id: order.product_id });
+                items = [{ title: product ? product.title : 'Product', quantity: order.quantity || 1, amount_paise: order.amount_paise }];
+            }
+            mailer.sendOrderConfirmation({
+                to: req.user.email,
+                name: req.user.name,
+                items: items || [],
+                totalPaise: order.amount_paise,
+                currency: order.currency,
+                orderId: order._id.toString(),
+                site: res.locals.site,
+            }).catch(() => {});
+        }
 
         res.json({ message: 'Payment verified.' });
     } catch (error) {

@@ -5,12 +5,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const statusBox = document.querySelector('[data-checkout-status]');
+    let appliedCouponCode = null;
 
     const showStatus = (message, type) => {
         if (!statusBox) return;
         statusBox.textContent = message;
         statusBox.className = `alert alert-${type}`;
     };
+
+    const applyCouponBtn = document.getElementById('applyCouponBtn');
+    if (applyCouponBtn) {
+        applyCouponBtn.addEventListener('click', async () => {
+            const code = document.getElementById('couponInput').value.trim();
+            const couponStatus = document.getElementById('couponStatus');
+            if (!code) return;
+            couponStatus.textContent = 'Checking coupon...';
+            couponStatus.className = 'small mb-3 text-muted';
+            try {
+                const response = await fetch('/api/checkout/apply-coupon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId: payButton.dataset.productId, code }),
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || 'Invalid coupon.');
+                }
+                appliedCouponCode = code;
+                couponStatus.textContent = `Coupon applied! New total: ₹${(result.finalAmountPaise / 100).toLocaleString('en-IN')}`;
+                couponStatus.className = 'small mb-3 text-success';
+            } catch (error) {
+                appliedCouponCode = null;
+                couponStatus.textContent = error.message;
+                couponStatus.className = 'small mb-3 text-danger';
+            }
+        });
+    }
 
     payButton.addEventListener('click', async () => {
         payButton.disabled = true;
@@ -20,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const createResponse = await fetch('/api/checkout/create-order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId: payButton.dataset.productId }),
+                body: JSON.stringify({ productId: payButton.dataset.productId, couponCode: appliedCouponCode || undefined }),
             });
             const order = await createResponse.json();
 

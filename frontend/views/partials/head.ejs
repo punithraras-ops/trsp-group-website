@@ -10,6 +10,16 @@
     <link rel="apple-touch-icon" href="<%= design.images.favicon || '/img/apple-touch-icon.png' %>">
     <link rel="canonical" href="<%= site.site_url + currentPath %>">
 
+    <% if (site.analytics_id) { %>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<%= site.analytics_id %>"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '<%= site.analytics_id %>');
+    </script>
+    <% } %>
+
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="<%= site.legal_name %>">
     <meta property="og:title" content="<%= pageTitle %>">

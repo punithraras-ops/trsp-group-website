@@ -1,5 +1,7 @@
 const express = require('express');
 const db = require('../db');
+const mailer = require('../lib/mailer');
+const { contactLimiter } = require('../lib/rateLimiters');
 
 const router = express.Router();
 
@@ -22,7 +24,7 @@ function validateSubmission(payload) {
     return { ok: true, data: { name, email, phone, service, message } };
 }
 
-router.post('/api/contact', async (req, res) => {
+router.post('/api/contact', contactLimiter, async (req, res) => {
     if (!db.isDbConfigured()) {
         res.status(503).json({ error: 'The contact form is temporarily unavailable. Please email us directly.' });
         return;
@@ -39,6 +41,7 @@ router.post('/api/contact', async (req, res) => {
             ...validation.data,
             created_at: new Date(),
         });
+        mailer.sendContactAlert({ ...validation.data, site: res.locals.site }).catch(() => {});
         res.status(201).json({ message: 'Message received successfully.' });
     } catch (error) {
         res.status(500).json({ error: 'Unable to save your message right now.' });

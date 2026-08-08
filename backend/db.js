@@ -40,6 +40,11 @@ async function connect() {
             db.collection('services').createIndex({ slug: 1 }, { unique: true }),
             db.collection('orders').createIndex({ user_id: 1 }),
             db.collection('upcoming_features').createIndex({ is_active: 1, sort_order: 1 }),
+            db.collection('users').createIndex({ reset_token: 1 }, { sparse: true }),
+            db.collection('users').createIndex({ verify_token: 1 }, { sparse: true }),
+            db.collection('reviews').createIndex({ product_id: 1 }),
+            db.collection('coupons').createIndex({ code: 1 }, { unique: true }),
+            db.collection('admin_audit_log').createIndex({ created_at: -1 }),
         ]);
 
         console.log('Connected to MongoDB successfully.');

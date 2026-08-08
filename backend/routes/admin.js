@@ -7,6 +7,15 @@ const adminSecurity = require('../lib/adminSecurity');
 const design = require('../lib/design');
 const siteInfo = require('../lib/siteInfo');
 const legal = require('../lib/legal');
+const auditLog = require('../lib/auditLog');
+const coupons = require('../lib/coupons');
+const invoices = require('../lib/invoices');
+const reviews = require('../lib/reviews');
+const { adminLoginLimiter } = require('../lib/rateLimiters');
+
+function logAdminAction(req, action, details) {
+    return auditLog.log(req, action, details);
+}
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
@@ -45,7 +54,7 @@ router.get('/admin/login', (req, res) => {
     res.render('admin-login', { site, redirect: safeAdminRedirect(req.query.redirect), error: '' });
 });
 
-router.post('/admin/login', async (req, res) => {
+router.post('/admin/login', adminLoginLimiter, async (req, res) => {
     const redirect = safeAdminRedirect(req.body.redirect);
 
     if (!db.isDbConfigured()) {
@@ -85,7 +94,7 @@ router.get('/admin/verify-2fa', async (req, res) => {
     res.render('admin-verify-2fa', { site, error: '' });
 });
 
-router.post('/admin/verify-2fa', async (req, res) => {
+router.post('/admin/verify-2fa', adminLoginLimiter, async (req, res) => {
     const pending = await adminSecurity.getPendingLogin(req);
     if (!pending) {
         res.redirect('/admin/login');
@@ -109,7 +118,7 @@ router.get('/admin/forgot-password', async (req, res) => {
     res.render('admin-forgot-password', { site, totpAvailable, error: '' });
 });
 
-router.post('/admin/forgot-password', async (req, res) => {
+router.post('/admin/forgot-password', adminLoginLimiter, async (req, res) => {
     const totpAvailable = db.isDbConfigured() && (await adminSecurity.isTotpEnabled());
     if (!totpAvailable) {
         res.render('admin-forgot-password', { site, totpAvailable, error: 'Two-factor authentication is not enabled, so password recovery is not available this way.' });
@@ -206,10 +215,12 @@ router.get('/admin', async (req, res) => {
     let products = [];
     let features = [];
     let services = [];
+    let productReviews = [];
 
     if (db.isDbConfigured()) {
         try {
             const database = db.getDb();
+            productReviews = await reviews.listAllReviews();
             const [submissionDocs, userDocs, orderDocs, productDocs, featureDocs, serviceDocs] = await Promise.all([
                 database.collection('contact_submissions').find().sort({ created_at: -1 }).toArray(),
                 database.collection('users').find().sort({ created_at: -1 }).toArray(),
@@ -234,7 +245,12 @@ router.get('/admin', async (req, res) => {
 
             submissions = submissionDocs.map(db.withId);
             users = userDocs.map(db.withId);
-            orders = orderDocs.map(db.withId);
+            orders = orderDocs.map(db.withId).map(order => ({
+                ...order,
+                display_title: order.items && order.items.length > 0
+                    ? order.items.map(i => `${i.title}${i.quantity > 1 ? ' x' + i.quantity : ''}`).join(', ')
+                    : order.product_title,
+            }));
             products = productDocs.map(db.withId);
             features = featureDocs.map(db.withId);
             services = serviceDocs.map(db.withId).map(s => ({ ...s, featuresText: featuresToText(s.features) }));
@@ -252,7 +268,16 @@ router.get('/admin', async (req, res) => {
         products,
         features,
         services,
+        productReviews,
     });
+});
+
+router.post('/admin/reviews/:id/delete', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await reviews.deleteReview(req.params.id);
+        await logAdminAction(req, 'review.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=reviews');
 });
 
 router.post('/admin/products', upload.array('images', 10), async (req, res) => {
@@ -269,6 +294,7 @@ router.post('/admin/products', upload.array('images', 10), async (req, res) => {
         await db.getDb().collection('products').insertOne({
             title: req.body.title,
             description: req.body.description || '',
+            category: (req.body.category || '').trim(),
             price_paise: pricePaise,
             currency: 'INR',
             images,
@@ -276,6 +302,7 @@ router.post('/admin/products', upload.array('images', 10), async (req, res) => {
             is_active: true,
             created_at: new Date(),
         });
+        await logAdminAction(req, 'product.create', req.body.title);
     }
     res.redirect('/admin?tab=products');
 });
@@ -289,12 +316,14 @@ router.post('/admin/products/:id/update', async (req, res) => {
                 $set: {
                     title: req.body.title,
                     description: req.body.description || '',
+                    category: (req.body.category || '').trim(),
                     price_paise: pricePaise,
                     is_active: req.body.is_active === '1',
                     requires_approval: req.body.requires_approval === '1',
                 },
             }
         );
+        await logAdminAction(req, 'product.update', req.body.title);
     }
     res.redirect('/admin?tab=products');
 });
@@ -338,6 +367,7 @@ router.post('/admin/products/:id/delete', async (req, res) => {
         for (const fileId of (product && product.images) || []) {
             await db.deleteFile(fileId);
         }
+        await logAdminAction(req, 'product.delete', product && product.title);
     }
     res.redirect('/admin?tab=products');
 });
@@ -354,6 +384,7 @@ router.post('/admin/features', async (req, res) => {
             created_at: new Date(),
             updated_at: new Date(),
         });
+        await logAdminAction(req, 'feature.create', req.body.title);
     }
     res.redirect('/admin?tab=features');
 });
@@ -373,6 +404,7 @@ router.post('/admin/features/:id/update', async (req, res) => {
                 },
             }
         );
+        await logAdminAction(req, 'feature.update', req.body.title);
     }
     res.redirect('/admin?tab=features');
 });
@@ -380,6 +412,7 @@ router.post('/admin/features/:id/update', async (req, res) => {
 router.post('/admin/features/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
         await db.getDb().collection('upcoming_features').deleteOne({ _id: db.toId(req.params.id) });
+        await logAdminAction(req, 'feature.delete', req.params.id);
     }
     res.redirect('/admin?tab=features');
 });
@@ -400,6 +433,7 @@ router.post('/admin/services', async (req, res) => {
             created_at: new Date(),
             updated_at: new Date(),
         });
+        await logAdminAction(req, 'service.create', req.body.title);
     }
     res.redirect('/admin?tab=services');
 });
@@ -424,6 +458,7 @@ router.post('/admin/services/:id/update', async (req, res) => {
                 },
             }
         );
+        await logAdminAction(req, 'service.update', req.body.title);
     }
     res.redirect('/admin?tab=services');
 });
@@ -431,6 +466,7 @@ router.post('/admin/services/:id/update', async (req, res) => {
 router.post('/admin/services/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
         await db.getDb().collection('services').deleteOne({ _id: db.toId(req.params.id) });
+        await logAdminAction(req, 'service.delete', req.params.id);
     }
     res.redirect('/admin?tab=services');
 });
@@ -450,6 +486,7 @@ router.post('/admin/design/colors', async (req, res) => {
             text_color: req.body.text_color,
             heading_color: req.body.heading_color,
         });
+        await logAdminAction(req, 'design.colors', 'Updated site color palette');
     }
     const settings = await design.getDesignSettings();
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Colors updated.' });
@@ -478,6 +515,7 @@ router.post('/admin/design/upload/:slot', upload.single('file'), async (req, res
 
     uploadStream.on('finish', async () => {
         await design.saveImageRef(req.params.slot, uploadStream.id);
+        await logAdminAction(req, 'design.image', `Updated ${req.params.slot}`);
         const updated = await design.getDesignSettings();
         res.render('admin-design', { site, colors: updated.colors, images: updated.images, error: '', message: 'Image updated.' });
     });
@@ -490,6 +528,7 @@ router.post('/admin/design/upload/:slot', upload.single('file'), async (req, res
 router.post('/admin/design/remove/:slot', async (req, res) => {
     if (db.isDbConfigured() && design.IMAGE_SLOTS.includes(req.params.slot)) {
         await design.removeImage(req.params.slot);
+        await logAdminAction(req, 'design.image_remove', req.params.slot);
     }
     const settings = await design.getDesignSettings();
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Image removed.' });
@@ -501,6 +540,7 @@ router.post('/admin/orders/:id/approve', async (req, res) => {
             { _id: db.toId(req.params.id), status: 'pending_approval' },
             { $set: { status: 'approved_awaiting_payment', updated_at: new Date() } }
         );
+        await logAdminAction(req, 'order.approve', req.params.id);
     }
     res.redirect('/admin?tab=orders');
 });
@@ -511,6 +551,7 @@ router.post('/admin/orders/:id/reject', async (req, res) => {
             { _id: db.toId(req.params.id), status: 'pending_approval' },
             { $set: { status: 'rejected', updated_at: new Date() } }
         );
+        await logAdminAction(req, 'order.reject', req.params.id);
     }
     res.redirect('/admin?tab=orders');
 });
@@ -522,6 +563,7 @@ router.post('/admin/orders/:id/delivery-status', async (req, res) => {
             { _id: db.toId(req.params.id) },
             { $set: { delivery_status: req.body.delivery_status, updated_at: new Date() } }
         );
+        await logAdminAction(req, 'order.delivery_status', `${req.params.id} -> ${req.body.delivery_status}`);
     }
     res.redirect('/admin?tab=orders');
 });
@@ -529,6 +571,7 @@ router.post('/admin/orders/:id/delivery-status', async (req, res) => {
 router.post('/admin/design/admin-theme', async (req, res) => {
     if (db.isDbConfigured() && req.body.admin_bg_color) {
         await design.saveAdminBackground(req.body.admin_bg_color);
+        await logAdminAction(req, 'design.admin_theme', 'Updated admin panel background');
     }
     const settings = await design.getDesignSettings();
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Admin panel appearance updated.' });
@@ -542,6 +585,7 @@ router.get('/admin/site-info', async (req, res) => {
 router.post('/admin/site-info', async (req, res) => {
     if (db.isDbConfigured()) {
         await siteInfo.saveSiteInfo(req.body);
+        await logAdminAction(req, 'site_info.update', 'Updated site info');
     }
     const currentSite = await siteInfo.getMergedSite();
     res.render('admin-site-info', { site: currentSite, error: '', message: 'Site info updated.' });
@@ -549,15 +593,91 @@ router.post('/admin/site-info', async (req, res) => {
 
 router.get('/admin/legal', async (req, res) => {
     const terms = await legal.getTermsContent();
-    res.render('admin-legal', { terms, error: '', message: '' });
+    const privacy = await legal.getPrivacyContent();
+    res.render('admin-legal', { terms, privacy, activeDoc: 'terms', error: '', message: '' });
 });
 
 router.post('/admin/legal', async (req, res) => {
     if (db.isDbConfigured() && typeof req.body.terms === 'string' && req.body.terms.trim() !== '') {
         await legal.saveTermsContent(req.body.terms);
+        await logAdminAction(req, 'terms.update', 'Updated Terms & Conditions');
     }
     const terms = await legal.getTermsContent();
-    res.render('admin-legal', { terms, error: '', message: 'Terms & Conditions updated.' });
+    const privacy = await legal.getPrivacyContent();
+    res.render('admin-legal', { terms, privacy, activeDoc: 'terms', error: '', message: 'Terms & Conditions updated.' });
+});
+
+router.post('/admin/legal/privacy', async (req, res) => {
+    if (db.isDbConfigured() && typeof req.body.privacy === 'string' && req.body.privacy.trim() !== '') {
+        await legal.savePrivacyContent(req.body.privacy);
+        await logAdminAction(req, 'privacy.update', 'Updated Privacy Policy');
+    }
+    const terms = await legal.getTermsContent();
+    const privacy = await legal.getPrivacyContent();
+    res.render('admin-legal', { terms, privacy, activeDoc: 'privacy', error: '', message: 'Privacy Policy updated.' });
+});
+
+router.get('/admin/audit-log', async (req, res) => {
+    const entries = await auditLog.recent(200);
+    res.render('admin-audit-log', { site, entries });
+});
+
+router.get('/admin/coupons', async (req, res) => {
+    const list = await coupons.listCoupons();
+    res.render('admin-coupons', { site, coupons: list, error: '', message: '' });
+});
+
+router.post('/admin/coupons', async (req, res) => {
+    if (db.isDbConfigured() && req.body.code) {
+        await coupons.createCoupon(req.body);
+        await logAdminAction(req, 'coupon.create', req.body.code);
+    }
+    res.redirect('/admin/coupons');
+});
+
+router.post('/admin/coupons/:id/update', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await coupons.updateCoupon(req.params.id, req.body);
+        await logAdminAction(req, 'coupon.update', req.body.code);
+    }
+    res.redirect('/admin/coupons');
+});
+
+router.post('/admin/coupons/:id/delete', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await coupons.deleteCoupon(req.params.id);
+        await logAdminAction(req, 'coupon.delete', req.params.id);
+    }
+    res.redirect('/admin/coupons');
+});
+
+router.get('/admin/orders/:id/invoice', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(404).send('Not available.');
+        return;
+    }
+    try {
+        const order = await db.getDb().collection('orders').findOne({ _id: db.toId(req.params.id) });
+        if (!order || order.status !== 'paid') {
+            res.status(404).send('Invoice not available for this order.');
+            return;
+        }
+        const user = await db.getDb().collection('users').findOne({ _id: order.user_id });
+        let items = order.items;
+        if (!items && order.product_id) {
+            const product = await db.getDb().collection('products').findOne({ _id: order.product_id });
+            items = [{ title: product ? product.title : 'Product', quantity: order.quantity || 1, amount_paise: order.amount_paise }];
+        }
+        invoices.streamInvoice(res, {
+            order: db.withId(order),
+            items: items || [],
+            customerName: user ? user.name : '',
+            customerEmail: user ? user.email : '',
+            site,
+        });
+    } catch (error) {
+        res.status(500).send('Unable to generate invoice.');
+    }
 });
 
 module.exports = router;

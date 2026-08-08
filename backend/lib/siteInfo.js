@@ -16,6 +16,7 @@ const EDITABLE_FIELDS = [
     'phone_href',
     'whatsapp_href',
     'default_description',
+    'analytics_id',
 ];
 
 async function getMergedSite() {

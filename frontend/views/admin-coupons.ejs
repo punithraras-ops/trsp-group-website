@@ -1,0 +1,99 @@
+<%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Coupons' }) %>
+<body class="admin-page" style="--admin-bg: <%= design.adminBackground %>;">
+
+<div class="admin-topbar">
+    <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3" style="max-width: 900px;">
+        <h1><i class="fas fa-tags me-2" style="color: var(--admin-accent);"></i>Coupons &amp; Discounts</h1>
+        <div class="me-2"><%- include('partials/language-switcher') %></div>
+        <a href="/admin" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Dashboard</a>
+    </div>
+</div>
+
+<main class="admin-page-main">
+<div class="container pb-5" style="max-width: 900px;">
+
+    <% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
+    <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <p class="text-muted">Coupons can be applied at checkout for regular (non-approval) store purchases.</p>
+            <% if (coupons.length === 0) { %>
+                <p class="text-muted">No coupons yet.</p>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead><tr><th>Code</th><th>Discount</th><th>Active</th><th>Expires</th><th>Usage</th><th></th></tr></thead>
+                        <tbody>
+                            <% coupons.forEach(c => { %>
+                                <tr>
+                                    <td><code><%= c.code %></code></td>
+                                    <td><%= c.discount_type === 'percent' ? c.value + '%' : '₹' + (c.value / 100).toFixed(2) %></td>
+                                    <td><span class="badge bg-<%= c.active ? 'success' : 'secondary' %>"><%= c.active ? 'Active' : 'Inactive' %></span></td>
+                                    <td><%= c.expires_at ? new Date(c.expires_at).toLocaleDateString('en-IN') : '—' %></td>
+                                    <td><%= c.used_count %><%= c.usage_limit ? ' / ' + c.usage_limit : '' %></td>
+                                    <td class="text-nowrap">
+                                        <form method="POST" action="/admin/coupons/<%= c.id %>/update" class="d-inline">
+                                            <input type="hidden" name="code" value="<%= c.code %>">
+                                            <input type="hidden" name="discount_type" value="<%= c.discount_type %>">
+                                            <input type="hidden" name="value" value="<%= c.discount_type === 'percent' ? c.value : (c.value / 100) %>">
+                                            <input type="hidden" name="expires_at" value="<%= c.expires_at ? new Date(c.expires_at).toISOString().slice(0,10) : '' %>">
+                                            <input type="hidden" name="usage_limit" value="<%= c.usage_limit || '' %>">
+                                            <input type="hidden" name="active" value="<%= c.active ? '0' : '1' %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary"><%= c.active ? 'Deactivate' : 'Activate' %></button>
+                                        </form>
+                                        <form method="POST" action="/admin/coupons/<%= c.id %>/delete" class="d-inline" onsubmit="return confirm('Delete this coupon?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3">Create Coupon</h4>
+            <form method="POST" action="/admin/coupons" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Code</label>
+                    <input type="text" name="code" class="form-control text-uppercase" placeholder="WELCOME10" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Discount Type</label>
+                    <select name="discount_type" class="form-select">
+                        <option value="percent">Percent off</option>
+                        <option value="flat">Flat amount (INR)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Value</label>
+                    <input type="number" name="value" class="form-control" min="0" step="0.01" required>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Expires (optional)</label>
+                    <input type="date" name="expires_at" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Usage Limit (optional)</label>
+                    <input type="number" name="usage_limit" class="form-control" min="1">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-plus me-2"></i>Create Coupon</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</main>
+<footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Admin Panel.
+</footer>
+<script src="/js/click-sound.js"></script>
+<script src="/js/translate-widget.js"></script>
+</body>
+</html>

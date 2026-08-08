@@ -1,0 +1,69 @@
+<%- include('partials/head') %>
+<%- include('partials/nav') %>
+
+<section class="section-padding bg-light page-offset">
+    <div class="container">
+        <h1 class="display-5 fw-bold mb-4">Your Cart</h1>
+
+        <% if (!dbConfigured) { %>
+            <div class="alert alert-info text-center">The store is not fully configured yet. Please check back soon.</div>
+        <% } else if (!user) { %>
+            <div class="text-center py-5">
+                <h2 class="fw-bold mb-3">Please sign in to check out</h2>
+                <p class="text-muted">You need an account to complete your purchase.</p>
+                <button class="btn btn-primary btn-lg" data-open-login>Login / Sign Up</button>
+            </div>
+        <% } else { %>
+            <div id="cartEmptyState" class="text-center py-5 d-none">
+                <p class="text-muted mb-3">Your cart is empty.</p>
+                <a href="/store" class="btn btn-primary">Browse the Store</a>
+            </div>
+
+            <div id="cartContent" class="row justify-content-center d-none">
+                <div class="col-lg-7 mb-4">
+                    <div id="cartItems" class="d-flex flex-column gap-3"></div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-lg rounded-4">
+                        <div class="card-body p-4">
+                            <h4 class="fw-bold mb-3">Order Summary</h4>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span id="cartSubtotal">&#8377;0</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2 text-success d-none" id="cartDiscountRow">
+                                <span>Discount</span>
+                                <span id="cartDiscount">-&#8377;0</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                                <span>Total</span>
+                                <span id="cartTotal">&#8377;0</span>
+                            </div>
+
+                            <div class="input-group mb-3">
+                                <input type="text" id="couponInput" class="form-control" placeholder="Coupon code">
+                                <button class="btn btn-outline-secondary" id="applyCouponBtn" type="button">Apply</button>
+                            </div>
+                            <div id="couponStatus" class="small mb-3"></div>
+
+                            <% if (!razorpayConfigured) { %>
+                                <div class="alert alert-info">Online payments are not enabled yet. Please contact us to complete this purchase.</div>
+                            <% } else { %>
+                                <div class="alert d-none" data-checkout-status role="status"></div>
+                                <button class="btn btn-primary btn-lg w-100" id="cartPayBtn">Pay Now</button>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</section>
+
+<% if (razorpayConfigured) { %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<% } %>
+<script src="/js/cart-checkout.js"></script>
+
+<%- include('partials/footer') %>

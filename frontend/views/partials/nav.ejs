@@ -12,6 +12,7 @@
                     <li class="nav-item"><a class="nav-link <%= activePage === 'home' ? 'active' : '' %>" href="<%= site.routes.home %>">Home</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'services' ? 'active' : '' %>" href="<%= site.routes.services %>">Services</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'store' ? 'active' : '' %>" href="/store">Store</a></li>
+                    <li class="nav-item"><a class="nav-link position-relative <%= activePage === 'cart' ? 'active' : '' %>" href="/cart"><i class="fas fa-cart-shopping"></i><span class="cart-badge d-none" data-cart-count></span></a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'contact' ? 'active' : '' %>" href="<%= site.routes.contact %>">Contact</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'about' ? 'active' : '' %>" href="<%= site.routes.about %>">About</a></li>
                     <li class="nav-item d-flex align-items-center">

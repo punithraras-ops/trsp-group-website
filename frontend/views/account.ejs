@@ -6,6 +6,19 @@
         <h1 class="display-5 fw-bold mb-4">My Account</h1>
         <p class="lead">Signed in as <strong><%= user.name %></strong> (<%= user.email %>)</p>
 
+        <% if (typeof verified !== 'undefined' && verified) { %>
+            <div class="alert alert-success">Your email address has been verified. Thank you!</div>
+        <% } %>
+        <% if (typeof resent !== 'undefined' && resent) { %>
+            <div class="alert alert-info">Verification email sent. Please check your inbox.</div>
+        <% } %>
+        <% if (!user.email_verified) { %>
+            <div class="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span><i class="fas fa-triangle-exclamation me-2"></i>Your email address is not verified yet.</span>
+                <a href="/resend-verification" class="btn btn-sm btn-outline-dark">Resend verification email</a>
+            </div>
+        <% } %>
+
         <h3 class="fw-bold mt-5 mb-3">My Orders</h3>
         <% if (orders.length === 0) { %>
             <p class="text-muted">You have not placed any orders yet. <a href="/store">Browse the store</a>.</p>
@@ -26,7 +39,7 @@
                         <% orders.forEach(order => { %>
                             <tr>
                                 <td class="text-nowrap"><%= new Date(order.created_at).toLocaleString('en-IN') %></td>
-                                <td><%= order.product_title %></td>
+                                <td><%= order.display_title %></td>
                                 <td>&#8377;<%= (order.amount_paise / 100).toLocaleString('en-IN') %></td>
                                 <td>
                                     <span class="badge bg-<%= order.status === 'paid' ? 'success' : (order.status === 'failed' || order.status === 'rejected' ? 'danger' : (order.status === 'pending_approval' ? 'warning text-dark' : 'secondary')) %>"><%= order.status.replace(/_/g, ' ') %></span>
@@ -38,9 +51,12 @@
                                         <span class="text-muted">&mdash;</span>
                                     <% } %>
                                 </td>
-                                <td>
+                                <td class="text-nowrap">
                                     <% if (order.status === 'approved_awaiting_payment') { %>
                                         <a href="/checkout?product=<%= order.product_id %>" class="btn btn-sm btn-primary">Pay Now</a>
+                                    <% } %>
+                                    <% if (order.status === 'paid') { %>
+                                        <a href="/account/orders/<%= order.id %>/invoice" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
                                     <% } %>
                                 </td>
                             </tr>

@@ -1,6 +1,7 @@
 const path = require('node:path');
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 
 const db = require('./db');
 const site = require('./config/site');
@@ -17,6 +18,14 @@ const app = express();
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(frontendDir, 'views'));
+app.set('trust proxy', 1);
+
+// CSP and cross-origin isolation are left to browser defaults for now: this app embeds
+// several third-party origins (Google Translate, Razorpay Checkout, Bootstrap/AOS CDNs,
+// Google Analytics) via inline scripts/styles across many templates, and a misconfigured
+// CSP would silently break those without a real browser to verify against. The other
+// helmet defaults (X-Frame-Options, nosniff, HSTS, Referrer-Policy) apply as-is.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -49,6 +58,7 @@ app.use(require('./routes/pages'));
 app.use(require('./routes/auth'));
 app.use(require('./routes/contact'));
 app.use(require('./routes/checkout'));
+app.use(require('./routes/reviews'));
 app.use(require('./routes/admin'));
 
 app.use((req, res) => {

@@ -1,9 +1,9 @@
-<%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Terms & Conditions' }) %>
+<%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Legal' }) %>
 <body class="admin-page" style="--admin-bg: <%= design.adminBackground %>;">
 
 <div class="admin-topbar">
     <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3" style="max-width: 900px;">
-        <h1><i class="fas fa-file-contract me-2" style="color: var(--admin-accent);"></i>Terms &amp; Conditions</h1>
+        <h1><i class="fas fa-file-contract me-2" style="color: var(--admin-accent);"></i>Legal Pages</h1>
         <div class="me-2"><%- include('partials/language-switcher') %></div>
         <a href="/admin" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Dashboard</a>
     </div>
@@ -15,13 +15,37 @@
     <% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
     <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
 
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-4">
-            <p class="text-muted">This text is shown publicly at <a href="/terms" target="_blank">/terms</a> and linked from the site footer on every page. Covers website usage and payment terms - edit freely as plain text; line breaks are preserved exactly as typed.</p>
-            <form method="POST" action="/admin/legal">
-                <textarea name="terms" class="form-control" rows="28" style="font-family: 'Inter', monospace; font-size: 0.92rem;" required><%= terms %></textarea>
-                <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-floppy-disk me-2"></i>Save Terms &amp; Conditions</button>
-            </form>
+    <ul class="nav nav-pills mb-4" id="legalTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <%= activeDoc !== 'privacy' ? 'active' : '' %>" data-bs-toggle="pill" data-bs-target="#tab-terms" type="button">Terms &amp; Conditions</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link <%= activeDoc === 'privacy' ? 'active' : '' %>" data-bs-toggle="pill" data-bs-target="#tab-privacy" type="button">Privacy Policy</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade <%= activeDoc !== 'privacy' ? 'show active' : '' %>" id="tab-terms">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <p class="text-muted">This text is shown publicly at <a href="/terms" target="_blank">/terms</a> and linked from the site footer on every page. Covers website usage and payment terms - edit freely as plain text; line breaks are preserved exactly as typed.</p>
+                    <form method="POST" action="/admin/legal">
+                        <textarea name="terms" class="form-control" rows="28" style="font-family: 'Inter', monospace; font-size: 0.92rem;" required><%= terms %></textarea>
+                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-floppy-disk me-2"></i>Save Terms &amp; Conditions</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade <%= activeDoc === 'privacy' ? 'show active' : '' %>" id="tab-privacy">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <p class="text-muted">This text is shown publicly at <a href="/privacy" target="_blank">/privacy</a> and linked from the site footer on every page. Covers how customer data is collected and used - edit freely as plain text; line breaks are preserved exactly as typed.</p>
+                    <form method="POST" action="/admin/legal/privacy">
+                        <textarea name="privacy" class="form-control" rows="28" style="font-family: 'Inter', monospace; font-size: 0.92rem;" required><%= privacy %></textarea>
+                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-floppy-disk me-2"></i>Save Privacy Policy</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>

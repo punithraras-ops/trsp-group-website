@@ -1,6 +1,9 @@
 const express = require('express');
 const db = require('../db');
 const legal = require('../lib/legal');
+const invoices = require('../lib/invoices');
+const reviews = require('../lib/reviews');
+const { requireAuthPage } = require('../lib/auth');
 
 const router = express.Router();
 
@@ -89,6 +92,18 @@ router.get('/terms', async (req, res) => {
     });
 });
 
+router.get('/privacy', async (req, res) => {
+    const site = res.locals.site;
+    const privacy = await legal.getPrivacyContent();
+
+    res.render('privacy', {
+        pageTitle: `${site.short_name} - Privacy Policy`,
+        pageDescription: `How ${site.legal_name} collects, uses, and protects your personal information.`,
+        activePage: 'privacy',
+        privacy,
+    });
+});
+
 router.get('/services', async (req, res) => {
     const site = res.locals.site;
     const services = await getActiveServices();
@@ -156,13 +171,31 @@ router.get(['/software-development', '/business-analytics', '/cybersecurity', '/
 router.get('/store', async (req, res) => {
     const site = res.locals.site;
     let products = [];
+    let categories = [];
+    const search = String(req.query.q || '').trim();
+    const category = String(req.query.category || '').trim();
+
     if (db.isDbConfigured()) {
         try {
-            const docs = await db.getDb().collection('products')
-                .find({ is_active: true })
-                .sort({ created_at: -1 })
-                .toArray();
+            const allActive = await db.getDb().collection('products').find({ is_active: true }).toArray();
+            categories = [...new Set(allActive.map(p => p.category).filter(Boolean))].sort();
+
+            const filter = { is_active: true };
+            if (search) {
+                filter.$or = [
+                    { title: { $regex: search, $options: 'i' } },
+                    { description: { $regex: search, $options: 'i' } },
+                ];
+            }
+            if (category) {
+                filter.category = category;
+            }
+
+            const docs = await db.getDb().collection('products').find(filter).sort({ created_at: -1 }).toArray();
             products = docs.map(db.withId);
+
+            const summaries = await reviews.getSummaryForProducts(products.map(p => db.toId(p.id)));
+            products = products.map(p => ({ ...p, reviewSummary: summaries.get(p.id) || { avg: 0, count: 0 } }));
         } catch (error) {
             products = [];
         }
@@ -174,6 +207,41 @@ router.get('/store', async (req, res) => {
         activePage: 'store',
         dbConfigured: db.isDbConfigured(),
         products,
+        categories,
+        search,
+        category,
+    });
+});
+
+router.get('/api/products/by-ids', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.json({ products: [] });
+        return;
+    }
+    const ids = String(req.query.ids || '').split(',').map(s => s.trim()).filter(Boolean).slice(0, 50);
+    if (ids.length === 0) {
+        res.json({ products: [] });
+        return;
+    }
+    try {
+        const docs = await db.getDb().collection('products').find({
+            _id: { $in: ids.map(id => db.toId(id)) },
+            is_active: true,
+        }).toArray();
+        res.json({ products: docs.map(db.withId) });
+    } catch (error) {
+        res.json({ products: [] });
+    }
+});
+
+router.get('/cart', (req, res) => {
+    const site = res.locals.site;
+    res.render('cart', {
+        pageTitle: `${site.short_name} - Cart`,
+        pageDescription: 'Review the items in your cart.',
+        activePage: 'cart',
+        dbConfigured: db.isDbConfigured(),
+        razorpayConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
     });
 });
 
@@ -234,7 +302,12 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
                 { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
                 { $addFields: { product_title: '$product.title' } },
             ]).toArray();
-            orders = docs.map(db.withId);
+            orders = docs.map(db.withId).map(order => ({
+                ...order,
+                display_title: order.items && order.items.length > 0
+                    ? order.items.map(i => `${i.title}${i.quantity > 1 ? ' x' + i.quantity : ''}`).join(', ')
+                    : order.product_title,
+            }));
         } catch (error) {
             orders = [];
         }
@@ -245,7 +318,40 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
         pageDescription: 'Your account and order history.',
         activePage: 'account',
         orders,
+        verified: req.query.verified === '1',
+        resent: req.query.resent === '1',
     });
+});
+
+router.get('/account/orders/:id/invoice', requireAuthPage(), async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(404).send('Not available.');
+        return;
+    }
+    try {
+        const order = await db.getDb().collection('orders').findOne({
+            _id: db.toId(req.params.id),
+            user_id: db.toId(req.user.id),
+        });
+        if (!order || order.status !== 'paid') {
+            res.status(404).send('Invoice not available for this order.');
+            return;
+        }
+        let items = order.items;
+        if (!items && order.product_id) {
+            const product = await db.getDb().collection('products').findOne({ _id: order.product_id });
+            items = [{ title: product ? product.title : 'Product', quantity: order.quantity || 1, amount_paise: order.amount_paise }];
+        }
+        invoices.streamInvoice(res, {
+            order: db.withId(order),
+            items: items || [],
+            customerName: req.user.name,
+            customerEmail: req.user.email,
+            site: res.locals.site,
+        });
+    } catch (error) {
+        res.status(500).send('Unable to generate invoice.');
+    }
 });
 
 module.exports = router;
