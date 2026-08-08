@@ -3,6 +3,7 @@ const QRCode = require('qrcode');
 const db = require('../db');
 const razorpay = require('../lib/razorpay');
 const { requireAuthApi } = require('../lib/auth');
+const mailer = require('../lib/mailer');
 const coupons = require('../lib/coupons');
 const { markOrderPaid } = require('../lib/orders');
 const { checkoutLimiter } = require('../lib/rateLimiters');
@@ -508,15 +509,36 @@ router.post('/api/checkout/manual-upi/:orderId/submit-utr', requireAuthApi, asyn
     }
 
     try {
-        const result = await db.getDb().collection('orders').updateOne(
+        const order = await db.getDb().collection('orders').findOneAndUpdate(
             { _id: db.toId(req.params.orderId), user_id: db.toId(req.user.id), status: 'awaiting_upi_confirmation' },
-            { $set: { utr_reference: utr, updated_at: new Date() } }
+            { $set: { utr_reference: utr, updated_at: new Date() } },
+            { returnDocument: 'after' }
         );
 
-        if (result.matchedCount === 0) {
+        if (!order) {
             res.status(404).json({ error: 'Order not found or already processed.' });
             return;
         }
+
+        mailer.sendUtrReceivedEmail({
+            to: req.user.email,
+            name: req.user.name,
+            orderId: order._id.toString(),
+            utr,
+            amountPaise: order.amount_paise,
+            currency: order.currency,
+            site: res.locals.site,
+        }).catch(() => {});
+
+        mailer.sendUpiUtrAlert({
+            orderId: order._id.toString(),
+            utr,
+            amountPaise: order.amount_paise,
+            currency: order.currency,
+            customerName: req.user.name,
+            customerEmail: req.user.email,
+            site: res.locals.site,
+        }).catch(() => {});
 
         res.json({ message: "Reference submitted. We'll confirm your payment shortly." });
     } catch (error) {

@@ -28,6 +28,12 @@
 
     <% const pendingApprovalCount = orders.filter(o => o.status === 'pending_approval').length; %>
     <% const pendingUpiCount = orders.filter(o => o.status === 'awaiting_upi_confirmation').length; %>
+
+    <% if (pendingUpiCount > 0) { %>
+        <div class="toast-notification toast-warning" data-admin-upi-toast role="status">
+            <i class="fas fa-qrcode me-2"></i><%= pendingUpiCount %> UPI payment<%= pendingUpiCount > 1 ? 's' : '' %> awaiting your confirmation &mdash; check the Orders tab.
+        </div>
+    <% } %>
     <% const revenuePaise = orders.filter(o => o.status === 'paid').reduce((sum, o) => sum + (o.amount_paise || 0), 0); %>
     <div class="admin-stats">
         <div class="admin-stat-card" style="animation-delay: 0.02s;">
@@ -502,6 +508,11 @@
         if (targetTab) {
             new bootstrap.Tab(targetTab).show();
         }
+    }
+
+    var upiToast = document.querySelector('[data-admin-upi-toast]');
+    if (upiToast) {
+        setTimeout(function () { upiToast.remove(); }, 5000);
     }
 </script>
 <script src="/js/click-sound.js"></script>

@@ -138,6 +138,40 @@ async function sendOrderConfirmation({ to, name, items, totalPaise, currency, or
     });
 }
 
+async function sendUtrReceivedEmail({ to, name, orderId, utr, amountPaise, currency, site }) {
+    const body = `
+        <p>Hi ${name || 'there'},</p>
+        <p>We've received your UPI payment reference for order <strong>${orderId}</strong>:</p>
+        <p style="background:#f4f6f8;padding:12px;border-radius:8px;font-family:monospace;">UTR / Transaction ID: ${utr}</p>
+        <p>Amount: ${formatMoney(amountPaise, currency)}</p>
+        <p>We'll verify this against our bank statement and confirm your order shortly. You can check the status anytime on your account page.</p>
+    `;
+    return sendMail({
+        to,
+        subject: 'We received your UPI payment reference',
+        html: shell(site, 'Payment Reference Received', body),
+    });
+}
+
+async function sendUpiUtrAlert({ orderId, utr, amountPaise, currency, customerName, customerEmail, site }) {
+    if (!site.email) return false;
+    const body = `
+        <p>A customer has submitted a UPI payment reference awaiting your confirmation.</p>
+        <table style="width:100%;border-collapse:collapse;margin-top:12px;">
+            <tr><td style="padding:6px 0;color:#64748b;width:140px;">Order</td><td style="padding:6px 0;">${orderId}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Customer</td><td style="padding:6px 0;">${customerName} (${customerEmail})</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">Amount</td><td style="padding:6px 0;">${formatMoney(amountPaise, currency)}</td></tr>
+            <tr><td style="padding:6px 0;color:#64748b;">UTR / Transaction ID</td><td style="padding:6px 0;font-family:monospace;">${utr}</td></tr>
+        </table>
+        <p style="margin-top:16px;">Check your bank/UPI app, then confirm or reject it from the admin Orders tab.</p>
+    `;
+    return sendMail({
+        to: site.email,
+        subject: `UPI payment awaiting confirmation — ${customerName}`,
+        html: shell(site, 'UPI Payment Awaiting Confirmation', body),
+    });
+}
+
 module.exports = {
     isConfigured,
     sendMail,
@@ -145,4 +179,6 @@ module.exports = {
     sendPasswordResetEmail,
     sendVerificationEmail,
     sendOrderConfirmation,
+    sendUtrReceivedEmail,
+    sendUpiUtrAlert,
 };
