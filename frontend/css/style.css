@@ -204,6 +204,30 @@ img {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) inset;
 }
 
+.toast-notification {
+    position: fixed;
+    top: 5.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: #16a34a;
+    color: #ffffff;
+    font-weight: 600;
+    padding: 0.85rem 1.5rem;
+    border-radius: 999px;
+    box-shadow: 0 12px 32px rgba(22, 163, 74, 0.35);
+    z-index: 2000;
+    opacity: 0;
+    animation: toastIn 0.35s ease forwards, toastOut 0.4s ease forwards 3.5s;
+}
+
+@keyframes toastIn {
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+    to { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
 .cart-badge {
     position: absolute;
     top: 0.05rem;

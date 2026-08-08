@@ -67,6 +67,18 @@
             background-image: linear-gradient(135deg, rgba(9, 22, 35, 0.75), rgba(26, 114, 132, 0.65)), url('<%= design.images.hero_background %>');
         }
         <% } %>
+        <% if (design.images.page_background) { %>
+        body {
+            background-image:
+                radial-gradient(ellipse at 50% 110%, rgba(0, 0, 0, 0.35), transparent 55%),
+                radial-gradient(ellipse at 50% -10%, rgba(0, 0, 0, 0.2), transparent 45%),
+                url('<%= design.images.page_background %>');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        <% } %>
     </style>
 </head>
 <body data-page="<%= activePage %>">

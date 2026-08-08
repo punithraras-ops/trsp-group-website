@@ -11,7 +11,7 @@ const DEFAULT_COLORS = {
     heading_color: '#132236',
 };
 
-const IMAGE_SLOTS = ['logo', 'favicon', 'hero_background', 'team_photo'];
+const IMAGE_SLOTS = ['logo', 'favicon', 'hero_background', 'team_photo', 'page_background'];
 const DEFAULT_ADMIN_BG = '#eef1f5';
 
 async function getDesignSettings() {

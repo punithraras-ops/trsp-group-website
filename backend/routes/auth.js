@@ -5,6 +5,7 @@ const { hashPassword, verifyPassword, createSession, destroySession, requireAuth
 const { google, github, randomState } = require('../lib/oauth');
 const mailer = require('../lib/mailer');
 const { authLimiter } = require('../lib/rateLimiters');
+const userSecurity = require('../lib/userSecurity');
 
 const router = express.Router();
 router.use(['/signup', '/login', '/forgot-password', '/reset-password'], authLimiter);
@@ -96,11 +97,57 @@ router.post('/login', async (req, res) => {
             return back(res, redirect, 'Invalid email or password.');
         }
 
+        if (await userSecurity.isTotpEnabled(user._id)) {
+            await userSecurity.createPendingLogin(res, user._id, safeRedirect(redirect));
+            res.redirect('/verify-2fa');
+            return;
+        }
+
         await createSession(res, user._id);
         res.redirect(safeRedirect(redirect));
     } catch (error) {
         back(res, redirect, 'Something went wrong signing you in. Please try again.');
     }
+});
+
+router.get('/verify-2fa', async (req, res) => {
+    const pending = await userSecurity.getPendingLogin(req);
+    if (!pending) {
+        res.redirect('/');
+        return;
+    }
+    const site = res.locals.site;
+    res.render('verify-2fa', {
+        pageTitle: `${site.short_name} - Verify Code`,
+        pageDescription: 'Two-factor verification.',
+        activePage: '',
+        error: '',
+    });
+});
+
+router.post('/verify-2fa', authLimiter, async (req, res) => {
+    const pending = await userSecurity.getPendingLogin(req);
+    if (!pending) {
+        res.redirect('/');
+        return;
+    }
+
+    const valid = await userSecurity.verifyLoginTotpCode(pending.user_id, req.body.code);
+    if (!valid) {
+        const site = res.locals.site;
+        res.render('verify-2fa', {
+            pageTitle: `${site.short_name} - Verify Code`,
+            pageDescription: 'Two-factor verification.',
+            activePage: '',
+            error: 'Invalid or expired code. Please try again.',
+        });
+        return;
+    }
+
+    const redirect = safeRedirect(pending.redirect);
+    await userSecurity.clearPendingLogin(req, res);
+    await createSession(res, pending.user_id);
+    res.redirect(redirect);
 });
 
 router.get('/logout', async (req, res) => {
@@ -351,9 +398,16 @@ router.get('/auth/google/callback', async (req, res) => {
     try {
         const profile = await google.exchangeCodeForProfile(req.query.code);
         const user = await findOrCreateOAuthUser({ provider: 'google', providerId: profile.providerId, email: profile.email, name: profile.name });
-        await createSession(res, user._id);
         res.clearCookie('oauth_state', { path: '/' });
         res.clearCookie('oauth_redirect', { path: '/' });
+
+        if (await userSecurity.isTotpEnabled(user._id)) {
+            await userSecurity.createPendingLogin(res, user._id, safeRedirect(redirect));
+            res.redirect('/verify-2fa');
+            return;
+        }
+
+        await createSession(res, user._id);
         res.redirect(safeRedirect(redirect));
     } catch (error) {
         console.error('Google OAuth callback failed:', error.message);
@@ -386,9 +440,16 @@ router.get('/auth/github/callback', async (req, res) => {
     try {
         const profile = await github.exchangeCodeForProfile(req.query.code);
         const user = await findOrCreateOAuthUser({ provider: 'github', providerId: profile.providerId, email: profile.email, name: profile.name });
-        await createSession(res, user._id);
         res.clearCookie('oauth_state', { path: '/' });
         res.clearCookie('oauth_redirect', { path: '/' });
+
+        if (await userSecurity.isTotpEnabled(user._id)) {
+            await userSecurity.createPendingLogin(res, user._id, safeRedirect(redirect));
+            res.redirect('/verify-2fa');
+            return;
+        }
+
+        await createSession(res, user._id);
         res.redirect(safeRedirect(redirect));
     } catch (error) {
         console.error('GitHub OAuth callback failed:', error.message);

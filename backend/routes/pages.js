@@ -3,6 +3,7 @@ const db = require('../db');
 const legal = require('../lib/legal');
 const invoices = require('../lib/invoices');
 const reviews = require('../lib/reviews');
+const userSecurity = require('../lib/userSecurity');
 const { requireAuthPage } = require('../lib/auth');
 
 const router = express.Router();
@@ -283,48 +284,52 @@ router.get('/checkout', async (req, res) => {
     });
 });
 
-router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res) => {
-    const site = res.locals.site;
-    let orders = [];
-    if (db.isDbConfigured()) {
-        try {
-            const docs = await db.getDb().collection('orders').aggregate([
-                { $match: { user_id: db.toId(req.user.id) } },
-                { $sort: { created_at: -1 } },
-                {
-                    $lookup: {
-                        from: 'products',
-                        localField: 'product_id',
-                        foreignField: '_id',
-                        as: 'product',
-                    },
-                },
-                { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
-                {
-                    $addFields: {
-                        product_title: '$product.title',
-                        product_deliverable_file_id: '$product.deliverable_file_id',
-                        product_deliverable_filename: '$product.deliverable_filename',
-                    },
-                },
-            ]).toArray();
-            orders = docs.map(db.withId).map(order => {
-                const files = [...(order.deliverable_files || [])];
-                if (order.product_deliverable_file_id) {
-                    files.push({ id: order.product_deliverable_file_id, filename: order.product_deliverable_filename || 'download' });
-                }
-                return {
-                    ...order,
-                    display_title: order.items && order.items.length > 0
-                        ? order.items.map(i => `${i.title}${i.quantity > 1 ? ' x' + i.quantity : ''}`).join(', ')
-                        : order.product_title,
-                    downloadableFiles: order.status === 'paid' ? files : [],
-                };
-            });
-        } catch (error) {
-            orders = [];
-        }
+async function getAccountOrders(userId) {
+    if (!db.isDbConfigured()) {
+        return [];
     }
+    try {
+        const docs = await db.getDb().collection('orders').aggregate([
+            { $match: { user_id: db.toId(userId) } },
+            { $sort: { created_at: -1 } },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'product_id',
+                    foreignField: '_id',
+                    as: 'product',
+                },
+            },
+            { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+            {
+                $addFields: {
+                    product_title: '$product.title',
+                    product_deliverable_file_id: '$product.deliverable_file_id',
+                    product_deliverable_filename: '$product.deliverable_filename',
+                },
+            },
+        ]).toArray();
+        return docs.map(db.withId).map(order => {
+            const files = [...(order.deliverable_files || [])];
+            if (order.product_deliverable_file_id) {
+                files.push({ id: order.product_deliverable_file_id, filename: order.product_deliverable_filename || 'download' });
+            }
+            return {
+                ...order,
+                display_title: order.items && order.items.length > 0
+                    ? order.items.map(i => `${i.title}${i.quantity > 1 ? ' x' + i.quantity : ''}`).join(', ')
+                    : order.product_title,
+                downloadableFiles: order.status === 'paid' ? files : [],
+            };
+        });
+    } catch (error) {
+        return [];
+    }
+}
+
+async function renderAccountPage(req, res, extra = {}) {
+    const site = res.locals.site;
+    const orders = await getAccountOrders(req.user.id);
 
     res.render('account', {
         pageTitle: `${site.short_name} - My Account`,
@@ -336,8 +341,55 @@ router.get('/account', require('../lib/auth').requireAuthPage(), async (req, res
         profileUpdated: req.query.profileUpdated === '1',
         pwSuccess: req.query.pwSuccess === '1',
         pwError: req.query.pwError || '',
+        ordersCleared: req.query.ordersCleared || '',
+        totpEnabled: false,
+        enrollment: null,
+        totpError: '',
+        totpMessage: '',
         razorpayConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
+        ...extra,
     });
+}
+
+router.get('/account', requireAuthPage(), async (req, res) => {
+    const totpEnabled = await userSecurity.isTotpEnabled(req.user.id);
+    await renderAccountPage(req, res, { totpEnabled });
+});
+
+router.post('/account/security/start-enrollment', requireAuthPage(), async (req, res) => {
+    if (!db.isDbConfigured()) {
+        return renderAccountPage(req, res, {});
+    }
+    const enrollment = await userSecurity.startTotpEnrollment(req.user.id, req.user.email);
+    const QRCode = require('qrcode');
+    const qrDataUrl = await QRCode.toDataURL(enrollment.url);
+    await renderAccountPage(req, res, { totpEnabled: false, enrollment: { ...enrollment, qrDataUrl } });
+});
+
+router.post('/account/security/confirm-enrollment', requireAuthPage(), async (req, res) => {
+    const ok = db.isDbConfigured() && (await userSecurity.confirmTotpEnrollment(req.user.id, req.body.code));
+    if (!ok) {
+        return renderAccountPage(req, res, { totpEnabled: false, totpError: 'Invalid code. Please scan the QR code again and try once more.' });
+    }
+    await renderAccountPage(req, res, { totpEnabled: true, totpMessage: 'Two-factor authentication is now enabled.' });
+});
+
+router.post('/account/security/disable', requireAuthPage(), async (req, res) => {
+    const ok = db.isDbConfigured() && (await userSecurity.disableTotp(req.user.id, req.body.code));
+    if (!ok) {
+        return renderAccountPage(req, res, { totpEnabled: true, totpError: 'Invalid code. Two-factor authentication was not disabled.' });
+    }
+    await renderAccountPage(req, res, { totpEnabled: false, totpMessage: 'Two-factor authentication has been disabled.' });
+});
+
+router.post('/account/orders/clear', requireAuthPage(), async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('orders').deleteMany({
+            user_id: db.toId(req.user.id),
+            status: { $in: ['created', 'failed', 'rejected'] },
+        });
+    }
+    res.redirect('/account?ordersCleared=1');
 });
 
 router.get('/account/orders/:id/download/:fileId', requireAuthPage(), async (req, res) => {

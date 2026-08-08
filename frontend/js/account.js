@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const toast = document.querySelector('[data-auto-toast]');
+    if (toast) {
+        setTimeout(() => toast.remove(), 4000);
+        if (window.history.replaceState) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('ordersCleared');
+            window.history.replaceState({}, '', url);
+        }
+    }
+
     const statusBox = document.querySelector('[data-retry-status]');
 
     const showStatus = (message, type) => {
@@ -35,6 +45,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     name: order.companyName,
                     description: order.productTitle,
                     order_id: order.razorpayOrderId,
+                    config: {
+                        display: {
+                            blocks: {
+                                upi: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] },
+                                other: { name: 'Other ways to pay', instruments: [{ method: 'card' }, { method: 'netbanking' }, { method: 'wallet' }] },
+                            },
+                            sequence: ['block.upi', 'block.other'],
+                            preferences: { show_default_blocks: false },
+                        },
+                    },
+                    method: { upi: true, card: true, netbanking: true, wallet: true },
                     handler: async (response) => {
                         showStatus('Verifying payment...', 'info');
                         try {

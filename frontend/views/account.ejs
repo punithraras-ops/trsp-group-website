@@ -21,7 +21,19 @@
 
         <div class="alert d-none" data-retry-status role="status"></div>
 
-        <h3 class="fw-bold mt-5 mb-3">My Orders</h3>
+        <% if (typeof ordersCleared !== 'undefined' && ordersCleared) { %>
+            <div class="toast-notification" data-auto-toast><i class="fas fa-circle-check me-2"></i>Abandoned orders cleared.</div>
+        <% } %>
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-5 mb-3">
+            <h3 class="fw-bold mb-0">My Orders</h3>
+            <% if (orders.some(o => ['created','failed','rejected'].includes(o.status))) { %>
+                <form method="POST" action="/account/orders/clear" onsubmit="return confirm('Remove all abandoned/failed/rejected orders from your history? Paid orders are never affected.');">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-broom me-1"></i>Clear My Orders</button>
+                </form>
+            <% } %>
+        </div>
         <% if (orders.length === 0) { %>
             <p class="text-muted">You have not placed any orders yet. <a href="/store">Browse the store</a>.</p>
         <% } else { %>
@@ -85,7 +97,7 @@
 
         <h3 class="fw-bold mt-5 mb-3">Account Settings</h3>
         <div class="row g-4">
-            <div class="col-md-6">
+            <div class="col-md-6 col-lg-4">
                 <div class="card border-0 shadow-sm rounded-4 h-100">
                     <div class="card-body p-4">
                         <h5 class="fw-bold mb-3">Profile</h5>
@@ -108,7 +120,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6 col-lg-4">
                 <div class="card border-0 shadow-sm rounded-4 h-100">
                     <div class="card-body p-4">
                         <h5 class="fw-bold mb-3">Password</h5>
@@ -137,6 +149,52 @@
                             </form>
                         <% } else { %>
                             <p class="text-muted mb-0">You signed in with Google/GitHub, so there's no password to manage here.</p>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold mb-3">Two-Factor Authentication</h5>
+                        <% if (typeof totpMessage !== 'undefined' && totpMessage) { %>
+                            <div class="alert alert-success py-2"><%= totpMessage %></div>
+                        <% } %>
+                        <% if (typeof totpError !== 'undefined' && totpError) { %>
+                            <div class="alert alert-danger py-2"><%= totpError %></div>
+                        <% } %>
+
+                        <% if (totpEnabled) { %>
+                            <p class="text-success fw-bold mb-2"><i class="fas fa-check me-1"></i>Enabled</p>
+                            <p class="text-muted small">Logging in now requires a code from your authenticator app.</p>
+                            <form method="POST" action="/account/security/disable">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <div class="mb-3">
+                                    <label class="form-label">Enter current code to disable</label>
+                                    <input type="text" name="code" class="form-control text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required>
+                                </div>
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Disable 2FA</button>
+                            </form>
+                        <% } else if (typeof enrollment !== 'undefined' && enrollment) { %>
+                            <p class="small mb-2">1. Scan with Google Authenticator, Authy, or any TOTP app:</p>
+                            <div class="text-center mb-2">
+                                <img src="<%= enrollment.qrDataUrl %>" alt="2FA QR code" style="width: 160px; height: 160px;">
+                            </div>
+                            <p class="small">Or enter manually: <code><%= enrollment.secret %></code></p>
+                            <form method="POST" action="/account/security/confirm-enrollment">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <div class="mb-2">
+                                    <label class="form-label small">2. Enter the 6-digit code to confirm:</label>
+                                    <input type="text" name="code" class="form-control text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autofocus>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Confirm &amp; Enable</button>
+                            </form>
+                        <% } else { %>
+                            <p class="text-muted small">Add an authenticator app for a second layer of login security.</p>
+                            <form method="POST" action="/account/security/start-enrollment">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="btn btn-primary btn-sm">Enable 2FA</button>
+                            </form>
                         <% } %>
                     </div>
                 </div>
