@@ -82,7 +82,7 @@
                                     <% } %>
                                     <% if (order.downloadableFiles && order.downloadableFiles.length > 0) { %>
                                         <div class="dropdown d-inline-block">
-                                            <button class="btn btn-sm btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-download me-1"></i>Files (<%= order.downloadableFiles.length %>)</button>
+                                            <button class="btn btn-sm btn-success dropdown-toggle files-dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-download me-1"></i>Files (<%= order.downloadableFiles.length %>)</button>
                                             <ul class="dropdown-menu dropdown-menu-end">
                                                 <% order.downloadableFiles.forEach(f => { %>
                                                     <li><a class="dropdown-item" href="/account/orders/<%= order.id %>/download/<%= f.id %>"><i class="fas fa-file-arrow-down me-2"></i><%= f.filename %></a></li>

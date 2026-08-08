@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
+    if (typeof bootstrap !== 'undefined') {
+        document.querySelectorAll('.files-dropdown-toggle').forEach((el) => {
+            new bootstrap.Dropdown(el, {
+                popperConfig: (defaultConfig) => ({ ...defaultConfig, strategy: 'fixed' }),
+            });
+        });
+    }
+
     const toast = document.querySelector('[data-auto-toast]');
     if (toast) {
         setTimeout(() => toast.remove(), 4000);
