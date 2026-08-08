@@ -712,3 +712,43 @@ form .btn-primary {
         font-size: 1.7rem;
     }
 }
+
+/* Google Translate widget: suppress default banner/branding, style to match navbar */
+.goog-te-banner-frame {
+    display: none !important;
+}
+
+body {
+    top: 0 !important;
+}
+
+#google_translate_element .goog-te-gadget {
+    font-size: 0 !important;
+    color: transparent !important;
+}
+
+#google_translate_element .goog-te-gadget-simple {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 0.35rem 0.7rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+#google_translate_element .goog-te-gadget-simple .goog-te-menu-value {
+    font-size: 0.85rem !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+    font-weight: 600;
+}
+
+#google_translate_element img {
+    display: none !important;
+}
+
+.goog-tooltip,
+.goog-tooltip:hover,
+.goog-text-highlight {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}

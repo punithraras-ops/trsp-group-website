@@ -341,3 +341,13 @@ body.admin-auth-page .btn-primary:hover {
     transform: translateY(-1px);
     box-shadow: 0 10px 24px rgba(79, 70, 229, 0.35);
 }
+
+/* Language switcher on light admin backgrounds */
+body.admin-page #google_translate_element .goog-te-gadget-simple {
+    background: var(--admin-surface, #ffffff);
+    border: 1px solid var(--admin-border, #e6e9f0);
+}
+
+body.admin-page #google_translate_element .goog-te-gadget-simple .goog-te-menu-value {
+    color: var(--admin-text, #1e293b) !important;
+}

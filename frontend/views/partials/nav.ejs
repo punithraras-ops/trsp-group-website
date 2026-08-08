@@ -14,6 +14,10 @@
                     <li class="nav-item"><a class="nav-link <%= activePage === 'store' ? 'active' : '' %>" href="/store">Store</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'contact' ? 'active' : '' %>" href="<%= site.routes.contact %>">Contact</a></li>
                     <li class="nav-item"><a class="nav-link <%= activePage === 'about' ? 'active' : '' %>" href="<%= site.routes.about %>">About</a></li>
+                    <li class="nav-item d-flex align-items-center">
+                        <i class="fas fa-globe me-1" style="color: rgba(255,255,255,0.7); font-size: 0.85rem;"></i>
+                        <div id="google_translate_element" class="lang-switcher notranslate"></div>
+                    </li>
                     <% if (typeof user !== 'undefined' && user) { %>
                         <li class="nav-item"><a class="nav-link <%= activePage === 'account' ? 'active' : '' %>" href="/account"><i class="fas fa-user-circle me-1"></i><%= user.name %></a></li>
                         <li class="nav-item"><a class="nav-link nav-link-cta" href="/logout"><i class="fas fa-arrow-right-from-bracket me-1"></i>Logout</a></li>
