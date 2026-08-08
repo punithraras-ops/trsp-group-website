@@ -350,7 +350,7 @@ router.post('/admin/features', async (req, res) => {
             image_url: null,
             status: req.body.status || 'planned',
             sort_order: parseInt(req.body.sort_order, 10) || 0,
-            is_active: true,
+            is_active: req.body.is_active === '1',
             created_at: new Date(),
             updated_at: new Date(),
         });
