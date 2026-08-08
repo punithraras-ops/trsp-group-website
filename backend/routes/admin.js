@@ -306,6 +306,7 @@ router.post('/admin/products', upload.array('images', 10), csrf.verifyAfterUploa
             currency: 'INR',
             images,
             requires_approval: req.body.requires_approval === '1',
+            auto_approve: req.body.auto_approve === '1',
             is_active: true,
             created_at: new Date(),
         });
@@ -327,6 +328,7 @@ router.post('/admin/products/:id/update', async (req, res) => {
                     price_paise: pricePaise,
                     is_active: req.body.is_active === '1',
                     requires_approval: req.body.requires_approval === '1',
+                    auto_approve: req.body.auto_approve === '1',
                 },
             }
         );

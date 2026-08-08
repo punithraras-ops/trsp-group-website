@@ -306,6 +306,10 @@
                                         <input type="checkbox" name="requires_approval" value="1" class="form-check-input" id="approval-<%= p.id %>" <%= p.requires_approval ? 'checked' : '' %>>
                                         <label class="form-check-label" for="approval-<%= p.id %>">Requires approval before payment (customer requests it, you approve, then they can pay)</label>
                                     </div>
+                                    <div class="form-check mb-2">
+                                        <input type="checkbox" name="auto_approve" value="1" class="form-check-input" id="auto-approve-<%= p.id %>" <%= p.auto_approve ? 'checked' : '' %>>
+                                        <label class="form-check-label" for="auto-approve-<%= p.id %>">Auto-approve requests (skips manual review above &mdash; goes straight to "ready to pay")</label>
+                                    </div>
                                     <button type="submit" class="btn btn-sm btn-primary">Save</button>
                                 </form>
                                 <form method="POST" action="/admin/products/<%= p.id %>/delete" onsubmit="return confirm('Delete this product?');" class="d-inline">
@@ -351,6 +355,10 @@
                     <div class="form-check">
                         <input type="checkbox" name="requires_approval" value="1" class="form-check-input" id="approval-new">
                         <label class="form-check-label" for="approval-new">Requires approval before payment</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="auto_approve" value="1" class="form-check-input" id="auto-approve-new">
+                        <label class="form-check-label" for="auto-approve-new">Auto-approve requests (skips manual review above)</label>
                     </div>
                 </div>
                 <div class="col-md-4 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100">Add Product</button></div>

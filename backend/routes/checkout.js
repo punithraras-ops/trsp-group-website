@@ -44,7 +44,9 @@ router.post('/api/checkout/request-approval', requireAuthApi, async (req, res) =
                 quantity: 1,
                 amount_paise: product.price_paise,
                 currency: product.currency,
-                status: 'pending_approval',
+                // Auto-approve products skip the manual admin review step and
+                // go straight to "ready to pay" the moment the request is made.
+                status: product.auto_approve ? 'approved_awaiting_payment' : 'pending_approval',
                 delivery_status: 'processing',
                 razorpay_order_id: null,
                 razorpay_payment_id: null,
