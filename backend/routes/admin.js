@@ -10,6 +10,7 @@ const legal = require('../lib/legal');
 const auditLog = require('../lib/auditLog');
 const coupons = require('../lib/coupons');
 const invoices = require('../lib/invoices');
+const mailer = require('../lib/mailer');
 const reviews = require('../lib/reviews');
 const { markOrderPaid } = require('../lib/orders');
 const { adminLoginLimiter } = require('../lib/rateLimiters');
@@ -777,6 +778,31 @@ router.post('/admin/tickets/:id/update', async (req, res) => {
             { $set: update }
         );
         await logAdminAction(req, 'ticket.update', req.params.id);
+    }
+    res.redirect('/admin/tickets');
+});
+
+router.post('/admin/tickets/:id/message', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const text = String(req.body.text || '').trim();
+        if (text) {
+            const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
+                { _id: db.toId(req.params.id) },
+                { $push: { messages: { from: 'admin', text, created_at: new Date() } }, $set: { updated_at: new Date() } },
+                { returnDocument: 'after' }
+            );
+            if (ticket) {
+                const user = await db.getDb().collection('users').findOne({ _id: ticket.user_id });
+                if (user) {
+                    mailer.sendMail({
+                        to: user.email,
+                        subject: `New reply on your ticket: ${ticket.title}`,
+                        html: `<p>Hi ${user.name},</p><p>We replied on your ticket <strong>${ticket.title}</strong>:</p><p>${text}</p><p>View it at <a href="${res.locals.site.site_url}/tickets">your tickets page</a>.</p>`,
+                    }).catch(() => {});
+                }
+            }
+            await logAdminAction(req, 'ticket.message', req.params.id);
+        }
     }
     res.redirect('/admin/tickets');
 });

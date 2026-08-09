@@ -65,6 +65,7 @@ router.post('/tickets', requireAuthPage(), uploadAttachment.array('attachments',
         deliverable_files: [],
         delivery_status: 'not_delivered',
         admin_notes: '',
+        messages: [],
         customer_rating: null,
         customer_rating_comment: '',
         created_at: new Date(),
@@ -97,6 +98,34 @@ router.post('/tickets/:id/rate', requireAuthPage(), async (req, res) => {
     );
 
     res.redirect('/tickets?rated=1');
+});
+
+router.post('/tickets/:id/message', requireAuthPage(), async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.redirect('/tickets');
+        return;
+    }
+    const text = String(req.body.text || '').trim();
+    if (!text) {
+        res.redirect('/tickets');
+        return;
+    }
+
+    const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
+        { _id: db.toId(req.params.id), user_id: db.toId(req.user.id) },
+        { $push: { messages: { from: 'customer', text, created_at: new Date() } }, $set: { updated_at: new Date() } },
+        { returnDocument: 'after' }
+    );
+
+    if (ticket) {
+        mailer.sendMail({
+            to: res.locals.site.email,
+            subject: `New message on ticket: ${ticket.title}`,
+            html: `<p>${req.user.name} (${req.user.email}) replied on their ticket <strong>${ticket.title}</strong>:</p><p>${text}</p>`,
+        }).catch(() => {});
+    }
+
+    res.redirect('/tickets');
 });
 
 router.post('/api/tickets/:id/create-payment-order', requireAuthApi, async (req, res) => {
