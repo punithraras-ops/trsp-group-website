@@ -125,6 +125,22 @@ router.get('/api/tickets/:id/messages', requireAuthApi, async (req, res) => {
     res.json({ messages: ticket.messages || [] });
 });
 
+router.post('/api/tickets/:id/clear-messages', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'Not available.' });
+        return;
+    }
+    const result = await db.getDb().collection('tickets').updateOne(
+        { _id: db.toId(req.params.id), user_id: db.toId(req.user.id) },
+        { $set: { messages: [], updated_at: new Date() } }
+    );
+    if (result.matchedCount === 0) {
+        res.status(404).json({ error: 'Ticket not found.' });
+        return;
+    }
+    res.json({ message: 'Conversation cleared.' });
+});
+
 router.post('/api/tickets/:id/message', requireAuthApi, async (req, res) => {
     if (!db.isDbConfigured()) {
         res.status(503).json({ error: 'Not available.' });

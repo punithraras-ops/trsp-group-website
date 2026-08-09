@@ -191,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('ticketChatForm');
         const input = document.getElementById('ticketChatInput');
         const statusEl = document.getElementById('ticketChatStatus');
+        const clearBtn = document.getElementById('ticketChatClearBtn');
         let currentTicketId = null;
 
         function renderMessages(messages) {
@@ -273,5 +274,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitBtn.disabled = false;
             }
         });
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', async () => {
+                if (!currentTicketId) return;
+                if (!window.confirm('Clear this entire conversation? This cannot be undone.')) return;
+
+                clearBtn.disabled = true;
+                try {
+                    const response = await fetch(`/api/tickets/${currentTicketId}/clear-messages`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                    });
+                    const result = await response.json();
+                    if (!response.ok) {
+                        throw new Error(result.error || 'Unable to clear conversation.');
+                    }
+                    renderMessages([]);
+                } catch (error) {
+                    statusEl.textContent = error.message;
+                    statusEl.className = 'small mt-2 text-danger';
+                } finally {
+                    clearBtn.disabled = false;
+                }
+            });
+        }
     }
 });

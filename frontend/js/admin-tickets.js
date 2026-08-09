@@ -87,12 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
             messagesEl.appendChild(div);
             messagesEl.scrollTop = messagesEl.scrollHeight;
             input.value = '';
-
-            const openBtn = document.querySelector(`[data-open-chat="${currentTicketId}"]`);
-            if (openBtn) {
-                const count = messagesEl.querySelectorAll(':scope > div').length;
-                openBtn.innerHTML = `<i class="fas fa-comments me-1"></i>Conversation (${count})`;
-            }
         } catch (error) {
             statusEl.textContent = error.message;
             statusEl.className = 'small mt-2 text-danger';
