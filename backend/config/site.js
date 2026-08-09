@@ -32,6 +32,9 @@ module.exports = {
     home_testimonials_kicker: 'Client Trust',
     home_testimonials_heading: 'What Clients Say',
     home_testimonials_description: 'We aim to be consistent, collaborative, and dependable across every engagement.',
+    home_upcoming_kicker: "What's Next",
+    home_upcoming_heading: 'Upcoming Features',
+    home_upcoming_description: 'A look at what our team is actively building next.',
 
     services_hero_kicker: 'Our Expertise',
     services_hero_title: 'Services designed to move ideas into reliable products.',
