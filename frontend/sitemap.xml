@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://trsp-groups-production.up.railway.app/</loc></url>
-  <url><loc>https://trsp-groups-production.up.railway.app/about</loc></url>
-  <url><loc>https://trsp-groups-production.up.railway.app/services</loc></url>
-  <url><loc>https://trsp-groups-production.up.railway.app/software-development</loc></url>
-  <url><loc>https://trsp-groups-production.up.railway.app/contact</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/about</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/services</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/software-development</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/business-analytics</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/cybersecurity</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/product-strategy</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/store</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/contact</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/terms</loc></url>
+  <url><loc>https://trsp-group-website.onrender.com/privacy</loc></url>
 </urlset>

@@ -1,5 +1,9 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /account
+Disallow: /cart
+Disallow: /checkout
+Disallow: /tickets
 
-Sitemap: https://trsp-groups-production.up.railway.app/sitemap.xml
+Sitemap: https://trsp-group-website.onrender.com/sitemap.xml
