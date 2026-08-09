@@ -100,32 +100,52 @@ router.post('/tickets/:id/rate', requireAuthPage(), async (req, res) => {
     res.redirect('/tickets?rated=1');
 });
 
-router.post('/tickets/:id/message', requireAuthPage(), async (req, res) => {
+router.get('/api/tickets/:id/messages', requireAuthApi, async (req, res) => {
     if (!db.isDbConfigured()) {
-        res.redirect('/tickets');
+        res.status(503).json({ error: 'Not available.' });
+        return;
+    }
+    const ticket = await db.getDb().collection('tickets').findOne({
+        _id: db.toId(req.params.id),
+        user_id: db.toId(req.user.id),
+    });
+    if (!ticket) {
+        res.status(404).json({ error: 'Ticket not found.' });
+        return;
+    }
+    res.json({ messages: ticket.messages || [] });
+});
+
+router.post('/api/tickets/:id/message', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'Not available.' });
         return;
     }
     const text = String(req.body.text || '').trim();
     if (!text) {
-        res.redirect('/tickets');
+        res.status(422).json({ error: 'Message cannot be empty.' });
         return;
     }
 
+    const newMessage = { from: 'customer', text, created_at: new Date() };
     const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
         { _id: db.toId(req.params.id), user_id: db.toId(req.user.id) },
-        { $push: { messages: { from: 'customer', text, created_at: new Date() } }, $set: { updated_at: new Date() } },
+        { $push: { messages: newMessage }, $set: { updated_at: new Date() } },
         { returnDocument: 'after' }
     );
 
-    if (ticket) {
-        mailer.sendMail({
-            to: res.locals.site.email,
-            subject: `New message on ticket: ${ticket.title}`,
-            html: `<p>${req.user.name} (${req.user.email}) replied on their ticket <strong>${ticket.title}</strong>:</p><p>${text}</p>`,
-        }).catch(() => {});
+    if (!ticket) {
+        res.status(404).json({ error: 'Ticket not found.' });
+        return;
     }
 
-    res.redirect('/tickets');
+    mailer.sendMail({
+        to: res.locals.site.email,
+        subject: `New message on ticket: ${ticket.title}`,
+        html: `<p>${req.user.name} (${req.user.email}) replied on their ticket <strong>${ticket.title}</strong>:</p><p>${text}</p>`,
+    }).catch(() => {});
+
+    res.json({ message: newMessage });
 });
 
 router.post('/api/tickets/:id/create-payment-order', requireAuthApi, async (req, res) => {

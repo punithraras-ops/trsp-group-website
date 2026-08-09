@@ -782,29 +782,52 @@ router.post('/admin/tickets/:id/update', async (req, res) => {
     res.redirect('/admin/tickets');
 });
 
-router.post('/admin/tickets/:id/message', async (req, res) => {
-    if (db.isDbConfigured()) {
-        const text = String(req.body.text || '').trim();
-        if (text) {
-            const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
-                { _id: db.toId(req.params.id) },
-                { $push: { messages: { from: 'admin', text, created_at: new Date() } }, $set: { updated_at: new Date() } },
-                { returnDocument: 'after' }
-            );
-            if (ticket) {
-                const user = await db.getDb().collection('users').findOne({ _id: ticket.user_id });
-                if (user) {
-                    mailer.sendMail({
-                        to: user.email,
-                        subject: `New reply on your ticket: ${ticket.title}`,
-                        html: `<p>Hi ${user.name},</p><p>We replied on your ticket <strong>${ticket.title}</strong>:</p><p>${text}</p><p>View it at <a href="${res.locals.site.site_url}/tickets">your tickets page</a>.</p>`,
-                    }).catch(() => {});
-                }
-            }
-            await logAdminAction(req, 'ticket.message', req.params.id);
-        }
+router.get('/admin/tickets/:id/messages', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'Not available.' });
+        return;
     }
-    res.redirect('/admin/tickets');
+    const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id) });
+    if (!ticket) {
+        res.status(404).json({ error: 'Ticket not found.' });
+        return;
+    }
+    res.json({ messages: ticket.messages || [] });
+});
+
+router.post('/admin/tickets/:id/message', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'Not available.' });
+        return;
+    }
+    const text = String(req.body.text || '').trim();
+    if (!text) {
+        res.status(422).json({ error: 'Message cannot be empty.' });
+        return;
+    }
+
+    const newMessage = { from: 'admin', text, created_at: new Date() };
+    const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
+        { _id: db.toId(req.params.id) },
+        { $push: { messages: newMessage }, $set: { updated_at: new Date() } },
+        { returnDocument: 'after' }
+    );
+    if (!ticket) {
+        res.status(404).json({ error: 'Ticket not found.' });
+        return;
+    }
+
+    const user = await db.getDb().collection('users').findOne({ _id: ticket.user_id });
+    if (user) {
+        mailer.sendMail({
+            to: user.email,
+            subject: `New reply on your ticket: ${ticket.title}`,
+            html: `<p>Hi ${user.name},</p><p>We replied on your ticket <strong>${ticket.title}</strong>:</p><p>${text}</p><p>View it at <a href="${res.locals.site.site_url}/tickets">your tickets page</a>.</p>`,
+        }).catch(() => {});
+    }
+    await logAdminAction(req, 'ticket.message', req.params.id);
+
+    res.json({ message: newMessage });
 });
 
 router.post('/admin/tickets/:id/deliverable', uploadDeliverable.array('files', 5), csrf.verifyAfterUpload, async (req, res) => {
