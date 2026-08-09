@@ -16,6 +16,7 @@ function isKnownMultipartRoute(req) {
         || req.path === '/tickets'
         || /^\/admin\/products\/[^/]+\/(images|deliverable)$/.test(req.path)
         || /^\/admin\/design\/upload\/[^/]+$/.test(req.path)
+        || req.path === '/admin/design/welcome-video'
         || /^\/admin\/orders\/[^/]+\/deliverable$/.test(req.path)
         || /^\/admin\/services\/[^/]+\/background$/.test(req.path)
         || /^\/admin\/research-verticals\/[^/]+\/background$/.test(req.path)

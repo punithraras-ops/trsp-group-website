@@ -906,6 +906,43 @@ router.post('/admin/design/card-color/:slot/remove', async (req, res) => {
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Card color reset.' });
 });
 
+router.post('/admin/design/welcome-video', uploadDeliverable.single('video'), csrf.verifyAfterUpload, async (req, res) => {
+    const settings = await design.getDesignSettings();
+
+    if (!db.isDbConfigured() || !req.file) {
+        res.locals.design = settings;
+        res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: 'No file received.', message: '' });
+        return;
+    }
+
+    if (!req.file.mimetype.startsWith('video/')) {
+        res.locals.design = settings;
+        res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: 'Please upload a video file.', message: '' });
+        return;
+    }
+
+    const oldVideoUrl = settings.welcomeVideo;
+    const fileId = await db.uploadBuffer(req.file.buffer, req.file.originalname, req.file.mimetype);
+    await design.saveWelcomeVideo(fileId);
+    if (oldVideoUrl) {
+        await db.deleteFile(oldVideoUrl.replace('/uploads/', ''));
+    }
+    await logAdminAction(req, 'design.welcome_video', 'Updated welcome screen video');
+    const updated = await design.getDesignSettings();
+    res.locals.design = updated;
+    res.render('admin-design', { site, colors: updated.colors, images: updated.images, error: '', message: 'Video updated.' });
+});
+
+router.post('/admin/design/welcome-video/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await design.removeWelcomeVideo();
+        await logAdminAction(req, 'design.welcome_video_remove', 'Removed welcome screen video');
+    }
+    const settings = await design.getDesignSettings();
+    res.locals.design = settings;
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Video removed.' });
+});
+
 router.post('/admin/orders/:id/approve', async (req, res) => {
     if (db.isDbConfigured()) {
         await db.getDb().collection('orders').updateOne(

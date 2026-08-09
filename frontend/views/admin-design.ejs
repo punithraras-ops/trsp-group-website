@@ -70,7 +70,8 @@
                 <% const slots = [
                     { key: 'logo', label: 'Logo (navbar)', height: 80 },
                     { key: 'favicon', label: 'Favicon (browser tab icon)', height: 80 },
-                    { key: 'welcome_background', label: 'Welcome / Splash Screen Background', height: 120 },
+                    { key: 'welcome_logo', label: 'Welcome Screen Logo (falls back to the navbar logo above)', height: 80 },
+                    { key: 'welcome_background', label: 'Welcome / Splash Screen Background Image', height: 120 },
                     { key: 'hero_background', label: 'Hero Background (homepage banner)', height: 120 },
                     { key: 'team_photo', label: 'Team / About Photo', height: 120 },
                     { key: 'page_background', label: 'Page Background (whole site, behind all pages)', height: 120 },
@@ -192,6 +193,52 @@
                     </div>
                 <% }) %>
             </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mt-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1"><i class="fas fa-door-open me-2" style="color: var(--admin-accent);"></i>Welcome Screen Design</h4>
+            <p class="text-muted">Colors and background video for the splash screen a first-time visitor sees. Text, logo, hold duration, and the background image are set on the Site Info and Images sections above.</p>
+
+            <div class="row g-3 mb-4">
+                <% const welcomeColorSlots = [
+                    { key: 'welcome_bg_color_1', label: 'Background Gradient Start', fallback: colors.dark_color },
+                    { key: 'welcome_bg_color_2', label: 'Background Gradient End', fallback: colors.primary_color },
+                    { key: 'welcome_text_color', label: 'Text Color', fallback: '#ffffff' },
+                ]; %>
+                <% welcomeColorSlots.forEach(slot => { %>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block"><%= slot.label %></label>
+                        <form method="POST" action="/admin/design/card-color/<%= slot.key %>" class="d-flex gap-2 align-items-center">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="color" name="color" class="form-control form-control-color" value="<%= (design.cardColors && design.cardColors[slot.key]) || slot.fallback %>">
+                            <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Set</button>
+                        </form>
+                        <% if (design.cardColors && design.cardColors[slot.key]) { %>
+                            <form method="POST" action="/admin/design/card-color/<%= slot.key %>/remove" class="mt-1">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="btn btn-sm btn-link text-muted p-0">Reset to default</button>
+                            </form>
+                        <% } %>
+                    </div>
+                <% }) %>
+            </div>
+
+            <h6 class="fw-bold mb-2">Background Video <span class="text-muted fw-normal small">(optional &mdash; covers the background image/color when set; keep it short and under a few MB so the welcome screen loads fast)</span></h6>
+            <% if (design.welcomeVideo) { %>
+                <video src="<%= design.welcomeVideo %>" class="rounded border d-block mb-2" style="max-height:160px;" muted loop autoplay playsinline></video>
+                <form method="POST" action="/admin/design/welcome-video/remove" data-confirm="Remove this background video and go back to the image/color?">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-outline-danger text-nowrap">Remove Video</button>
+                </form>
+            <% } else { %>
+                <form method="POST" action="/admin/design/welcome-video" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap" data-ajax-upload>
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="file" name="video" accept="video/*" class="form-control" required>
+                    <button type="submit" class="btn btn-primary text-nowrap">Upload Video</button>
+                </form>
+            <% } %>
         </div>
     </div>
 

@@ -45,11 +45,17 @@ const ADMIN_CARD_SLOTS = [
     { key: 'admin_stat_revenue_bg', label: 'Revenue (Paid)' },
 ];
 
-const CARD_COLOR_SLOTS = [...CARD_SLOTS, ...ADMIN_CARD_SLOTS].map(s => s.key);
+const WELCOME_COLOR_SLOTS = [
+    { key: 'welcome_bg_color_1', label: 'Background Gradient Start' },
+    { key: 'welcome_bg_color_2', label: 'Background Gradient End' },
+    { key: 'welcome_text_color', label: 'Text Color' },
+];
+
+const CARD_COLOR_SLOTS = [...CARD_SLOTS, ...ADMIN_CARD_SLOTS, ...WELCOME_COLOR_SLOTS].map(s => s.key);
 
 const IMAGE_SLOTS = [
     'logo', 'favicon', 'hero_background', 'team_photo', 'page_background', 'services_background', 'button_background',
-    'welcome_background',
+    'welcome_background', 'welcome_logo',
     'nav_home_bg', 'nav_services_bg', 'nav_store_bg', 'nav_contact_bg', 'nav_about_bg', 'nav_language_bg', 'nav_login_bg', 'service_cta_bg',
     'admin_page_background', 'footer_background',
     ...ADMIN_BUTTON_SLOTS,
@@ -59,7 +65,7 @@ const DEFAULT_ADMIN_BG = '#eef1f5';
 
 async function getDesignSettings() {
     if (!db.isDbConfigured()) {
-        return { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG, adminButtonColors: {}, adminColors: DEFAULT_ADMIN_COLORS, cardColors: {} };
+        return { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG, adminButtonColors: {}, adminColors: DEFAULT_ADMIN_COLORS, cardColors: {}, welcomeVideo: null };
     }
 
     const doc = await db.getDb().collection('site_settings').findOne({ _id: CONFIG_ID });
@@ -76,8 +82,35 @@ async function getDesignSettings() {
     const adminButtonColors = (doc && doc.admin_button_colors) || {};
     const adminColors = { ...DEFAULT_ADMIN_COLORS, ...(doc && doc.admin_colors ? doc.admin_colors : {}) };
     const cardColors = (doc && doc.card_colors) || {};
+    const welcomeVideo = (doc && doc.welcome_video_id) ? `/uploads/${doc.welcome_video_id}` : null;
 
-    return { colors, images, adminBackground, adminButtonColors, adminColors, cardColors };
+    return { colors, images, adminBackground, adminButtonColors, adminColors, cardColors, welcomeVideo };
+}
+
+async function saveWelcomeVideo(fileId) {
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $set: { welcome_video_id: fileId.toString(), updated_at: new Date() } },
+        { upsert: true }
+    );
+}
+
+async function removeWelcomeVideo() {
+    const doc = await db.getDb().collection('site_settings').findOne({ _id: CONFIG_ID });
+    const existingFileId = doc && doc.welcome_video_id;
+
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $unset: { welcome_video_id: '' }, $set: { updated_at: new Date() } }
+    );
+
+    if (existingFileId) {
+        try {
+            await db.getBucket().delete(db.toId(existingFileId));
+        } catch (error) {
+            // File may already be gone; ignore.
+        }
+    }
 }
 
 async function saveAdminBackground(color) {
@@ -202,12 +235,15 @@ module.exports = {
     removeAdminButtonColor,
     saveCardColor,
     removeCardColor,
+    saveWelcomeVideo,
+    removeWelcomeVideo,
     DEFAULT_COLORS,
     DEFAULT_ADMIN_COLORS,
     IMAGE_SLOTS,
     ADMIN_BUTTON_SLOTS,
     CARD_SLOTS,
     ADMIN_CARD_SLOTS,
+    WELCOME_COLOR_SLOTS,
     CARD_COLOR_SLOTS,
     DEFAULT_ADMIN_BG,
 };

@@ -1,3 +1,9 @@
+<%
+    const welcomeTextColor = design.cardColors.welcome_text_color || '#ffffff';
+    const welcomeBgColor1 = design.cardColors.welcome_bg_color_1 || design.colors.dark_color;
+    const welcomeBgColor2 = design.cardColors.welcome_bg_color_2 || design.colors.primary_color;
+    const welcomeLogo = design.images.welcome_logo || design.images.logo || site.icon_path;
+%>
 <%- include('partials/head') %>
 
 <style>
@@ -15,9 +21,7 @@
         justify-content: center;
         text-align: center;
         padding: 2rem 1.5rem;
-        background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-dark) 55%, var(--primary-color) 100%);
-        background-size: cover;
-        background-position: center;
+        background: linear-gradient(135deg, var(--welcome-bg-1) 0%, var(--welcome-bg-2) 100%);
         overflow: hidden;
     }
 
@@ -29,13 +33,30 @@
             radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.10), transparent 45%),
             radial-gradient(circle at 80% 75%, rgba(255, 255, 255, 0.08), transparent 50%);
         pointer-events: none;
+        z-index: 1;
+    }
+
+    .welcome-bg-media {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+    }
+
+    .welcome-bg-scrim {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, color-mix(in srgb, var(--welcome-bg-1) 72%, transparent), color-mix(in srgb, var(--welcome-bg-2) 62%, transparent));
+        z-index: 0;
     }
 
     .welcome-inner {
         position: relative;
-        z-index: 1;
+        z-index: 2;
         max-width: 620px;
-        color: #ffffff;
+        color: var(--welcome-text);
         animation: welcomeRise 0.9s ease both;
     }
 
@@ -52,7 +73,7 @@
         font-weight: 600;
         letter-spacing: 0.14em;
         text-transform: uppercase;
-        color: rgba(255, 255, 255, 0.78);
+        color: color-mix(in srgb, var(--welcome-text) 78%, transparent);
         margin-bottom: 1rem;
     }
 
@@ -62,13 +83,14 @@
         line-height: 1.25;
         margin-bottom: 2.5rem;
         text-wrap: balance;
+        color: var(--welcome-text);
     }
 
     .welcome-progress-track {
         width: min(320px, 70vw);
         height: 4px;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.22);
+        background: color-mix(in srgb, var(--welcome-text) 22%, transparent);
         margin: 0 auto 2rem;
         overflow: hidden;
     }
@@ -77,7 +99,7 @@
         height: 100%;
         width: 0%;
         border-radius: 999px;
-        background: #ffffff;
+        background: var(--welcome-text);
         animation-name: welcomeFill;
         animation-timing-function: linear;
         animation-fill-mode: forwards;
@@ -89,8 +111,8 @@
         gap: 0.5rem;
         padding: 0.6rem 1.5rem;
         border-radius: 999px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        color: #ffffff;
+        border: 1px solid color-mix(in srgb, var(--welcome-text) 50%, transparent);
+        color: var(--welcome-text);
         text-decoration: none;
         font-weight: 500;
         font-size: 0.92rem;
@@ -98,9 +120,9 @@
     }
 
     .welcome-skip:hover {
-        background: rgba(255, 255, 255, 0.14);
-        border-color: rgba(255, 255, 255, 0.85);
-        color: #ffffff;
+        background: color-mix(in srgb, var(--welcome-text) 14%, transparent);
+        border-color: var(--welcome-text);
+        color: var(--welcome-text);
     }
 
     @keyframes welcomeFill {
@@ -119,10 +141,16 @@
     }
 </style>
 
-<div class="welcome-screen" <% if (design.images.welcome_background) { %>style="background-image: linear-gradient(135deg, rgba(9,22,35,0.72), rgba(23,131,150,0.62)), url('<%= design.images.welcome_background %>');"<% } %>>
+<div class="welcome-screen" style="--welcome-bg-1: <%= welcomeBgColor1 %>; --welcome-bg-2: <%= welcomeBgColor2 %>; --welcome-text: <%= welcomeTextColor %>;<% if (!design.welcomeVideo && design.images.welcome_background) { %> background-image: linear-gradient(135deg, color-mix(in srgb, var(--welcome-bg-1) 72%, transparent), color-mix(in srgb, var(--welcome-bg-2) 62%, transparent)), url('<%= design.images.welcome_background %>'); background-size: cover; background-position: center;<% } %>">
+    <% if (design.welcomeVideo) { %>
+        <video class="welcome-bg-media" autoplay muted loop playsinline <% if (design.images.welcome_background) { %>poster="<%= design.images.welcome_background %>"<% } %>>
+            <source src="<%= design.welcomeVideo %>">
+        </video>
+        <div class="welcome-bg-scrim"></div>
+    <% } %>
     <div class="welcome-inner">
-        <% if (design.images.logo || site.icon_path) { %>
-            <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %>" class="welcome-logo">
+        <% if (welcomeLogo) { %>
+            <img src="<%= welcomeLogo %>" alt="<%= site.legal_name %>" class="welcome-logo">
         <% } %>
         <span class="welcome-tagline"><%= site.welcome_tagline %></span>
         <h1 class="welcome-heading"><%= site.welcome_heading %></h1>
