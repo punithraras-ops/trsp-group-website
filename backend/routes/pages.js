@@ -48,8 +48,33 @@ router.get('/uploads/:id', async (req, res) => {
     }
 });
 
+const WELCOME_COOKIE = 'site_entered';
+const BOT_USER_AGENT_PATTERN = /bot|crawl|spider|slurp|facebookexternalhit|whatsapp|telegrambot|discordbot|pinterest|linkedinbot|twitterbot|applebot|petalbot|semrushbot|ahrefsbot|mj12bot|baiduspider|yandexbot|duckduckbot/i;
+
 router.get('/', async (req, res) => {
     const site = res.locals.site;
+
+    const alreadyEntered = Boolean(req.cookies && req.cookies[WELCOME_COOKIE]);
+    const isBot = BOT_USER_AGENT_PATTERN.test(req.headers['user-agent'] || '');
+    const welcomeEnabled = site.welcome_enabled !== 'false';
+
+    if (welcomeEnabled && !alreadyEntered && !isBot) {
+        res.cookie(WELCOME_COOKIE, '1', {
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+        });
+        const duration = Math.min(Math.max(parseInt(site.welcome_duration_seconds, 10) || 6, 3), 15);
+        res.render('welcome', {
+            pageTitle: site.company_name,
+            pageDescription: site.default_description,
+            activePage: 'welcome',
+            duration,
+        });
+        return;
+    }
+
     let upcomingFeatures = [];
     let testimonials = site.testimonials;
     let researchVerticals = site.research_verticals;

@@ -1,0 +1,142 @@
+<%- include('partials/head') %>
+
+<style>
+    body[data-page="welcome"] {
+        margin: 0;
+        min-height: 100vh;
+        overflow: hidden;
+    }
+
+    .welcome-screen {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem 1.5rem;
+        background: linear-gradient(135deg, var(--dark-color) 0%, var(--primary-dark) 55%, var(--primary-color) 100%);
+        background-size: cover;
+        background-position: center;
+        overflow: hidden;
+    }
+
+    .welcome-screen::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.10), transparent 45%),
+            radial-gradient(circle at 80% 75%, rgba(255, 255, 255, 0.08), transparent 50%);
+        pointer-events: none;
+    }
+
+    .welcome-inner {
+        position: relative;
+        z-index: 1;
+        max-width: 620px;
+        color: #ffffff;
+        animation: welcomeRise 0.9s ease both;
+    }
+
+    .welcome-logo {
+        height: 64px;
+        width: auto;
+        margin-bottom: 1.75rem;
+        filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.25));
+    }
+
+    .welcome-tagline {
+        display: inline-block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.78);
+        margin-bottom: 1rem;
+    }
+
+    .welcome-heading {
+        font-size: clamp(1.75rem, 4.5vw, 2.9rem);
+        font-weight: 700;
+        line-height: 1.25;
+        margin-bottom: 2.5rem;
+        text-wrap: balance;
+    }
+
+    .welcome-progress-track {
+        width: min(320px, 70vw);
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.22);
+        margin: 0 auto 2rem;
+        overflow: hidden;
+    }
+
+    .welcome-progress-fill {
+        height: 100%;
+        width: 0%;
+        border-radius: 999px;
+        background: #ffffff;
+        animation-name: welcomeFill;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+    }
+
+    .welcome-skip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.6rem 1.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.92rem;
+        transition: background 0.25s ease, border-color 0.25s ease;
+    }
+
+    .welcome-skip:hover {
+        background: rgba(255, 255, 255, 0.14);
+        border-color: rgba(255, 255, 255, 0.85);
+        color: #ffffff;
+    }
+
+    @keyframes welcomeFill {
+        from { width: 0%; }
+        to { width: 100%; }
+    }
+
+    @keyframes welcomeRise {
+        from { opacity: 0; transform: translateY(14px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .welcome-inner { animation: none; }
+        .welcome-progress-fill { animation: none; width: 100%; }
+    }
+</style>
+
+<div class="welcome-screen" <% if (design.images.welcome_background) { %>style="background-image: linear-gradient(135deg, rgba(9,22,35,0.72), rgba(23,131,150,0.62)), url('<%= design.images.welcome_background %>');"<% } %>>
+    <div class="welcome-inner">
+        <% if (design.images.logo || site.icon_path) { %>
+            <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %>" class="welcome-logo">
+        <% } %>
+        <span class="welcome-tagline"><%= site.welcome_tagline %></span>
+        <h1 class="welcome-heading"><%= site.welcome_heading %></h1>
+        <div class="welcome-progress-track">
+            <div class="welcome-progress-fill" style="animation-duration: <%= duration %>s;"></div>
+        </div>
+        <a href="/" class="welcome-skip"><%= site.welcome_button_label %> <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+    </div>
+</div>
+
+<script>
+    setTimeout(function () {
+        window.location.href = '/';
+    }, <%= duration * 1000 %>);
+</script>
+</body>
+</html>

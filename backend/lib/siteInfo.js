@@ -92,6 +92,11 @@ const EDITABLE_FIELDS = [
     'footer_terms_label',
     'footer_privacy_label',
     'footer_rights_text',
+    'welcome_enabled',
+    'welcome_heading',
+    'welcome_tagline',
+    'welcome_button_label',
+    'welcome_duration_seconds',
 ];
 
 async function getMergedSite() {

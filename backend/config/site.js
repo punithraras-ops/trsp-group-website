@@ -100,6 +100,12 @@ module.exports = {
     footer_privacy_label: 'Privacy Policy',
     footer_rights_text: 'All Rights Reserved.',
 
+    welcome_enabled: 'true',
+    welcome_heading: 'Welcome to Technical of RSP Groups',
+    welcome_tagline: 'Research-driven technology, engineered with care.',
+    welcome_button_label: 'Enter Site',
+    welcome_duration_seconds: '6',
+
     routes: {
         home: '/',
         about: '/about',

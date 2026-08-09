@@ -104,6 +104,22 @@
             <form method="POST" action="/admin/site-info">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Welcome / Splash Screen</h6>
+                <p class="text-muted small mt-n2">Shown once per browser session before a first-time visitor reaches the homepage, then continues on automatically. Search engines and link-preview bots always skip straight to the homepage. Background image is set on the Site Design page.</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Enabled</label>
+                        <select name="welcome_enabled" class="form-select">
+                            <option value="true" <%= site.welcome_enabled !== 'false' ? 'selected' : '' %>>Enabled</option>
+                            <option value="false" <%= site.welcome_enabled === 'false' ? 'selected' : '' %>>Disabled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4"><label class="form-label">Hold Duration (seconds, 3&ndash;15)</label><input type="number" name="welcome_duration_seconds" class="form-control" value="<%= site.welcome_duration_seconds %>" min="3" max="15"></div>
+                    <div class="col-md-4"><label class="form-label">Skip Button Label</label><input type="text" name="welcome_button_label" class="form-control" value="<%= site.welcome_button_label %>"></div>
+                    <div class="col-md-4"><label class="form-label">Tagline (small text above headline)</label><input type="text" name="welcome_tagline" class="form-control" value="<%= site.welcome_tagline %>"></div>
+                    <div class="col-md-8"><label class="form-label">Headline</label><input type="text" name="welcome_heading" class="form-control" value="<%= site.welcome_heading %>"></div>
+                </div>
+
                 <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; Hero</h6>
                 <div class="row g-3">
                     <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_hero_kicker" class="form-control" value="<%= site.home_hero_kicker %>"></div>

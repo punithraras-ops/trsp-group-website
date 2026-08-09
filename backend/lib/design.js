@@ -49,6 +49,7 @@ const CARD_COLOR_SLOTS = [...CARD_SLOTS, ...ADMIN_CARD_SLOTS].map(s => s.key);
 
 const IMAGE_SLOTS = [
     'logo', 'favicon', 'hero_background', 'team_photo', 'page_background', 'services_background', 'button_background',
+    'welcome_background',
     'nav_home_bg', 'nav_services_bg', 'nav_store_bg', 'nav_contact_bg', 'nav_about_bg', 'nav_language_bg', 'nav_login_bg', 'service_cta_bg',
     'admin_page_background', 'footer_background',
     ...ADMIN_BUTTON_SLOTS,
