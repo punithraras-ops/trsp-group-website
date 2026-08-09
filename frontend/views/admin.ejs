@@ -83,6 +83,8 @@
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-products" type="button"><i class="fas fa-box me-1"></i>Products (<%= products.length %>)</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-features" type="button"><i class="fas fa-rocket me-1"></i>Upcoming Features (<%= features.length %>)</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button"><i class="fas fa-star me-1"></i>Reviews (<%= productReviews.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-testimonials" type="button"><i class="fas fa-quote-left me-1"></i>Testimonials (<%= testimonials.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-research" type="button"><i class="fas fa-flask me-1"></i>Research Verticals (<%= researchVerticals.length %>)</button></li>
         </ul>
         <button type="button" class="admin-tabs-scroll-btn admin-tabs-scroll-right" aria-label="Scroll tabs right"><i class="fas fa-chevron-right"></i></button>
     </div>
@@ -472,6 +474,81 @@
                     </div>
                 </div>
                 <div class="col-md-1"><button type="submit" class="btn btn-primary w-100">Add</button></div>
+            </form>
+        </div>
+
+        <div class="tab-pane fade" id="tab-testimonials">
+            <h3 class="mb-3">Testimonials <span class="text-muted fw-normal small">("What Clients Say" on the homepage)</span></h3>
+            <div class="table-responsive mb-4">
+                <table class="table table-striped align-middle bg-white rounded shadow-sm">
+                    <thead><tr><th>Quote</th><th>Author</th><th>Order</th><th></th></tr></thead>
+                    <tbody>
+                        <% testimonials.forEach(t => { %>
+                            <tr>
+                                <form method="POST" action="/admin/testimonials/<%= t.id %>/update">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <td><textarea name="quote" class="form-control" rows="2" required><%= t.quote %></textarea></td>
+                                    <td><input type="text" name="author" class="form-control" value="<%= t.author %>"></td>
+                                    <td><input type="number" name="sort_order" class="form-control" value="<%= t.sort_order %>" style="width: 80px;"></td>
+                                    <td class="text-nowrap">
+                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                    </td>
+                                </form>
+                                <td>
+                                    <form method="POST" action="/admin/testimonials/<%= t.id %>/delete" data-confirm="Delete this testimonial?">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="mb-3">Add Testimonial</h4>
+            <form method="POST" action="/admin/testimonials" class="row g-2 align-items-end">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="col-md-6"><label class="form-label">Quote</label><textarea name="quote" class="form-control" rows="2" required></textarea></div>
+                <div class="col-md-3"><label class="form-label">Author</label><input type="text" name="author" class="form-control" placeholder="Client Name, Company"></div>
+                <div class="col-md-2"><label class="form-label">Order</label><input type="number" name="sort_order" class="form-control" value="0"></div>
+                <div class="col-md-1"><button type="submit" class="btn btn-primary w-100">Add</button></div>
+            </form>
+        </div>
+
+        <div class="tab-pane fade" id="tab-research">
+            <h3 class="mb-3">Research Verticals <span class="text-muted fw-normal small">(homepage cards)</span></h3>
+            <div class="d-flex flex-column gap-3 mb-4">
+                <% researchVerticals.forEach(r => { %>
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4">
+                            <form method="POST" action="/admin/research-verticals/<%= r.id %>/update" class="row g-2">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <div class="col-md-4"><label class="form-label">Title</label><input type="text" name="title" class="form-control" value="<%= r.title %>" required></div>
+                                <div class="col-md-2"><label class="form-label">Order</label><input type="number" name="sort_order" class="form-control" value="<%= r.sort_order %>"></div>
+                                <div class="col-md-6"><label class="form-label">Summary</label><input type="text" name="summary" class="form-control" value="<%= r.summary %>"></div>
+                                <div class="col-12"><label class="form-label">Areas (one per line, shown as a bullet list)</label><textarea name="areas" class="form-control" rows="4"><%= r.areasText %></textarea></div>
+                                <div class="col-12 d-flex gap-2">
+                                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                </div>
+                            </form>
+                            <form method="POST" action="/admin/research-verticals/<%= r.id %>/delete" data-confirm="Delete this research vertical?" class="mt-2">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+
+            <h4 class="mb-3">Add Research Vertical</h4>
+            <form method="POST" action="/admin/research-verticals" class="row g-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="col-md-4"><label class="form-label">Title</label><input type="text" name="title" class="form-control" required></div>
+                <div class="col-md-2"><label class="form-label">Order</label><input type="number" name="sort_order" class="form-control" value="0"></div>
+                <div class="col-md-6"><label class="form-label">Summary</label><input type="text" name="summary" class="form-control"></div>
+                <div class="col-12"><label class="form-label">Areas (one per line)</label><textarea name="areas" class="form-control" rows="4" placeholder="Scalable Distributed Systems&#10;Cloud-Native & Microservices Architecture"></textarea></div>
+                <div class="col-12"><button type="submit" class="btn btn-primary">Add</button></div>
             </form>
         </div>
 

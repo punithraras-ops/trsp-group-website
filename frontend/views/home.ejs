@@ -136,7 +136,7 @@
         </div>
 
         <div class="row g-4 justify-content-center">
-            <% site.research_verticals.forEach(vertical => { %>
+            <% researchVerticals.forEach(vertical => { %>
                 <div class="col-lg-4 col-md-6">
                     <div class="card research-card h-100 shadow-lg border-0 rounded-4">
                         <div class="card-body p-4">
@@ -172,7 +172,7 @@
 
         <div id="testimonialCarousel" class="carousel slide testimonial-carousel" data-bs-ride="carousel">
             <div class="carousel-inner">
-                <% site.testimonials.forEach((testimonial, index) => { %>
+                <% testimonials.forEach((testimonial, index) => { %>
                     <div class="carousel-item <%= index === 0 ? 'active' : '' %>">
                         <div class="testimonial-card text-center mx-auto">
                             <p class="lead fs-4 mb-4">"<%= testimonial.quote %>"</p>

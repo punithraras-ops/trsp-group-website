@@ -51,6 +51,8 @@ router.get('/uploads/:id', async (req, res) => {
 router.get('/', async (req, res) => {
     const site = res.locals.site;
     let upcomingFeatures = [];
+    let testimonials = site.testimonials;
+    let researchVerticals = site.research_verticals;
     if (db.isDbConfigured()) {
         try {
             const docs = await db.getDb().collection('upcoming_features')
@@ -60,6 +62,24 @@ router.get('/', async (req, res) => {
             upcomingFeatures = docs.map(db.withId);
         } catch (error) {
             upcomingFeatures = [];
+        }
+        try {
+            const testimonialDocs = await db.getDb().collection('testimonials')
+                .find().sort({ sort_order: 1, created_at: -1 }).toArray();
+            if (testimonialDocs.length > 0) {
+                testimonials = testimonialDocs.map(db.withId);
+            }
+        } catch (error) {
+            // Keep the static fallback.
+        }
+        try {
+            const researchDocs = await db.getDb().collection('research_verticals')
+                .find().sort({ sort_order: 1, created_at: -1 }).toArray();
+            if (researchDocs.length > 0) {
+                researchVerticals = researchDocs.map(db.withId);
+            }
+        } catch (error) {
+            // Keep the static fallback.
         }
     }
 
@@ -71,6 +91,8 @@ router.get('/', async (req, res) => {
         activePage: 'home',
         upcomingFeatures,
         services,
+        testimonials,
+        researchVerticals,
         dbConfigured: db.isDbConfigured(),
     });
 });

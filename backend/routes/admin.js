@@ -56,6 +56,17 @@ function featuresToText(features) {
     return (features || []).map(f => `${f.title} :: ${f.description}`).join('\n');
 }
 
+function parseAreasText(text) {
+    return String(text || '')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean);
+}
+
+function areasToText(areas) {
+    return (areas || []).join('\n');
+}
+
 router.get('/admin/login', (req, res) => {
     res.render('admin-login', { site, redirect: safeAdminRedirect(req.query.redirect), error: '' });
 });
@@ -222,12 +233,14 @@ router.get('/admin', async (req, res) => {
     let features = [];
     let services = [];
     let productReviews = [];
+    let testimonials = [];
+    let researchVerticals = [];
 
     if (db.isDbConfigured()) {
         try {
             const database = db.getDb();
             productReviews = await reviews.listAllReviews();
-            const [submissionDocs, userDocs, orderDocs, productDocs, featureDocs, serviceDocs] = await Promise.all([
+            const [submissionDocs, userDocs, orderDocs, productDocs, featureDocs, serviceDocs, testimonialDocs, researchDocs] = await Promise.all([
                 database.collection('contact_submissions').find().sort({ created_at: -1 }).toArray(),
                 database.collection('users').find().sort({ created_at: -1 }).toArray(),
                 database.collection('orders').aggregate([
@@ -247,6 +260,8 @@ router.get('/admin', async (req, res) => {
                 database.collection('products').find().sort({ created_at: -1 }).toArray(),
                 database.collection('upcoming_features').find().sort({ sort_order: 1, created_at: -1 }).toArray(),
                 database.collection('services').find().sort({ sort_order: 1, created_at: 1 }).toArray(),
+                database.collection('testimonials').find().sort({ sort_order: 1, created_at: -1 }).toArray(),
+                database.collection('research_verticals').find().sort({ sort_order: 1, created_at: -1 }).toArray(),
             ]);
 
             submissions = submissionDocs.map(db.withId);
@@ -264,6 +279,11 @@ router.get('/admin', async (req, res) => {
                 featuresText: featuresToText(s.features),
                 background_image: s.background_image_id ? `/uploads/${s.background_image_id}` : null,
             }));
+            testimonials = testimonialDocs.map(db.withId);
+            researchVerticals = researchDocs.map(db.withId).map(r => ({
+                ...r,
+                areasText: areasToText(r.areas),
+            }));
         } catch (error) {
             // Leave arrays empty if any query fails; the page still renders.
         }
@@ -279,6 +299,8 @@ router.get('/admin', async (req, res) => {
         features,
         services,
         productReviews,
+        testimonials,
+        researchVerticals,
     });
 });
 
@@ -472,6 +494,88 @@ router.post('/admin/features/:id/delete', async (req, res) => {
         await logAdminAction(req, 'feature.delete', req.params.id);
     }
     res.redirect('/admin?tab=features');
+});
+
+router.post('/admin/testimonials', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('testimonials').insertOne({
+            quote: req.body.quote,
+            author: req.body.author || '',
+            sort_order: parseInt(req.body.sort_order, 10) || 0,
+            created_at: new Date(),
+            updated_at: new Date(),
+        });
+        await logAdminAction(req, 'testimonial.create', req.body.author);
+    }
+    res.redirect('/admin?tab=testimonials');
+});
+
+router.post('/admin/testimonials/:id/update', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('testimonials').updateOne(
+            { _id: db.toId(req.params.id) },
+            {
+                $set: {
+                    quote: req.body.quote,
+                    author: req.body.author || '',
+                    sort_order: parseInt(req.body.sort_order, 10) || 0,
+                    updated_at: new Date(),
+                },
+            }
+        );
+        await logAdminAction(req, 'testimonial.update', req.body.author);
+    }
+    res.redirect('/admin?tab=testimonials');
+});
+
+router.post('/admin/testimonials/:id/delete', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('testimonials').deleteOne({ _id: db.toId(req.params.id) });
+        await logAdminAction(req, 'testimonial.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=testimonials');
+});
+
+router.post('/admin/research-verticals', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('research_verticals').insertOne({
+            title: req.body.title,
+            summary: req.body.summary || '',
+            areas: parseAreasText(req.body.areas),
+            sort_order: parseInt(req.body.sort_order, 10) || 0,
+            created_at: new Date(),
+            updated_at: new Date(),
+        });
+        await logAdminAction(req, 'research_vertical.create', req.body.title);
+    }
+    res.redirect('/admin?tab=research');
+});
+
+router.post('/admin/research-verticals/:id/update', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('research_verticals').updateOne(
+            { _id: db.toId(req.params.id) },
+            {
+                $set: {
+                    title: req.body.title,
+                    summary: req.body.summary || '',
+                    areas: parseAreasText(req.body.areas),
+                    sort_order: parseInt(req.body.sort_order, 10) || 0,
+                    updated_at: new Date(),
+                },
+            }
+        );
+        await logAdminAction(req, 'research_vertical.update', req.body.title);
+    }
+    res.redirect('/admin?tab=research');
+});
+
+router.post('/admin/research-verticals/:id/delete', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('research_verticals').deleteOne({ _id: db.toId(req.params.id) });
+        await logAdminAction(req, 'research_vertical.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=research');
 });
 
 router.post('/admin/services', async (req, res) => {
