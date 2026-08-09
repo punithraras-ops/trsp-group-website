@@ -1,5 +1,5 @@
 <%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Site Design' }) %>
-<body class="admin-page" style="--admin-bg: <%= design.adminBackground %>;">
+<body class="admin-page" style="--admin-bg: <%= design.adminBackground %>; --admin-accent: <%= design.adminColors.admin_accent %>; --admin-accent-dark: <%= design.adminColors.admin_accent_dark %>; --admin-text: <%= design.adminColors.admin_text %>; --admin-surface: <%= design.adminColors.admin_surface %>;">
 
 <div class="admin-topbar">
     <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -153,6 +153,31 @@
                     <input type="color" name="admin_bg_color" class="form-control form-control-color" value="<%= design.adminBackground %>">
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
+            </form>
+
+            <h6 class="fw-bold mb-2">Admin Panel Colors</h6>
+            <p class="text-muted small">Controls admin buttons, active tabs, links, body text, and card backgrounds across every admin page — same idea as the public site's Colors section above, kept separate so the admin tool stays legible no matter what theme the public site uses.</p>
+            <form method="POST" action="/admin/design/admin-colors" class="mb-4">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="row g-3 mb-3">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block">Accent (buttons/links)</label>
+                        <input type="color" name="admin_accent" class="form-control form-control-color" value="<%= design.adminColors.admin_accent %>">
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block">Accent Hover</label>
+                        <input type="color" name="admin_accent_dark" class="form-control form-control-color" value="<%= design.adminColors.admin_accent_dark %>">
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block">Body Text</label>
+                        <input type="color" name="admin_text" class="form-control form-control-color" value="<%= design.adminColors.admin_text %>">
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label d-block">Card/Surface Background</label>
+                        <input type="color" name="admin_surface" class="form-control form-control-color" value="<%= design.adminColors.admin_surface %>">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Admin Colors</button>
             </form>
 
             <h6 class="fw-bold mb-2">Admin Panel Background Image</h6>

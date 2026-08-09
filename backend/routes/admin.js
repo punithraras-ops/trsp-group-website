@@ -726,6 +726,20 @@ router.post('/admin/design/admin-theme', async (req, res) => {
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Admin panel appearance updated.' });
 });
 
+router.post('/admin/design/admin-colors', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await design.saveAdminColors({
+            admin_accent: req.body.admin_accent,
+            admin_accent_dark: req.body.admin_accent_dark,
+            admin_text: req.body.admin_text,
+            admin_surface: req.body.admin_surface,
+        });
+        await logAdminAction(req, 'design.admin_colors', 'Updated admin panel colors');
+    }
+    const settings = await design.getDesignSettings();
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Admin panel colors updated.' });
+});
+
 router.post('/admin/design/admin-button-color/:slot', async (req, res) => {
     if (db.isDbConfigured() && design.ADMIN_BUTTON_SLOTS.includes(req.params.slot) && req.body.color) {
         await design.saveAdminButtonColor(req.params.slot, req.body.color);

@@ -12,6 +12,13 @@ const DEFAULT_COLORS = {
     card_background_color: '#ffffff',
 };
 
+const DEFAULT_ADMIN_COLORS = {
+    admin_accent: '#4f46e5',
+    admin_accent_dark: '#4338ca',
+    admin_text: '#1e293b',
+    admin_surface: '#ffffff',
+};
+
 const ADMIN_BUTTON_SLOTS = [
     'admin_btn_tickets', 'admin_btn_siteinfo', 'admin_btn_sitedesign', 'admin_btn_legal',
     'admin_btn_coupons', 'admin_btn_auditlog', 'admin_btn_security', 'admin_btn_logout',
@@ -27,7 +34,7 @@ const DEFAULT_ADMIN_BG = '#eef1f5';
 
 async function getDesignSettings() {
     if (!db.isDbConfigured()) {
-        return { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG };
+        return { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG, adminButtonColors: {}, adminColors: DEFAULT_ADMIN_COLORS };
     }
 
     const doc = await db.getDb().collection('site_settings').findOne({ _id: CONFIG_ID });
@@ -42,14 +49,29 @@ async function getDesignSettings() {
 
     const adminBackground = (doc && doc.admin_bg_color) || DEFAULT_ADMIN_BG;
     const adminButtonColors = (doc && doc.admin_button_colors) || {};
+    const adminColors = { ...DEFAULT_ADMIN_COLORS, ...(doc && doc.admin_colors ? doc.admin_colors : {}) };
 
-    return { colors, images, adminBackground, adminButtonColors };
+    return { colors, images, adminBackground, adminButtonColors, adminColors };
 }
 
 async function saveAdminBackground(color) {
     await db.getDb().collection('site_settings').updateOne(
         { _id: CONFIG_ID },
         { $set: { admin_bg_color: color, updated_at: new Date() } },
+        { upsert: true }
+    );
+}
+
+async function saveAdminColors(colors) {
+    const update = {};
+    for (const key of Object.keys(DEFAULT_ADMIN_COLORS)) {
+        if (colors[key]) {
+            update[`admin_colors.${key}`] = colors[key];
+        }
+    }
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $set: { ...update, updated_at: new Date() } },
         { upsert: true }
     );
 }
@@ -128,9 +150,11 @@ module.exports = {
     saveImageRef,
     removeImage,
     saveAdminBackground,
+    saveAdminColors,
     saveAdminButtonColor,
     removeAdminButtonColor,
     DEFAULT_COLORS,
+    DEFAULT_ADMIN_COLORS,
     IMAGE_SLOTS,
     ADMIN_BUTTON_SLOTS,
     DEFAULT_ADMIN_BG,
