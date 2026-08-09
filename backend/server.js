@@ -48,7 +48,7 @@ app.use(async (req, res, next) => {
     try {
         res.locals.design = await getDesignSettings();
     } catch (error) {
-        res.locals.design = { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG };
+        res.locals.design = { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG, adminButtonColors: {}, adminColors: {}, cardColors: {} };
     }
     try {
         res.locals.site = await getMergedSite();

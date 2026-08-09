@@ -59,7 +59,10 @@ router.get('/', async (req, res) => {
                 .find({ is_active: true })
                 .sort({ sort_order: 1, created_at: -1 })
                 .toArray();
-            upcomingFeatures = docs.map(db.withId);
+            upcomingFeatures = docs.map(db.withId).map(f => ({
+                ...f,
+                background_image: f.background_image_id ? `/uploads/${f.background_image_id}` : null,
+            }));
         } catch (error) {
             upcomingFeatures = [];
         }
@@ -67,7 +70,10 @@ router.get('/', async (req, res) => {
             const testimonialDocs = await db.getDb().collection('testimonials')
                 .find().sort({ sort_order: 1, created_at: -1 }).toArray();
             if (testimonialDocs.length > 0) {
-                testimonials = testimonialDocs.map(db.withId);
+                testimonials = testimonialDocs.map(db.withId).map(t => ({
+                    ...t,
+                    background_image: t.background_image_id ? `/uploads/${t.background_image_id}` : null,
+                }));
             }
         } catch (error) {
             // Keep the static fallback.
@@ -76,7 +82,10 @@ router.get('/', async (req, res) => {
             const researchDocs = await db.getDb().collection('research_verticals')
                 .find().sort({ sort_order: 1, created_at: -1 }).toArray();
             if (researchDocs.length > 0) {
-                researchVerticals = researchDocs.map(db.withId);
+                researchVerticals = researchDocs.map(db.withId).map(r => ({
+                    ...r,
+                    background_image: r.background_image_id ? `/uploads/${r.background_image_id}` : null,
+                }));
             }
         } catch (error) {
             // Keep the static fallback.

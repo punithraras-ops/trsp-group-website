@@ -24,17 +24,31 @@ const ADMIN_BUTTON_SLOTS = [
     'admin_btn_coupons', 'admin_btn_auditlog', 'admin_btn_security', 'admin_btn_logout',
 ];
 
+const CARD_SLOTS = [
+    { key: 'process_card1_bg', label: 'Process Card 1 (Discover)' },
+    { key: 'process_card2_bg', label: 'Process Card 2 (Design & Build)' },
+    { key: 'process_card3_bg', label: 'Process Card 3 (Improve & Scale)' },
+    { key: 'about_mission_card_bg', label: 'About Page - Mission Card' },
+    { key: 'about_vision_card_bg', label: 'About Page - Vision Card' },
+    { key: 'about_team_card_bg', label: 'About Page - Team Card' },
+    { key: 'about_focus_card_bg', label: 'About Page - Focus Card' },
+    { key: 'home_about_mission_card_bg', label: 'Home Page - Mission Card' },
+    { key: 'home_about_approach_card_bg', label: 'Home Page - Approach Card' },
+];
+const CARD_COLOR_SLOTS = CARD_SLOTS.map(s => s.key);
+
 const IMAGE_SLOTS = [
     'logo', 'favicon', 'hero_background', 'team_photo', 'page_background', 'services_background', 'button_background',
     'nav_home_bg', 'nav_services_bg', 'nav_store_bg', 'nav_contact_bg', 'nav_about_bg', 'nav_language_bg', 'nav_login_bg', 'service_cta_bg',
     'admin_page_background', 'footer_background',
     ...ADMIN_BUTTON_SLOTS,
+    ...CARD_COLOR_SLOTS,
 ];
 const DEFAULT_ADMIN_BG = '#eef1f5';
 
 async function getDesignSettings() {
     if (!db.isDbConfigured()) {
-        return { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG, adminButtonColors: {}, adminColors: DEFAULT_ADMIN_COLORS };
+        return { colors: DEFAULT_COLORS, images: {}, adminBackground: DEFAULT_ADMIN_BG, adminButtonColors: {}, adminColors: DEFAULT_ADMIN_COLORS, cardColors: {} };
     }
 
     const doc = await db.getDb().collection('site_settings').findOne({ _id: CONFIG_ID });
@@ -50,8 +64,9 @@ async function getDesignSettings() {
     const adminBackground = (doc && doc.admin_bg_color) || DEFAULT_ADMIN_BG;
     const adminButtonColors = (doc && doc.admin_button_colors) || {};
     const adminColors = { ...DEFAULT_ADMIN_COLORS, ...(doc && doc.admin_colors ? doc.admin_colors : {}) };
+    const cardColors = (doc && doc.card_colors) || {};
 
-    return { colors, images, adminBackground, adminButtonColors, adminColors };
+    return { colors, images, adminBackground, adminButtonColors, adminColors, cardColors };
 }
 
 async function saveAdminBackground(color) {
@@ -111,6 +126,27 @@ async function removeAdminButtonColor(slot) {
     );
 }
 
+async function saveCardColor(slot, color) {
+    if (!CARD_COLOR_SLOTS.includes(slot)) {
+        throw new Error(`Unknown card color slot: ${slot}`);
+    }
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $set: { [`card_colors.${slot}`]: color, updated_at: new Date() } },
+        { upsert: true }
+    );
+}
+
+async function removeCardColor(slot) {
+    if (!CARD_COLOR_SLOTS.includes(slot)) {
+        throw new Error(`Unknown card color slot: ${slot}`);
+    }
+    await db.getDb().collection('site_settings').updateOne(
+        { _id: CONFIG_ID },
+        { $unset: { [`card_colors.${slot}`]: '' }, $set: { updated_at: new Date() } }
+    );
+}
+
 async function saveImageRef(slot, fileId) {
     if (!IMAGE_SLOTS.includes(slot)) {
         throw new Error(`Unknown image slot: ${slot}`);
@@ -153,9 +189,13 @@ module.exports = {
     saveAdminColors,
     saveAdminButtonColor,
     removeAdminButtonColor,
+    saveCardColor,
+    removeCardColor,
     DEFAULT_COLORS,
     DEFAULT_ADMIN_COLORS,
     IMAGE_SLOTS,
     ADMIN_BUTTON_SLOTS,
+    CARD_SLOTS,
+    CARD_COLOR_SLOTS,
     DEFAULT_ADMIN_BG,
 };

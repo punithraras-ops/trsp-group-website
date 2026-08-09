@@ -273,16 +273,23 @@ router.get('/admin', async (req, res) => {
                     : order.product_title,
             }));
             products = productDocs.map(db.withId);
-            features = featureDocs.map(db.withId);
+            features = featureDocs.map(db.withId).map(f => ({
+                ...f,
+                background_image: f.background_image_id ? `/uploads/${f.background_image_id}` : null,
+            }));
             services = serviceDocs.map(db.withId).map(s => ({
                 ...s,
                 featuresText: featuresToText(s.features),
                 background_image: s.background_image_id ? `/uploads/${s.background_image_id}` : null,
             }));
-            testimonials = testimonialDocs.map(db.withId);
+            testimonials = testimonialDocs.map(db.withId).map(t => ({
+                ...t,
+                background_image: t.background_image_id ? `/uploads/${t.background_image_id}` : null,
+            }));
             researchVerticals = researchDocs.map(db.withId).map(r => ({
                 ...r,
                 areasText: areasToText(r.areas),
+                background_image: r.background_image_id ? `/uploads/${r.background_image_id}` : null,
             }));
         } catch (error) {
             // Leave arrays empty if any query fails; the page still renders.
@@ -490,8 +497,54 @@ router.post('/admin/features/:id/update', async (req, res) => {
 
 router.post('/admin/features/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
+        const feature = await db.getDb().collection('upcoming_features').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('upcoming_features').deleteOne({ _id: db.toId(req.params.id) });
+        if (feature && feature.background_image_id) {
+            await db.deleteFile(feature.background_image_id);
+        }
         await logAdminAction(req, 'feature.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=features');
+});
+
+router.post('/admin/features/:id/background', upload.single('background'), csrf.verifyAfterUpload, async (req, res) => {
+    if (db.isDbConfigured() && req.file) {
+        const feature = await db.getDb().collection('upcoming_features').findOne({ _id: db.toId(req.params.id) });
+        if (feature && feature.background_image_id) {
+            await db.deleteFile(feature.background_image_id);
+        }
+        const fileId = await db.uploadBuffer(req.file.buffer, req.file.originalname, req.file.mimetype);
+        await db.getDb().collection('upcoming_features').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_image_id: fileId.toString() } }
+        );
+        await logAdminAction(req, 'feature.background_upload', req.params.id);
+    }
+    res.redirect('/admin?tab=features');
+});
+
+router.post('/admin/features/:id/background/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const feature = await db.getDb().collection('upcoming_features').findOne({ _id: db.toId(req.params.id) });
+        if (feature && feature.background_image_id) {
+            await db.deleteFile(feature.background_image_id);
+            await db.getDb().collection('upcoming_features').updateOne(
+                { _id: db.toId(req.params.id) },
+                { $unset: { background_image_id: '' } }
+            );
+        }
+        await logAdminAction(req, 'feature.background_remove', req.params.id);
+    }
+    res.redirect('/admin?tab=features');
+});
+
+router.post('/admin/features/:id/background-color', async (req, res) => {
+    if (db.isDbConfigured() && req.body.color) {
+        await db.getDb().collection('upcoming_features').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_color: req.body.color } }
+        );
+        await logAdminAction(req, 'feature.background_color', req.params.id);
     }
     res.redirect('/admin?tab=features');
 });
@@ -530,8 +583,54 @@ router.post('/admin/testimonials/:id/update', async (req, res) => {
 
 router.post('/admin/testimonials/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
+        const testimonial = await db.getDb().collection('testimonials').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('testimonials').deleteOne({ _id: db.toId(req.params.id) });
+        if (testimonial && testimonial.background_image_id) {
+            await db.deleteFile(testimonial.background_image_id);
+        }
         await logAdminAction(req, 'testimonial.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=testimonials');
+});
+
+router.post('/admin/testimonials/:id/background', upload.single('background'), csrf.verifyAfterUpload, async (req, res) => {
+    if (db.isDbConfigured() && req.file) {
+        const testimonial = await db.getDb().collection('testimonials').findOne({ _id: db.toId(req.params.id) });
+        if (testimonial && testimonial.background_image_id) {
+            await db.deleteFile(testimonial.background_image_id);
+        }
+        const fileId = await db.uploadBuffer(req.file.buffer, req.file.originalname, req.file.mimetype);
+        await db.getDb().collection('testimonials').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_image_id: fileId.toString() } }
+        );
+        await logAdminAction(req, 'testimonial.background_upload', req.params.id);
+    }
+    res.redirect('/admin?tab=testimonials');
+});
+
+router.post('/admin/testimonials/:id/background/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const testimonial = await db.getDb().collection('testimonials').findOne({ _id: db.toId(req.params.id) });
+        if (testimonial && testimonial.background_image_id) {
+            await db.deleteFile(testimonial.background_image_id);
+            await db.getDb().collection('testimonials').updateOne(
+                { _id: db.toId(req.params.id) },
+                { $unset: { background_image_id: '' } }
+            );
+        }
+        await logAdminAction(req, 'testimonial.background_remove', req.params.id);
+    }
+    res.redirect('/admin?tab=testimonials');
+});
+
+router.post('/admin/testimonials/:id/background-color', async (req, res) => {
+    if (db.isDbConfigured() && req.body.color) {
+        await db.getDb().collection('testimonials').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_color: req.body.color } }
+        );
+        await logAdminAction(req, 'testimonial.background_color', req.params.id);
     }
     res.redirect('/admin?tab=testimonials');
 });
@@ -572,8 +671,54 @@ router.post('/admin/research-verticals/:id/update', async (req, res) => {
 
 router.post('/admin/research-verticals/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
+        const vertical = await db.getDb().collection('research_verticals').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('research_verticals').deleteOne({ _id: db.toId(req.params.id) });
+        if (vertical && vertical.background_image_id) {
+            await db.deleteFile(vertical.background_image_id);
+        }
         await logAdminAction(req, 'research_vertical.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=research');
+});
+
+router.post('/admin/research-verticals/:id/background', upload.single('background'), csrf.verifyAfterUpload, async (req, res) => {
+    if (db.isDbConfigured() && req.file) {
+        const vertical = await db.getDb().collection('research_verticals').findOne({ _id: db.toId(req.params.id) });
+        if (vertical && vertical.background_image_id) {
+            await db.deleteFile(vertical.background_image_id);
+        }
+        const fileId = await db.uploadBuffer(req.file.buffer, req.file.originalname, req.file.mimetype);
+        await db.getDb().collection('research_verticals').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_image_id: fileId.toString() } }
+        );
+        await logAdminAction(req, 'research_vertical.background_upload', req.params.id);
+    }
+    res.redirect('/admin?tab=research');
+});
+
+router.post('/admin/research-verticals/:id/background/remove', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const vertical = await db.getDb().collection('research_verticals').findOne({ _id: db.toId(req.params.id) });
+        if (vertical && vertical.background_image_id) {
+            await db.deleteFile(vertical.background_image_id);
+            await db.getDb().collection('research_verticals').updateOne(
+                { _id: db.toId(req.params.id) },
+                { $unset: { background_image_id: '' } }
+            );
+        }
+        await logAdminAction(req, 'research_vertical.background_remove', req.params.id);
+    }
+    res.redirect('/admin?tab=research');
+});
+
+router.post('/admin/research-verticals/:id/background-color', async (req, res) => {
+    if (db.isDbConfigured() && req.body.color) {
+        await db.getDb().collection('research_verticals').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_color: req.body.color } }
+        );
+        await logAdminAction(req, 'research_vertical.background_color', req.params.id);
     }
     res.redirect('/admin?tab=research');
 });
@@ -667,6 +812,17 @@ router.post('/admin/services/:id/background/remove', async (req, res) => {
     res.redirect('/admin?tab=services');
 });
 
+router.post('/admin/services/:id/background-color', async (req, res) => {
+    if (db.isDbConfigured() && req.body.color) {
+        await db.getDb().collection('services').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { background_color: req.body.color } }
+        );
+        await logAdminAction(req, 'service.background_color', req.params.id);
+    }
+    res.redirect('/admin?tab=services');
+});
+
 router.get('/admin/design', async (req, res) => {
     const settings = await design.getDesignSettings();
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: '' });
@@ -728,6 +884,26 @@ router.post('/admin/design/remove/:slot', async (req, res) => {
     }
     const settings = await design.getDesignSettings();
     res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Image removed.' });
+});
+
+router.post('/admin/design/card-color/:slot', async (req, res) => {
+    if (db.isDbConfigured() && design.CARD_COLOR_SLOTS.includes(req.params.slot) && req.body.color) {
+        await design.saveCardColor(req.params.slot, req.body.color);
+        await logAdminAction(req, 'design.card_color', req.params.slot);
+    }
+    const settings = await design.getDesignSettings();
+    res.locals.design = settings;
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Card color updated.' });
+});
+
+router.post('/admin/design/card-color/:slot/remove', async (req, res) => {
+    if (db.isDbConfigured() && design.CARD_COLOR_SLOTS.includes(req.params.slot)) {
+        await design.removeCardColor(req.params.slot);
+        await logAdminAction(req, 'design.card_color_remove', req.params.slot);
+    }
+    const settings = await design.getDesignSettings();
+    res.locals.design = settings;
+    res.render('admin-design', { site, colors: settings.colors, images: settings.images, error: '', message: 'Card color reset.' });
 });
 
 router.post('/admin/orders/:id/approve', async (req, res) => {

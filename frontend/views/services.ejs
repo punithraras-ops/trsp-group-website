@@ -29,7 +29,7 @@
         <div class="row g-4 justify-content-center">
             <% services.forEach((service, index) => { %>
                 <div class="col-xl-3 col-lg-6 col-md-6" data-aos="zoom-in" data-aos-delay="<%= index * 100 %>">
-                    <article class="card service-card h-100 border-0 shadow-lg" <% if (service.background_image) { %>style="background-image: linear-gradient(rgba(255,255,255,0.86), rgba(255,255,255,0.86)), url('<%= service.background_image %>'); background-size: cover; background-position: center;"<% } %>>
+                    <article class="card service-card h-100 border-0 shadow-lg" <% if (service.background_color || service.background_image) { %>style="<%- include('partials/frame-bg-style', { color: service.background_color, image: service.background_image, overlay: 'light' }) %>"<% } %>>
                         <div class="card-body d-flex flex-column">
                             <div class="service-card-header">
                                 <span class="service-icon-wrap">
@@ -64,21 +64,21 @@
 
         <div class="row g-4 justify-content-center">
             <div class="col-lg-4 col-md-6" data-aos="fade-up">
-                <div class="process-card h-100">
+                <div class="process-card h-100" <% if (design.cardColors.process_card1_bg || design.images.process_card1_bg) { %>style="<%- include('partials/frame-bg-style', { color: design.cardColors.process_card1_bg, image: design.images.process_card1_bg, overlay: 'light' }) %>"<% } %>>
                     <span class="process-number">01</span>
                     <h3><%= site.services_process_card1_title %></h3>
                     <p><%= site.services_process_card1_text %></p>
                 </div>
             </div>
             <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="100">
-                <div class="process-card h-100">
+                <div class="process-card h-100" <% if (design.cardColors.process_card2_bg || design.images.process_card2_bg) { %>style="<%- include('partials/frame-bg-style', { color: design.cardColors.process_card2_bg, image: design.images.process_card2_bg, overlay: 'light' }) %>"<% } %>>
                     <span class="process-number">02</span>
                     <h3><%= site.services_process_card2_title %></h3>
                     <p><%= site.services_process_card2_text %></p>
                 </div>
             </div>
             <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="200">
-                <div class="process-card h-100">
+                <div class="process-card h-100" <% if (design.cardColors.process_card3_bg || design.images.process_card3_bg) { %>style="<%- include('partials/frame-bg-style', { color: design.cardColors.process_card3_bg, image: design.images.process_card3_bg, overlay: 'light' }) %>"<% } %>>
                     <span class="process-number">03</span>
                     <h3><%= site.services_process_card3_title %></h3>
                     <p><%= site.services_process_card3_text %></p>

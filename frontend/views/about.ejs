@@ -11,19 +11,19 @@
                 <p><%= site.about_paragraph2 %></p>
 
                 <div class="about-mini-grid">
-                    <div class="about-mini-card">
+                    <div class="about-mini-card" <% if (design.cardColors.about_mission_card_bg || design.images.about_mission_card_bg) { %>style="<%- include('partials/frame-bg-style', { color: design.cardColors.about_mission_card_bg, image: design.images.about_mission_card_bg, overlay: 'light' }) %>"<% } %>>
                         <h3><%= site.about_mission_title %></h3>
                         <p><%= site.about_mission_text %></p>
                     </div>
-                    <div class="about-mini-card">
+                    <div class="about-mini-card" <% if (design.cardColors.about_vision_card_bg || design.images.about_vision_card_bg) { %>style="<%- include('partials/frame-bg-style', { color: design.cardColors.about_vision_card_bg, image: design.images.about_vision_card_bg, overlay: 'light' }) %>"<% } %>>
                         <h3><%= site.about_vision_title %></h3>
                         <p><%= site.about_vision_text %></p>
                     </div>
-                    <div class="about-mini-card">
+                    <div class="about-mini-card" <% if (design.cardColors.about_team_card_bg || design.images.about_team_card_bg) { %>style="<%- include('partials/frame-bg-style', { color: design.cardColors.about_team_card_bg, image: design.images.about_team_card_bg, overlay: 'light' }) %>"<% } %>>
                         <h3><%= site.about_team_title %></h3>
                         <p><%= site.about_team_text %></p>
                     </div>
-                    <div class="about-mini-card">
+                    <div class="about-mini-card" <% if (design.cardColors.about_focus_card_bg || design.images.about_focus_card_bg) { %>style="<%- include('partials/frame-bg-style', { color: design.cardColors.about_focus_card_bg, image: design.images.about_focus_card_bg, overlay: 'light' }) %>"<% } %>>
                         <h3><%= site.about_focus_title %></h3>
                         <p><%= site.about_focus_text %></p>
                     </div>

@@ -265,17 +265,22 @@
                                 <td>
                                     <% if (s.background_image) { %>
                                         <img src="<%= s.background_image %>" class="rounded border d-block mb-1" style="width:70px;height:50px;object-fit:cover;">
-                                        <form method="POST" action="/admin/services/<%= s.id %>/background/remove" data-confirm="Remove this background image?">
+                                        <form method="POST" action="/admin/services/<%= s.id %>/background/remove" data-confirm="Remove this background image?" class="mb-1">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
                                         </form>
                                     <% } else { %>
-                                        <form method="POST" action="/admin/services/<%= s.id %>/background" enctype="multipart/form-data" data-ajax-upload>
+                                        <form method="POST" action="/admin/services/<%= s.id %>/background" enctype="multipart/form-data" data-ajax-upload class="mb-1">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <input type="file" name="background" accept="image/*" class="form-control form-control-sm mb-1">
                                             <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
                                         </form>
                                     <% } %>
+                                    <form method="POST" action="/admin/services/<%= s.id %>/background-color" class="d-flex gap-1">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="color" name="color" class="form-control form-control-color form-control-sm" value="<%= s.background_color || '#ffffff' %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-1">Color</button>
+                                    </form>
                                 </td>
                             </tr>
                         <% }) %>
@@ -420,7 +425,7 @@
             <h3 class="mb-3">Upcoming Features</h3>
             <div class="table-responsive mb-4">
                 <table class="table table-striped align-middle bg-white rounded shadow-sm">
-                    <thead><tr><th>Title</th><th>Description</th><th>Status</th><th>Order</th><th>Active</th><th></th></tr></thead>
+                    <thead><tr><th>Title</th><th>Description</th><th>Status</th><th>Order</th><th>Active</th><th></th><th style="min-width:180px">Card Background</th></tr></thead>
                     <tbody>
                         <% features.forEach(f => { %>
                             <tr>
@@ -445,6 +450,26 @@
                                     <form method="POST" action="/admin/features/<%= f.id %>/delete" data-confirm="Delete this feature?">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <% if (f.background_image) { %>
+                                        <img src="<%= f.background_image %>" class="rounded border d-block mb-1" style="width:70px;height:50px;object-fit:cover;">
+                                        <form method="POST" action="/admin/features/<%= f.id %>/background/remove" data-confirm="Remove this background image?" class="mb-1">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
+                                        </form>
+                                    <% } else { %>
+                                        <form method="POST" action="/admin/features/<%= f.id %>/background" enctype="multipart/form-data" data-ajax-upload class="mb-1">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="file" name="background" accept="image/*" class="form-control form-control-sm mb-1">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
+                                        </form>
+                                    <% } %>
+                                    <form method="POST" action="/admin/features/<%= f.id %>/background-color" class="d-flex gap-1">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="color" name="color" class="form-control form-control-color form-control-sm" value="<%= f.background_color || '#ffffff' %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-1">Color</button>
                                     </form>
                                 </td>
                             </tr>
@@ -481,7 +506,7 @@
             <h3 class="mb-3">Testimonials <span class="text-muted fw-normal small">("What Clients Say" on the homepage)</span></h3>
             <div class="table-responsive mb-4">
                 <table class="table table-striped align-middle bg-white rounded shadow-sm">
-                    <thead><tr><th>Quote</th><th>Author</th><th>Order</th><th></th></tr></thead>
+                    <thead><tr><th>Quote</th><th>Author</th><th>Order</th><th></th><th style="min-width:180px">Card Background</th></tr></thead>
                     <tbody>
                         <% testimonials.forEach(t => { %>
                             <tr>
@@ -498,6 +523,26 @@
                                     <form method="POST" action="/admin/testimonials/<%= t.id %>/delete" data-confirm="Delete this testimonial?">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <% if (t.background_image) { %>
+                                        <img src="<%= t.background_image %>" class="rounded border d-block mb-1" style="width:70px;height:50px;object-fit:cover;">
+                                        <form method="POST" action="/admin/testimonials/<%= t.id %>/background/remove" data-confirm="Remove this background image?" class="mb-1">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
+                                        </form>
+                                    <% } else { %>
+                                        <form method="POST" action="/admin/testimonials/<%= t.id %>/background" enctype="multipart/form-data" data-ajax-upload class="mb-1">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="file" name="background" accept="image/*" class="form-control form-control-sm mb-1">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
+                                        </form>
+                                    <% } %>
+                                    <form method="POST" action="/admin/testimonials/<%= t.id %>/background-color" class="d-flex gap-1">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="color" name="color" class="form-control form-control-color form-control-sm" value="<%= t.background_color || '#0a1828' %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-1">Color</button>
                                     </form>
                                 </td>
                             </tr>
@@ -532,10 +577,34 @@
                                     <button type="submit" class="btn btn-sm btn-primary">Save</button>
                                 </div>
                             </form>
-                            <form method="POST" action="/admin/research-verticals/<%= r.id %>/delete" data-confirm="Delete this research vertical?" class="mt-2">
+                            <form method="POST" action="/admin/research-verticals/<%= r.id %>/delete" data-confirm="Delete this research vertical?" class="mt-2 d-inline-block me-2">
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                 <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                             </form>
+
+                            <div class="border-top mt-3 pt-3">
+                                <h6 class="fw-bold small mb-2">Card Background</h6>
+                                <div class="d-flex flex-wrap align-items-center gap-2">
+                                    <% if (r.background_image) { %>
+                                        <img src="<%= r.background_image %>" class="rounded border d-block" style="width:70px;height:50px;object-fit:cover;">
+                                        <form method="POST" action="/admin/research-verticals/<%= r.id %>/background/remove" data-confirm="Remove this background image?">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove Image</button>
+                                        </form>
+                                    <% } else { %>
+                                        <form method="POST" action="/admin/research-verticals/<%= r.id %>/background" enctype="multipart/form-data" class="d-flex gap-2" data-ajax-upload>
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="file" name="background" accept="image/*" class="form-control form-control-sm">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap">Upload Image</button>
+                                        </form>
+                                    <% } %>
+                                    <form method="POST" action="/admin/research-verticals/<%= r.id %>/background-color" class="d-flex gap-2 align-items-center">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="color" name="color" class="form-control form-control-color form-control-sm" value="<%= r.background_color || '#ffffff' %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-2">Set Color</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 <% }) %>
