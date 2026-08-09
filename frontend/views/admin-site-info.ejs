@@ -96,6 +96,85 @@
             </form>
         </div>
     </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mt-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1"><i class="fas fa-heading me-2" style="color: var(--admin-accent);"></i>Page Text</h4>
+            <p class="text-muted">Headings, kickers, and intro text shown on the Home, Services, About, and Contact pages. Leave a field blank and Save to keep its current value &mdash; it won't be cleared.</p>
+            <form method="POST" action="/admin/site-info">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; Hero</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_hero_kicker" class="form-control" value="<%= site.home_hero_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Headline</label><input type="text" name="home_hero_title" class="form-control" value="<%= site.home_hero_title %>"></div>
+                    <div class="col-12"><label class="form-label">Subheadline</label><textarea name="home_hero_description" class="form-control" rows="2"><%= site.home_hero_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; Services Section</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_services_kicker" class="form-control" value="<%= site.home_services_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="home_services_heading" class="form-control" value="<%= site.home_services_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Description</label><textarea name="home_services_description" class="form-control" rows="2"><%= site.home_services_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; About Section</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_about_kicker" class="form-control" value="<%= site.home_about_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="home_about_heading" class="form-control" value="<%= site.home_about_heading %>"></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; Research Verticals Section</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_research_kicker" class="form-control" value="<%= site.home_research_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="home_research_heading" class="form-control" value="<%= site.home_research_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Description</label><textarea name="home_research_description" class="form-control" rows="2"><%= site.home_research_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; Testimonials Section</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_testimonials_kicker" class="form-control" value="<%= site.home_testimonials_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="home_testimonials_heading" class="form-control" value="<%= site.home_testimonials_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Description</label><textarea name="home_testimonials_description" class="form-control" rows="2"><%= site.home_testimonials_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Services Page &mdash; Hero</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="services_hero_kicker" class="form-control" value="<%= site.services_hero_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Headline</label><input type="text" name="services_hero_title" class="form-control" value="<%= site.services_hero_title %>"></div>
+                    <div class="col-12"><label class="form-label">Subheadline</label><textarea name="services_hero_description" class="form-control" rows="2"><%= site.services_hero_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Services Page &mdash; Offer Section</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="services_offer_kicker" class="form-control" value="<%= site.services_offer_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="services_offer_heading" class="form-control" value="<%= site.services_offer_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Description</label><textarea name="services_offer_description" class="form-control" rows="2"><%= site.services_offer_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Services Page &mdash; Process Section</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="services_process_kicker" class="form-control" value="<%= site.services_process_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="services_process_heading" class="form-control" value="<%= site.services_process_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Description</label><textarea name="services_process_description" class="form-control" rows="2"><%= site.services_process_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">About Page</h6>
+                <div class="row g-3">
+                    <div class="col-12"><label class="form-label">Headline</label><input type="text" name="about_heading" class="form-control" value="<%= site.about_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Second Paragraph</label><textarea name="about_paragraph2" class="form-control" rows="2"><%= site.about_paragraph2 %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Contact Page</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Heading</label><input type="text" name="contact_heading" class="form-control" value="<%= site.contact_heading %>"></div>
+                    <div class="col-md-8"><label class="form-label">Subheading</label><input type="text" name="contact_subheading" class="form-control" value="<%= site.contact_subheading %>"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-4">Save Page Text</button>
+            </form>
+        </div>
+    </div>
 </div>
 </main>
 <footer class="admin-footer">
