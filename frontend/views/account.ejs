@@ -28,7 +28,7 @@
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-5 mb-3">
             <h3 class="fw-bold mb-0">My Orders</h3>
             <% if (orders.some(o => ['created','failed','rejected'].includes(o.status))) { %>
-                <form method="POST" action="/account/orders/clear" onsubmit="return confirm('Remove all abandoned/failed/rejected orders from your history? Paid orders are never affected.');">
+                <form method="POST" action="/account/orders/clear" data-confirm="Remove all abandoned/failed/rejected orders from your history? Paid orders are never affected.">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-broom me-1"></i>Clear My Orders</button>
                 </form>

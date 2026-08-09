@@ -278,7 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clearBtn) {
             clearBtn.addEventListener('click', async () => {
                 if (!currentTicketId) return;
-                if (!window.confirm('Clear this entire conversation? This cannot be undone.')) return;
+                const confirmed = await customConfirm('Clear this conversation from your view? This only affects what you see - our team keeps the full history.');
+                if (!confirmed) return;
 
                 clearBtn.disabled = true;
                 try {

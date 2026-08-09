@@ -178,11 +178,11 @@
                                             <div class="small text-muted mb-2">Customer hasn't submitted a UTR reference yet.</div>
                                         <% } %>
                                         <div class="d-flex gap-2">
-                                            <form method="POST" action="/admin/orders/<%= o.id %>/confirm-manual-upi" onsubmit="return confirm('Confirm you have verified this UPI payment in your bank/UPI app? This will mark the order paid and deliver the product.');">
+                                            <form method="POST" action="/admin/orders/<%= o.id %>/confirm-manual-upi" data-confirm="Confirm you have verified this UPI payment in your bank/UPI app? This will mark the order paid and deliver the product.">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-sm btn-success">Confirm Paid</button>
                                             </form>
-                                            <form method="POST" action="/admin/orders/<%= o.id %>/reject-manual-upi" onsubmit="return confirm('Reject this UPI payment claim?');">
+                                            <form method="POST" action="/admin/orders/<%= o.id %>/reject-manual-upi" data-confirm="Reject this UPI payment claim?">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
                                             </form>
@@ -209,7 +209,7 @@
                                         <% (o.deliverable_files || []).forEach(f => { %>
                                             <div class="d-flex align-items-center gap-1 mb-1">
                                                 <span class="badge bg-light text-dark border text-truncate" style="max-width: 140px;" title="<%= f.filename %>"><i class="fas fa-file me-1"></i><%= f.filename %></span>
-                                                <form method="POST" action="/admin/orders/<%= o.id %>/deliverable/<%= f.id %>/remove" onsubmit="return confirm('Remove this file?');">
+                                                <form method="POST" action="/admin/orders/<%= o.id %>/deliverable/<%= f.id %>/remove" data-confirm="Remove this file?">
                                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">&times;</button>
                                                 </form>
@@ -255,7 +255,7 @@
                                     </td>
                                 </form>
                                 <td>
-                                    <form method="POST" action="/admin/services/<%= s.id %>/delete" onsubmit="return confirm('Delete this service?');">
+                                    <form method="POST" action="/admin/services/<%= s.id %>/delete" data-confirm="Delete this service?">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
@@ -263,7 +263,7 @@
                                 <td>
                                     <% if (s.background_image) { %>
                                         <img src="<%= s.background_image %>" class="rounded border d-block mb-1" style="width:70px;height:50px;object-fit:cover;">
-                                        <form method="POST" action="/admin/services/<%= s.id %>/background/remove" onsubmit="return confirm('Remove this background image?');">
+                                        <form method="POST" action="/admin/services/<%= s.id %>/background/remove" data-confirm="Remove this background image?">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
                                         </form>
@@ -303,7 +303,7 @@
             <% if (products.some(p => p.requires_approval)) { %>
                 <div class="alert alert-secondary d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
                     <span><i class="fas fa-bolt me-2"></i>Skip manual approval for every product (any price) so customers go straight to payment.</span>
-                    <form method="POST" action="/admin/products/bulk-disable-approval" onsubmit="return confirm('Turn off \'Requires Approval\' for ALL products, regardless of price? Customers will be able to buy instantly.');">
+                    <form method="POST" action="/admin/products/bulk-disable-approval" data-confirm="Turn off 'Requires Approval' for ALL products, regardless of price? Customers will be able to buy instantly.">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit" class="btn btn-sm btn-primary">Enable instant checkout for all products</button>
                     </form>
@@ -320,7 +320,7 @@
                                     <% (p.images || []).forEach(fileId => { %>
                                         <div class="text-center">
                                             <img src="/uploads/<%= fileId %>" class="rounded border d-block mb-1" style="width:70px;height:70px;object-fit:cover;">
-                                            <form method="POST" action="/admin/products/<%= p.id %>/images/remove" onsubmit="return confirm('Remove this image?');">
+                                            <form method="POST" action="/admin/products/<%= p.id %>/images/remove" data-confirm="Remove this image?">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <input type="hidden" name="fileId" value="<%= fileId %>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
@@ -361,7 +361,7 @@
                                     </div>
                                     <button type="submit" class="btn btn-sm btn-primary">Save</button>
                                 </form>
-                                <form method="POST" action="/admin/products/<%= p.id %>/delete" onsubmit="return confirm('Delete this product?');" class="d-inline">
+                                <form method="POST" action="/admin/products/<%= p.id %>/delete" data-confirm="Delete this product?" class="d-inline">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger mt-2">Delete Product</button>
                                 </form>
@@ -371,7 +371,7 @@
                                     <% if (p.deliverable_filename) { %>
                                         <div class="d-flex align-items-center gap-2 mb-2">
                                             <span class="badge bg-light text-dark border"><i class="fas fa-file me-1"></i><%= p.deliverable_filename %></span>
-                                            <form method="POST" action="/admin/products/<%= p.id %>/deliverable/remove" onsubmit="return confirm('Remove this deliverable file?');">
+                                            <form method="POST" action="/admin/products/<%= p.id %>/deliverable/remove" data-confirm="Remove this deliverable file?">
                                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">Remove</button>
                                             </form>
@@ -440,7 +440,7 @@
                                     </td>
                                 </form>
                                 <td>
-                                    <form method="POST" action="/admin/features/<%= f.id %>/delete" onsubmit="return confirm('Delete this feature?');">
+                                    <form method="POST" action="/admin/features/<%= f.id %>/delete" data-confirm="Delete this feature?">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                     </form>
@@ -492,7 +492,7 @@
                                     <td><%= r.comment %></td>
                                     <td class="text-nowrap"><%= new Date(r.created_at).toLocaleDateString('en-IN') %></td>
                                     <td>
-                                        <form method="POST" action="/admin/reviews/<%= r.id %>/delete" onsubmit="return confirm('Delete this review?');">
+                                        <form method="POST" action="/admin/reviews/<%= r.id %>/delete" data-confirm="Delete this review?">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
                                         </form>
@@ -511,7 +511,9 @@
 <footer class="admin-footer">
     &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Admin Panel.
 </footer>
+<%- include('partials/confirm-modal') %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/confirm-modal.js"></script>
 <script>
     var requestedTab = new URLSearchParams(window.location.search).get('tab');
     if (requestedTab) {

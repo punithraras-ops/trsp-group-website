@@ -100,7 +100,7 @@
                                 <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
                             </form>
                             <% if (images[slot.key]) { %>
-                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" onsubmit="return confirm('Remove this image and go back to the default?');">
+                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" data-confirm="Remove this image and go back to the default?">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-outline-danger text-nowrap">Remove</button>
                                 </form>
@@ -130,7 +130,7 @@
                                 <button type="submit" class="btn btn-sm btn-primary w-100">Upload</button>
                             </form>
                             <% if (images[slot.key]) { %>
-                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" onsubmit="return confirm('Remove this image and go back to the default?');">
+                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" data-confirm="Remove this image and go back to the default?">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove</button>
                                 </form>
@@ -167,7 +167,7 @@
                     <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
                 </form>
                 <% if (images.admin_page_background) { %>
-                    <form method="POST" action="/admin/design/remove/admin_page_background" onsubmit="return confirm('Remove this image and go back to the plain color?');">
+                    <form method="POST" action="/admin/design/remove/admin_page_background" data-confirm="Remove this image and go back to the plain color?">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <button type="submit" class="btn btn-outline-danger text-nowrap">Remove</button>
                     </form>
@@ -204,7 +204,7 @@
                                 <button type="submit" class="btn btn-sm btn-primary w-100">Upload Image</button>
                             </form>
                             <% if (images[slot.key]) { %>
-                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" onsubmit="return confirm('Remove this image?');" class="mb-2">
+                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" data-confirm="Remove this image?" class="mb-2">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove Image</button>
                                 </form>
@@ -231,6 +231,9 @@
 <footer class="admin-footer">
     &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Admin Panel.
 </footer>
+<%- include('partials/confirm-modal') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/confirm-modal.js"></script>
 <script src="/js/click-sound.js"></script>
 <script src="/js/translate-widget.js"></script>
 <script src="/js/admin-upload.js"></script>

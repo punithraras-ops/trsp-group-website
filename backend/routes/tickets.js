@@ -72,6 +72,7 @@ router.post('/tickets', requireAuthPage(), uploadAttachment.array('attachments',
         admin_notes: '',
         messages: [],
         unread_by_customer: false,
+        customer_cleared_at: null,
         customer_rating: null,
         customer_rating_comment: '',
         created_at: new Date(),
@@ -122,7 +123,13 @@ router.get('/api/tickets/:id/messages', requireAuthApi, async (req, res) => {
     if (ticket.unread_by_customer) {
         await db.getDb().collection('tickets').updateOne({ _id: ticket._id }, { $set: { unread_by_customer: false } });
     }
-    res.json({ messages: ticket.messages || [] });
+    // Clearing only hides messages from before the customer's own "clear" point -
+    // the admin side always sees the full, unfiltered history regardless.
+    const allMessages = ticket.messages || [];
+    const visibleMessages = ticket.customer_cleared_at
+        ? allMessages.filter(m => new Date(m.created_at) > new Date(ticket.customer_cleared_at))
+        : allMessages;
+    res.json({ messages: visibleMessages });
 });
 
 router.post('/api/tickets/:id/clear-messages', requireAuthApi, async (req, res) => {
@@ -130,9 +137,11 @@ router.post('/api/tickets/:id/clear-messages', requireAuthApi, async (req, res) 
         res.status(503).json({ error: 'Not available.' });
         return;
     }
+    // Only marks a "cleared as of" point for this customer's own view - never
+    // deletes the underlying messages, so the admin side keeps the full record.
     const result = await db.getDb().collection('tickets').updateOne(
         { _id: db.toId(req.params.id), user_id: db.toId(req.user.id) },
-        { $set: { messages: [], updated_at: new Date() } }
+        { $set: { customer_cleared_at: new Date(), updated_at: new Date() } }
     );
     if (result.matchedCount === 0) {
         res.status(404).json({ error: 'Ticket not found.' });
