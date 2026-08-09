@@ -761,10 +761,12 @@ router.post('/admin/tickets/:id/update', async (req, res) => {
     if (db.isDbConfigured()) {
         const allowedStatus = ['open', 'in_progress', 'fulfilled', 'closed'];
         const allowedDelivery = ['not_delivered', 'delivered'];
+        const allowedPayment = ['unpaid', 'paid'];
         const update = { updated_at: new Date() };
 
         if (allowedStatus.includes(req.body.status)) update.status = req.body.status;
         if (allowedDelivery.includes(req.body.delivery_status)) update.delivery_status = req.body.delivery_status;
+        if (allowedPayment.includes(req.body.payment_status)) update.payment_status = req.body.payment_status;
         if (req.body.price !== undefined && req.body.price !== '') {
             update.price_paise = Math.round(parseFloat(req.body.price) * 100);
         }
@@ -793,6 +795,31 @@ router.post('/admin/tickets/:id/deliverable', uploadDeliverable.array('files', 5
         await logAdminAction(req, 'ticket.deliverable_upload', `${req.params.id}: ${newFiles.map(f => f.filename).join(', ')}`);
     }
     res.redirect('/admin/tickets');
+});
+
+router.get('/admin/tickets/:id/attachment/:fileId', async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(404).send('Not available.');
+        return;
+    }
+    try {
+        const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id) });
+        const file = ticket && (ticket.attachments || []).find(f => f.id === req.params.fileId);
+        if (!file) {
+            res.status(404).send('File not available.');
+            return;
+        }
+        const fileDoc = await db.getDb().collection('uploads.files').findOne({ _id: db.toId(req.params.fileId) });
+        if (!fileDoc) {
+            res.status(404).send('File not found.');
+            return;
+        }
+        res.set('Content-Type', fileDoc.contentType || 'application/octet-stream');
+        res.set('Content-Disposition', `attachment; filename="${file.filename.replace(/"/g, '')}"`);
+        db.getBucket().openDownloadStream(db.toId(req.params.fileId)).pipe(res);
+    } catch (error) {
+        res.status(404).send('File not available.');
+    }
 });
 
 router.post('/admin/tickets/:id/deliverable/:fileId/remove', async (req, res) => {

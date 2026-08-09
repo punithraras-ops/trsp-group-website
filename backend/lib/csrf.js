@@ -13,6 +13,7 @@ const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 // the check entirely.
 function isKnownMultipartRoute(req) {
     return req.path === '/admin/products'
+        || req.path === '/tickets'
         || /^\/admin\/products\/[^/]+\/(images|deliverable)$/.test(req.path)
         || /^\/admin\/design\/upload\/[^/]+$/.test(req.path)
         || /^\/admin\/orders\/[^/]+\/deliverable$/.test(req.path)

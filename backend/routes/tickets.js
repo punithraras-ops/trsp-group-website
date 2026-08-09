@@ -1,9 +1,16 @@
 const express = require('express');
+const multer = require('multer');
 const db = require('../db');
 const invoices = require('../lib/invoices');
-const { requireAuthPage } = require('../lib/auth');
+const razorpay = require('../lib/razorpay');
+const mailer = require('../lib/mailer');
+const { requireAuthPage, requireAuthApi } = require('../lib/auth');
+const csrf = require('../lib/csrf');
+const { checkoutLimiter } = require('../lib/rateLimiters');
 
 const router = express.Router();
+const uploadAttachment = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
+router.use('/api/tickets', checkoutLimiter);
 
 async function getUserTickets(userId) {
     const docs = await db.getDb().collection('tickets')
@@ -22,10 +29,11 @@ router.get('/tickets', requireAuthPage(), async (req, res) => {
         tickets,
         ticketCreated: req.query.created === '1',
         rated: req.query.rated === '1',
+        razorpayConfigured: razorpay.isConfigured(),
     });
 });
 
-router.post('/tickets', requireAuthPage(), async (req, res) => {
+router.post('/tickets', requireAuthPage(), uploadAttachment.array('attachments', 5), csrf.verifyAfterUpload, async (req, res) => {
     if (!db.isDbConfigured()) {
         res.redirect('/tickets');
         return;
@@ -37,13 +45,23 @@ router.post('/tickets', requireAuthPage(), async (req, res) => {
         return;
     }
 
+    const attachments = [];
+    for (const file of req.files || []) {
+        const fileId = await db.uploadBuffer(file.buffer, file.originalname, file.mimetype);
+        attachments.push({ id: fileId.toString(), filename: file.originalname });
+    }
+
     await db.getDb().collection('tickets').insertOne({
         user_id: db.toId(req.user.id),
         title,
         description,
+        attachments,
         status: 'open',
         price_paise: null,
         currency: 'INR',
+        payment_status: 'unpaid',
+        razorpay_order_id: null,
+        razorpay_payment_id: null,
         deliverable_files: [],
         delivery_status: 'not_delivered',
         admin_notes: '',
@@ -52,6 +70,12 @@ router.post('/tickets', requireAuthPage(), async (req, res) => {
         created_at: new Date(),
         updated_at: new Date(),
     });
+
+    mailer.sendMail({
+        to: res.locals.site.email,
+        subject: `New requirement ticket from ${req.user.name}`,
+        html: `<p>${req.user.name} (${req.user.email}) raised a new ticket: <strong>${title}</strong></p><p>${description}</p>`,
+    }).catch(() => {});
 
     res.redirect('/tickets?created=1');
 });
@@ -73,6 +97,83 @@ router.post('/tickets/:id/rate', requireAuthPage(), async (req, res) => {
     );
 
     res.redirect('/tickets?rated=1');
+});
+
+router.post('/api/tickets/:id/create-payment-order', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured() || !razorpay.isConfigured()) {
+        res.status(503).json({ error: 'Payments are not enabled yet.' });
+        return;
+    }
+    try {
+        const ticket = await db.getDb().collection('tickets').findOne({
+            _id: db.toId(req.params.id),
+            user_id: db.toId(req.user.id),
+        });
+        if (!ticket || !ticket.price_paise) {
+            res.status(404).json({ error: 'This ticket does not have a price set yet.' });
+            return;
+        }
+        if (ticket.payment_status === 'paid') {
+            res.status(422).json({ error: 'This ticket has already been paid.' });
+            return;
+        }
+
+        const razorpayOrder = await razorpay.createOrder({
+            amountPaise: ticket.price_paise,
+            currency: ticket.currency,
+            receipt: `ticket_${ticket._id.toString()}`,
+        });
+
+        await db.getDb().collection('tickets').updateOne(
+            { _id: ticket._id },
+            { $set: { razorpay_order_id: razorpayOrder.id, updated_at: new Date() } }
+        );
+
+        res.json({
+            razorpayOrderId: razorpayOrder.id,
+            amount: ticket.price_paise,
+            currency: ticket.currency,
+            key: process.env.RAZORPAY_KEY_ID,
+            companyName: res.locals.site.company_name,
+            productTitle: ticket.title,
+        });
+    } catch (error) {
+        console.error('create-payment-order (ticket) failed:', error.message);
+        res.status(500).json({ error: 'Unable to start payment right now.' });
+    }
+});
+
+router.post('/api/tickets/:id/verify-payment', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured() || !razorpay.isConfigured()) {
+        res.status(503).json({ error: 'Payments are not enabled yet.' });
+        return;
+    }
+    const { razorpay_order_id: orderId, razorpay_payment_id: paymentId, razorpay_signature: signature } = req.body || {};
+    if (!orderId || !paymentId || !signature) {
+        res.status(422).json({ error: 'Missing payment details.' });
+        return;
+    }
+
+    const valid = razorpay.verifySignature({ orderId, paymentId, signature });
+    if (!valid) {
+        res.status(400).json({ error: 'Payment verification failed.' });
+        return;
+    }
+
+    try {
+        const result = await db.getDb().collection('tickets').updateOne(
+            { _id: db.toId(req.params.id), user_id: db.toId(req.user.id), razorpay_order_id: orderId },
+            { $set: { payment_status: 'paid', razorpay_payment_id: paymentId, updated_at: new Date() } }
+        );
+        if (result.matchedCount === 0) {
+            res.status(404).json({ error: 'Ticket not found.' });
+            return;
+        }
+        res.json({ message: 'Payment verified.' });
+    } catch (error) {
+        console.error('verify-payment (ticket) failed:', error.message);
+        res.status(500).json({ error: 'Unable to verify payment right now.' });
+    }
 });
 
 router.get('/tickets/:id/download/:fileId', requireAuthPage(), async (req, res) => {

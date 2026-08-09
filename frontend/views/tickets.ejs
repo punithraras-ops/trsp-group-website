@@ -7,7 +7,7 @@
         <p class="lead">Raise a custom product requirement and track it here until it's delivered.</p>
 
         <% if (ticketCreated) { %>
-            <div class="alert alert-success">Your ticket has been submitted. We'll review it and get back to you here.</div>
+            <div class="alert alert-success">Your ticket has been submitted. Our team will contact you within 24 hours &mdash; you can track progress here.</div>
         <% } %>
         <% if (rated) { %>
             <div class="alert alert-success">Thanks for your rating!</div>
@@ -18,7 +18,7 @@
                 <div class="card border-0 shadow-sm rounded-4">
                     <div class="card-body p-4">
                         <h4 class="fw-bold mb-3">Raise a New Ticket</h4>
-                        <form method="POST" action="/tickets">
+                        <form method="POST" action="/tickets" enctype="multipart/form-data" data-ajax-upload>
                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                             <div class="mb-3">
                                 <label class="form-label">Title</label>
@@ -27,6 +27,10 @@
                             <div class="mb-3">
                                 <label class="form-label">Describe your requirement</label>
                                 <textarea name="description" class="form-control" rows="4" placeholder="Tell us what you need built, any specific features, deadlines, or references." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Attach reference files (optional)</label>
+                                <input type="file" name="attachments" multiple class="form-control">
                             </div>
                             <button type="submit" class="btn btn-primary">Submit Ticket</button>
                         </form>
@@ -52,9 +56,20 @@
                                 <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge bg-<%= t.status === 'fulfilled' ? 'success' : (t.status === 'closed' ? 'secondary' : (t.status === 'in_progress' ? 'info' : 'warning text-dark')) %>"><%= t.status.replace(/_/g, ' ') %></span>
                                     <span class="badge bg-<%= t.delivery_status === 'delivered' ? 'success' : 'secondary' %>"><%= t.delivery_status.replace(/_/g, ' ') %></span>
+                                    <% if (t.price_paise) { %>
+                                        <span class="badge bg-<%= t.payment_status === 'paid' ? 'success' : 'danger' %>"><%= t.payment_status === 'paid' ? 'Paid' : 'Unpaid' %></span>
+                                    <% } %>
                                 </div>
                             </div>
                             <p class="text-muted mb-3"><%= t.description %></p>
+
+                            <% if (t.attachments && t.attachments.length > 0) { %>
+                                <div class="mb-3">
+                                    <% t.attachments.forEach(f => { %>
+                                        <span class="badge bg-light text-dark border me-1 mb-1"><i class="fas fa-paperclip me-1"></i><%= f.filename %></span>
+                                    <% }) %>
+                                </div>
+                            <% } %>
 
                             <% if (t.price_paise) { %>
                                 <p class="fw-bold mb-2">Price: &#8377;<%= (t.price_paise / 100).toLocaleString('en-IN') %></p>
@@ -63,7 +78,12 @@
                                 <div class="alert alert-info py-2 mb-3"><strong>Note from us:</strong> <%= t.admin_notes %></div>
                             <% } %>
 
+                            <div class="alert d-none py-2" data-ticket-pay-status="<%= t.id %>" role="status"></div>
+
                             <div class="d-flex gap-2 flex-wrap align-items-center">
+                                <% if (t.price_paise && t.payment_status !== 'paid' && razorpayConfigured) { %>
+                                    <button type="button" class="btn btn-sm btn-primary" data-pay-ticket="<%= t.id %>">Pay Now</button>
+                                <% } %>
                                 <% if (t.price_paise) { %>
                                     <a href="/tickets/<%= t.id %>/invoice" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
                                 <% } %>
@@ -110,6 +130,10 @@
     </div>
 </section>
 
+<% if (razorpayConfigured) { %>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<% } %>
+<script src="/js/admin-upload.js"></script>
 <script src="/js/tickets.js"></script>
 
 <%- include('partials/footer') %>
