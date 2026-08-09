@@ -1,5 +1,6 @@
 const express = require('express');
 const multer = require('multer');
+const QRCode = require('qrcode');
 const db = require('../db');
 const invoices = require('../lib/invoices');
 const razorpay = require('../lib/razorpay');
@@ -7,6 +8,7 @@ const mailer = require('../lib/mailer');
 const { requireAuthPage, requireAuthApi } = require('../lib/auth');
 const csrf = require('../lib/csrf');
 const { checkoutLimiter } = require('../lib/rateLimiters');
+const { MANUAL_UPI_ID, buildUpiUri } = require('../lib/manualUpi');
 
 const router = express.Router();
 const uploadAttachment = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
@@ -22,6 +24,7 @@ async function getUserTickets(userId) {
 
 router.get('/tickets', requireAuthPage(), async (req, res) => {
     const tickets = db.isDbConfigured() ? await getUserTickets(req.user.id) : [];
+    const unreadCount = tickets.filter(t => t.unread_by_customer).length;
     res.render('tickets', {
         pageTitle: `${res.locals.site.short_name} - My Tickets`,
         pageDescription: 'Submit and track your custom product requirements.',
@@ -30,6 +33,7 @@ router.get('/tickets', requireAuthPage(), async (req, res) => {
         ticketCreated: req.query.created === '1',
         rated: req.query.rated === '1',
         razorpayConfigured: razorpay.isConfigured(),
+        unreadCount,
     });
 });
 
@@ -62,10 +66,12 @@ router.post('/tickets', requireAuthPage(), uploadAttachment.array('attachments',
         payment_status: 'unpaid',
         razorpay_order_id: null,
         razorpay_payment_id: null,
+        utr_reference: null,
         deliverable_files: [],
         delivery_status: 'not_delivered',
         admin_notes: '',
         messages: [],
+        unread_by_customer: false,
         customer_rating: null,
         customer_rating_comment: '',
         created_at: new Date(),
@@ -113,6 +119,9 @@ router.get('/api/tickets/:id/messages', requireAuthApi, async (req, res) => {
         res.status(404).json({ error: 'Ticket not found.' });
         return;
     }
+    if (ticket.unread_by_customer) {
+        await db.getDb().collection('tickets').updateOne({ _id: ticket._id }, { $set: { unread_by_customer: false } });
+    }
     res.json({ messages: ticket.messages || [] });
 });
 
@@ -127,17 +136,22 @@ router.post('/api/tickets/:id/message', requireAuthApi, async (req, res) => {
         return;
     }
 
+    const existing = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id), user_id: db.toId(req.user.id) });
+    if (!existing) {
+        res.status(404).json({ error: 'Ticket not found.' });
+        return;
+    }
+    if (existing.status === 'closed') {
+        res.status(422).json({ error: 'This ticket is closed. Messaging is disabled.' });
+        return;
+    }
+
     const newMessage = { from: 'customer', text, created_at: new Date() };
     const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
         { _id: db.toId(req.params.id), user_id: db.toId(req.user.id) },
         { $push: { messages: newMessage }, $set: { updated_at: new Date() } },
         { returnDocument: 'after' }
     );
-
-    if (!ticket) {
-        res.status(404).json({ error: 'Ticket not found.' });
-        return;
-    }
 
     mailer.sendMail({
         to: res.locals.site.email,
@@ -222,6 +236,94 @@ router.post('/api/tickets/:id/verify-payment', requireAuthApi, async (req, res) 
     } catch (error) {
         console.error('verify-payment (ticket) failed:', error.message);
         res.status(500).json({ error: 'Unable to verify payment right now.' });
+    }
+});
+
+router.post('/api/tickets/:id/create-manual-upi-order', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'Not available.' });
+        return;
+    }
+    try {
+        const ticket = await db.getDb().collection('tickets').findOne({
+            _id: db.toId(req.params.id),
+            user_id: db.toId(req.user.id),
+        });
+        if (!ticket || !ticket.price_paise) {
+            res.status(404).json({ error: 'This ticket does not have a price set yet.' });
+            return;
+        }
+        if (ticket.payment_status === 'paid') {
+            res.status(422).json({ error: 'This ticket has already been paid.' });
+            return;
+        }
+
+        await db.getDb().collection('tickets').updateOne(
+            { _id: ticket._id },
+            { $set: { payment_status: 'awaiting_confirmation', updated_at: new Date() } }
+        );
+
+        const upiUri = buildUpiUri({ amountPaise: ticket.price_paise, referenceId: ticket._id.toString(), companyName: res.locals.site.company_name });
+        const qrDataUrl = await QRCode.toDataURL(upiUri);
+
+        res.json({
+            ticketId: ticket._id.toString(),
+            amount: ticket.price_paise,
+            currency: ticket.currency,
+            upiId: MANUAL_UPI_ID,
+            qrDataUrl,
+        });
+    } catch (error) {
+        console.error('create-manual-upi-order (ticket) failed:', error.message);
+        res.status(500).json({ error: 'Unable to start UPI checkout. Please try again.' });
+    }
+});
+
+router.post('/api/tickets/:id/submit-utr', requireAuthApi, async (req, res) => {
+    if (!db.isDbConfigured()) {
+        res.status(503).json({ error: 'Not available.' });
+        return;
+    }
+    const utr = String(req.body.utr || '').trim();
+    if (!utr || utr.length < 4 || utr.length > 40) {
+        res.status(422).json({ error: 'Enter a valid UPI transaction / UTR reference number.' });
+        return;
+    }
+    try {
+        const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
+            { _id: db.toId(req.params.id), user_id: db.toId(req.user.id) },
+            { $set: { utr_reference: utr, updated_at: new Date() } },
+            { returnDocument: 'after' }
+        );
+        if (!ticket) {
+            res.status(404).json({ error: 'Ticket not found.' });
+            return;
+        }
+
+        mailer.sendUtrReceivedEmail({
+            to: req.user.email,
+            name: req.user.name,
+            orderId: ticket._id.toString(),
+            utr,
+            amountPaise: ticket.price_paise,
+            currency: ticket.currency,
+            site: res.locals.site,
+        }).catch(() => {});
+
+        mailer.sendUpiUtrAlert({
+            orderId: ticket._id.toString(),
+            utr,
+            amountPaise: ticket.price_paise,
+            currency: ticket.currency,
+            customerName: req.user.name,
+            customerEmail: req.user.email,
+            site: res.locals.site,
+        }).catch(() => {});
+
+        res.json({ message: "Reference submitted. We'll confirm your payment shortly." });
+    } catch (error) {
+        console.error('submit-utr (ticket) failed:', error.message);
+        res.status(500).json({ error: 'Unable to submit reference right now.' });
     }
 });
 

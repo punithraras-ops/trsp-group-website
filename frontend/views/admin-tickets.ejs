@@ -34,12 +34,32 @@
                                     <h5 class="fw-bold mb-0"><%= t.title %></h5>
                                     <div class="d-flex gap-2 flex-wrap">
                                         <span class="badge bg-<%= t.status === 'fulfilled' ? 'success' : (t.status === 'closed' ? 'secondary' : (t.status === 'in_progress' ? 'info' : 'warning text-dark')) %>"><%= t.status.replace(/_/g, ' ') %></span>
-                                        <span class="badge bg-<%= t.payment_status === 'paid' ? 'success' : 'danger' %>"><%= t.payment_status === 'paid' ? 'Paid' : 'Unpaid' %></span>
+                                        <span class="badge bg-<%= t.payment_status === 'paid' ? 'success' : (t.payment_status === 'awaiting_confirmation' ? 'warning text-dark' : 'danger') %>"><%= t.payment_status === 'paid' ? 'Paid' : (t.payment_status === 'awaiting_confirmation' ? 'Awaiting UPI Confirmation' : 'Unpaid') %></span>
                                     </div>
                                 </div>
                                 <p class="text-muted small mb-1"><%= t.user_name %> (<%= t.user_email %>)</p>
                                 <p class="text-muted small mb-3"><%= new Date(t.created_at).toLocaleString('en-IN') %></p>
                                 <p class="mb-3"><%= t.description %></p>
+
+                                <% if (t.payment_status === 'awaiting_confirmation') { %>
+                                    <div class="alert alert-warning py-2 mb-3">
+                                        <% if (t.utr_reference) { %>
+                                            UPI UTR: <strong><%= t.utr_reference %></strong> &mdash; check your bank app before confirming.
+                                        <% } else { %>
+                                            Customer hasn't submitted a UTR reference yet.
+                                        <% } %>
+                                        <div class="d-flex gap-2 mt-2">
+                                            <form method="POST" action="/admin/tickets/<%= t.id %>/confirm-manual-upi" onsubmit="return confirm('Confirm you verified this UPI payment in your bank app?');">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-success">Confirm Paid</button>
+                                            </form>
+                                            <form method="POST" action="/admin/tickets/<%= t.id %>/reject-manual-upi" onsubmit="return confirm('Reject this UPI payment claim?');">
+                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <% } %>
 
                                 <% if (t.attachments && t.attachments.length > 0) { %>
                                     <div class="mb-3">
@@ -84,7 +104,8 @@
                                     <div class="mb-2">
                                         <label class="form-label small">Payment Status</label>
                                         <select name="payment_status" class="form-select form-select-sm">
-                                            <option value="unpaid" <%= t.payment_status !== 'paid' ? 'selected' : '' %>>Unpaid</option>
+                                            <option value="unpaid" <%= t.payment_status !== 'paid' && t.payment_status !== 'awaiting_confirmation' ? 'selected' : '' %>>Unpaid</option>
+                                            <option value="awaiting_confirmation" <%= t.payment_status === 'awaiting_confirmation' ? 'selected' : '' %>>Awaiting UPI Confirmation</option>
                                             <option value="paid" <%= t.payment_status === 'paid' ? 'selected' : '' %>>Paid</option>
                                         </select>
                                         <div class="form-text">Auto-set to Paid when the customer pays via Razorpay; you can also set it manually for offline/cash payments.</div>
@@ -116,7 +137,7 @@
                                 <% if (t.price_paise) { %>
                                     <a href="/admin/tickets/<%= t.id %>/invoice" class="btn btn-sm btn-outline-secondary w-100 mt-2"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
                                 <% } %>
-                                <button type="button" class="btn btn-sm btn-outline-dark w-100 mt-2" data-open-chat="<%= t.id %>" data-ticket-title="<%= t.title %>" data-user-name="<%= t.user_name %>"><i class="fas fa-comments me-1"></i>Conversation<%= t.messages && t.messages.length > 0 ? ' (' + t.messages.length + ')' : '' %></button>
+                                <button type="button" class="btn btn-sm btn-outline-dark w-100 mt-2" data-open-chat="<%= t.id %>" data-ticket-title="<%= t.title %>" data-user-name="<%= t.user_name %>" data-ticket-status="<%= t.status %>"><i class="fas fa-comments me-1"></i>Conversation</button>
                             </div>
                         </div>
                     </div>

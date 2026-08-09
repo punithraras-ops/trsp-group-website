@@ -7,26 +7,10 @@ const mailer = require('../lib/mailer');
 const coupons = require('../lib/coupons');
 const { markOrderPaid } = require('../lib/orders');
 const { checkoutLimiter } = require('../lib/rateLimiters');
+const { MANUAL_UPI_ID, buildUpiUri } = require('../lib/manualUpi');
 
 const router = express.Router();
 router.use('/api/checkout', checkoutLimiter);
-
-// Personal UPI VPA for the manual-confirmation QR flow. A payment made to this
-// ID never touches this server or Razorpay, so it can't be auto-verified -
-// the customer submits their UTR reference and an admin manually confirms it
-// against their bank statement before the order is marked paid.
-const MANUAL_UPI_ID = 'punithraras-2@okhdfcbank';
-
-function buildUpiUri({ amountPaise, orderId, companyName }) {
-    const params = new URLSearchParams({
-        pa: MANUAL_UPI_ID,
-        pn: companyName || 'Technical of RSP Groups',
-        am: (amountPaise / 100).toFixed(2),
-        cu: 'INR',
-        tn: `Order ${orderId}`,
-    });
-    return `upi://pay?${params.toString()}`;
-}
 
 router.post('/api/checkout/request-approval', requireAuthApi, async (req, res) => {
     if (!db.isDbConfigured()) {
@@ -478,7 +462,7 @@ router.post('/api/checkout/create-manual-upi-order', requireAuthApi, async (req,
             return;
         }
 
-        const upiUri = buildUpiUri({ amountPaise: finalAmountPaise, orderId: localOrderId, companyName: res.locals.site.company_name });
+        const upiUri = buildUpiUri({ amountPaise: finalAmountPaise, referenceId: localOrderId, companyName: res.locals.site.company_name });
         const qrDataUrl = await QRCode.toDataURL(upiUri);
 
         res.json({

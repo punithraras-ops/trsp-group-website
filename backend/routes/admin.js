@@ -762,7 +762,7 @@ router.post('/admin/tickets/:id/update', async (req, res) => {
     if (db.isDbConfigured()) {
         const allowedStatus = ['open', 'in_progress', 'fulfilled', 'closed'];
         const allowedDelivery = ['not_delivered', 'delivered'];
-        const allowedPayment = ['unpaid', 'paid'];
+        const allowedPayment = ['unpaid', 'awaiting_confirmation', 'paid'];
         const update = { updated_at: new Date() };
 
         if (allowedStatus.includes(req.body.status)) update.status = req.body.status;
@@ -778,6 +778,43 @@ router.post('/admin/tickets/:id/update', async (req, res) => {
             { $set: update }
         );
         await logAdminAction(req, 'ticket.update', req.params.id);
+    }
+    res.redirect('/admin/tickets');
+});
+
+router.post('/admin/tickets/:id/confirm-manual-upi', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
+            { _id: db.toId(req.params.id), payment_status: 'awaiting_confirmation' },
+            { $set: { payment_status: 'paid', updated_at: new Date() } },
+            { returnDocument: 'after' }
+        );
+        if (ticket) {
+            const user = await db.getDb().collection('users').findOne({ _id: ticket.user_id });
+            if (user) {
+                mailer.sendOrderConfirmation({
+                    to: user.email,
+                    name: user.name,
+                    items: [{ title: ticket.title, quantity: 1, amount_paise: ticket.price_paise }],
+                    totalPaise: ticket.price_paise,
+                    currency: ticket.currency,
+                    orderId: ticket._id.toString(),
+                    site: res.locals.site,
+                }).catch(() => {});
+            }
+            await logAdminAction(req, 'ticket.confirm_manual_upi', req.params.id);
+        }
+    }
+    res.redirect('/admin/tickets');
+});
+
+router.post('/admin/tickets/:id/reject-manual-upi', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('tickets').updateOne(
+            { _id: db.toId(req.params.id), payment_status: 'awaiting_confirmation' },
+            { $set: { payment_status: 'unpaid', updated_at: new Date() } }
+        );
+        await logAdminAction(req, 'ticket.reject_manual_upi', req.params.id);
     }
     res.redirect('/admin/tickets');
 });
@@ -806,16 +843,22 @@ router.post('/admin/tickets/:id/message', async (req, res) => {
         return;
     }
 
-    const newMessage = { from: 'admin', text, created_at: new Date() };
-    const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
-        { _id: db.toId(req.params.id) },
-        { $push: { messages: newMessage }, $set: { updated_at: new Date() } },
-        { returnDocument: 'after' }
-    );
-    if (!ticket) {
+    const existing = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id) });
+    if (!existing) {
         res.status(404).json({ error: 'Ticket not found.' });
         return;
     }
+    if (existing.status === 'closed') {
+        res.status(422).json({ error: 'This ticket is closed. Reopen it to send a message.' });
+        return;
+    }
+
+    const newMessage = { from: 'admin', text, created_at: new Date() };
+    const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
+        { _id: db.toId(req.params.id) },
+        { $push: { messages: newMessage }, $set: { updated_at: new Date(), unread_by_customer: true } },
+        { returnDocument: 'after' }
+    );
 
     const user = await db.getDb().collection('users').findOne({ _id: ticket.user_id });
     if (user) {

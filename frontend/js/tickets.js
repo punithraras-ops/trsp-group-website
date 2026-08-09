@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const unreadToast = document.querySelector('[data-ticket-unread-toast]');
+    if (unreadToast) {
+        setTimeout(() => unreadToast.remove(), 5000);
+    }
+
     document.querySelectorAll('.rate-ticket-form').forEach((form) => {
         const ratingInput = form.querySelector('.rating-input');
         const stars = form.querySelectorAll('.rating-stars [data-star]');
@@ -101,6 +106,83 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => payForTicket(ticketId, buttons, true));
     });
 
+    document.querySelectorAll('[data-pay-ticket-manual-upi]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+            const ticketId = btn.dataset.payTicketManualUpi;
+            const panel = document.getElementById(`manualUpiPanel-${ticketId}`);
+            const statusBox = document.querySelector(`[data-ticket-pay-status="${ticketId}"]`);
+            const showStatus = (message, type) => {
+                if (!statusBox) return;
+                statusBox.textContent = message;
+                statusBox.className = `alert alert-${type} py-2`;
+            };
+
+            btn.disabled = true;
+            showStatus('Generating your UPI QR code...', 'info');
+
+            try {
+                const createResponse = await fetch(`/api/tickets/${ticketId}/create-manual-upi-order`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                });
+                const order = await createResponse.json();
+                if (!createResponse.ok) {
+                    throw new Error(order.error || 'Unable to generate UPI QR code.');
+                }
+
+                panel.classList.remove('d-none');
+                panel.innerHTML = `
+                    <img src="${order.qrDataUrl}" alt="UPI QR Code" style="width:220px;height:220px;">
+                    <p class="mt-2 mb-1"><strong>Scan with any UPI app</strong></p>
+                    <p class="text-muted small mb-1">UPI ID: ${order.upiId}</p>
+                    <p class="fw-bold mb-3">Amount: &#8377;${(order.amount / 100).toLocaleString('en-IN')}</p>
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="utrInput-${ticketId}" placeholder="Enter UPI transaction / UTR number after paying">
+                        <button class="btn btn-primary" id="submitUtrBtn-${ticketId}" type="button">Submit</button>
+                    </div>
+                    <div class="small" id="utrStatus-${ticketId}"></div>
+                `;
+                showStatus('', 'info');
+
+                document.getElementById(`submitUtrBtn-${ticketId}`).addEventListener('click', async () => {
+                    const utrInput = document.getElementById(`utrInput-${ticketId}`);
+                    const utrStatus = document.getElementById(`utrStatus-${ticketId}`);
+                    const utr = utrInput.value.trim();
+                    if (!utr) {
+                        utrStatus.textContent = 'Please enter your transaction reference number.';
+                        utrStatus.className = 'small text-danger';
+                        return;
+                    }
+                    utrStatus.textContent = 'Submitting...';
+                    utrStatus.className = 'small text-muted';
+                    try {
+                        const submitResponse = await fetch(`/api/tickets/${ticketId}/submit-utr`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': getCsrfToken() },
+                            body: JSON.stringify({ utr }),
+                        });
+                        const result = await submitResponse.json();
+                        if (!submitResponse.ok) {
+                            throw new Error(result.error || 'Unable to submit reference.');
+                        }
+                        utrStatus.textContent = "Reference submitted! We'll confirm your payment shortly.";
+                        utrStatus.className = 'small text-success';
+                        utrInput.disabled = true;
+                        document.getElementById(`submitUtrBtn-${ticketId}`).disabled = true;
+                        setTimeout(() => window.location.reload(), 1500);
+                    } catch (error) {
+                        utrStatus.textContent = error.message;
+                        utrStatus.className = 'small text-danger';
+                    }
+                });
+            } catch (error) {
+                showStatus(error.message, 'danger');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    });
+
     const chatModalEl = document.getElementById('ticketChatModal');
     if (chatModalEl && typeof bootstrap !== 'undefined') {
         const chatModal = new bootstrap.Modal(chatModalEl);
@@ -132,6 +214,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleEl.textContent = `Conversation - ${btn.dataset.ticketTitle}`;
                 statusEl.textContent = '';
                 messagesEl.innerHTML = '<p class="text-muted">Loading...</p>';
+
+                const isClosed = btn.dataset.ticketStatus === 'closed';
+                const submitBtn = form.querySelector('button[type="submit"]');
+                input.disabled = isClosed;
+                submitBtn.disabled = isClosed;
+                input.placeholder = isClosed ? 'This ticket is closed - messaging is disabled.' : 'Type a message...';
+
                 chatModal.show();
                 try {
                     const response = await fetch(`/api/tickets/${currentTicketId}/messages`);
@@ -140,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } catch (error) {
                     messagesEl.innerHTML = '<p class="text-danger">Unable to load messages.</p>';
                 }
-                input.focus();
+                if (!isClosed) input.focus();
             });
         });
 
@@ -177,12 +266,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 messagesEl.appendChild(div);
                 messagesEl.scrollTop = messagesEl.scrollHeight;
                 input.value = '';
-
-                const openBtn = document.querySelector(`[data-open-chat="${currentTicketId}"]`);
-                if (openBtn) {
-                    const count = messagesEl.querySelectorAll(':scope > div').length;
-                    openBtn.innerHTML = `<i class="fas fa-comments me-1"></i>Conversation (${count})`;
-                }
             } catch (error) {
                 statusEl.textContent = error.message;
                 statusEl.className = 'small mt-2 text-danger';

@@ -35,6 +35,13 @@ document.addEventListener('DOMContentLoaded', () => {
             titleEl.textContent = `Conversation - ${btn.dataset.ticketTitle}`;
             statusEl.textContent = '';
             messagesEl.innerHTML = '<p class="text-muted">Loading...</p>';
+
+            const isClosed = btn.dataset.ticketStatus === 'closed';
+            const submitBtn = form.querySelector('button[type="submit"]');
+            input.disabled = isClosed;
+            submitBtn.disabled = isClosed;
+            input.placeholder = isClosed ? 'This ticket is closed - reopen it to reply.' : 'Type a reply...';
+
             chatModal.show();
             try {
                 const response = await fetch(`/admin/tickets/${currentTicketId}/messages`);
@@ -43,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } catch (error) {
                 messagesEl.innerHTML = '<p class="text-danger">Unable to load messages.</p>';
             }
-            input.focus();
+            if (!isClosed) input.focus();
         });
     });
 
