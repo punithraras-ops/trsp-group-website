@@ -99,6 +99,15 @@
             background-position: center;
         }
         <% } %>
+        <% if (design.images.footer_background) { %>
+        .footer {
+            background-image:
+                linear-gradient(180deg, rgba(10, 23, 37, 0.85), rgba(10, 23, 37, 0.85)),
+                url('<%= design.images.footer_background %>');
+            background-size: cover;
+            background-position: center;
+        }
+        <% } %>
         <%
         const navButtonImages = [
             { key: 'nav_home_bg', selector: '.nav-link-home', style: 'dark' },

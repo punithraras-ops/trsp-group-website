@@ -75,6 +75,7 @@
                     { key: 'page_background', label: 'Page Background (whole site, behind all pages)', height: 120 },
                     { key: 'services_background', label: 'Services Section Background', height: 120 },
                     { key: 'button_background', label: 'Button Background Texture (all primary buttons, default)', height: 80 },
+                    { key: 'footer_background', label: 'Footer Background', height: 120 },
                 ]; %>
                 <% const navSlots = [
                     { key: 'nav_home_bg', label: 'Home Button' },
@@ -145,14 +146,33 @@
         <div class="card-body p-4">
             <h4 class="fw-bold mb-3"><i class="fas fa-toolbox me-2" style="color: var(--admin-accent);"></i>Admin Panel Appearance</h4>
             <p class="text-muted">This only affects the background of admin pages like this one — it's separate from the public site's colors above, so the admin tool stays legible no matter what theme the public site uses.</p>
-            <form method="POST" action="/admin/design/admin-theme" class="d-flex align-items-end gap-3">
+            <form method="POST" action="/admin/design/admin-theme" class="d-flex align-items-end gap-3 mb-4">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <div>
-                    <label class="form-label d-block">Admin Panel Background</label>
+                    <label class="form-label d-block">Admin Panel Background Color</label>
                     <input type="color" name="admin_bg_color" class="form-control form-control-color" value="<%= design.adminBackground %>">
                 </div>
                 <button type="submit" class="btn btn-primary">Save</button>
             </form>
+
+            <h6 class="fw-bold mb-2">Admin Panel Background Image</h6>
+            <p class="text-muted small">Optional — overlays on top of the color above across every admin page.</p>
+            <% if (images.admin_page_background) { %>
+                <img src="<%= images.admin_page_background %>" class="img-fluid mb-2 rounded border d-block" style="max-height:120px;">
+            <% } %>
+            <div class="d-flex gap-2">
+                <form method="POST" action="/admin/design/upload/admin_page_background" enctype="multipart/form-data" class="d-flex gap-2 flex-grow-1">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <input type="file" name="file" accept="image/*" class="form-control" required>
+                    <button type="submit" class="btn btn-primary text-nowrap">Upload</button>
+                </form>
+                <% if (images.admin_page_background) { %>
+                    <form method="POST" action="/admin/design/remove/admin_page_background" onsubmit="return confirm('Remove this image and go back to the plain color?');">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button type="submit" class="btn btn-outline-danger text-nowrap">Remove</button>
+                    </form>
+                <% } %>
+            </div>
         </div>
     </div>
 

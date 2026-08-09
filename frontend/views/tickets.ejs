@@ -83,6 +83,7 @@
                             <div class="d-flex gap-2 flex-wrap align-items-center">
                                 <% if (t.price_paise && t.payment_status !== 'paid' && razorpayConfigured) { %>
                                     <button type="button" class="btn btn-sm btn-primary" data-pay-ticket="<%= t.id %>">Pay Now</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" data-pay-ticket-upi="<%= t.id %>"><i class="fas fa-qrcode me-1"></i>Pay with UPI</button>
                                 <% } %>
                                 <% if (t.price_paise) { %>
                                     <a href="/tickets/<%= t.id %>/invoice" class="btn btn-sm btn-outline-secondary"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
