@@ -109,6 +109,8 @@
                     <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_hero_kicker" class="form-control" value="<%= site.home_hero_kicker %>"></div>
                     <div class="col-md-8"><label class="form-label">Headline</label><input type="text" name="home_hero_title" class="form-control" value="<%= site.home_hero_title %>"></div>
                     <div class="col-12"><label class="form-label">Subheadline</label><textarea name="home_hero_description" class="form-control" rows="2"><%= site.home_hero_description %></textarea></div>
+                    <div class="col-md-6"><label class="form-label">Button 1 Label</label><input type="text" name="home_hero_btn1_label" class="form-control" value="<%= site.home_hero_btn1_label %>"></div>
+                    <div class="col-md-6"><label class="form-label">Button 2 Label</label><input type="text" name="home_hero_btn2_label" class="form-control" value="<%= site.home_hero_btn2_label %>"></div>
                 </div>
 
                 <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; Services Section</h6>
@@ -122,6 +124,12 @@
                 <div class="row g-3">
                     <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="home_about_kicker" class="form-control" value="<%= site.home_about_kicker %>"></div>
                     <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="home_about_heading" class="form-control" value="<%= site.home_about_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Second Paragraph</label><textarea name="home_about_paragraph2" class="form-control" rows="2"><%= site.home_about_paragraph2 %></textarea></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 1 Title</label><input type="text" name="home_about_mission_title" class="form-control" value="<%= site.home_about_mission_title %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 1 Text</label><input type="text" name="home_about_mission_text" class="form-control" value="<%= site.home_about_mission_text %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 2 Title</label><input type="text" name="home_about_approach_title" class="form-control" value="<%= site.home_about_approach_title %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 2 Text</label><input type="text" name="home_about_approach_text" class="form-control" value="<%= site.home_about_approach_text %>"></div>
+                    <div class="col-md-4"><label class="form-label">Button Label</label><input type="text" name="home_about_btn_label" class="form-control" value="<%= site.home_about_btn_label %>"></div>
                 </div>
 
                 <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Home &mdash; Upcoming Features Section</h6>
@@ -164,18 +172,67 @@
                     <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="services_process_kicker" class="form-control" value="<%= site.services_process_kicker %>"></div>
                     <div class="col-md-8"><label class="form-label">Heading</label><input type="text" name="services_process_heading" class="form-control" value="<%= site.services_process_heading %>"></div>
                     <div class="col-12"><label class="form-label">Description</label><textarea name="services_process_description" class="form-control" rows="2"><%= site.services_process_description %></textarea></div>
+                    <div class="col-md-4"><label class="form-label">Step 1 Title</label><input type="text" name="services_process_card1_title" class="form-control" value="<%= site.services_process_card1_title %>"></div>
+                    <div class="col-md-8"><label class="form-label">Step 1 Text</label><input type="text" name="services_process_card1_text" class="form-control" value="<%= site.services_process_card1_text %>"></div>
+                    <div class="col-md-4"><label class="form-label">Step 2 Title</label><input type="text" name="services_process_card2_title" class="form-control" value="<%= site.services_process_card2_title %>"></div>
+                    <div class="col-md-8"><label class="form-label">Step 2 Text</label><input type="text" name="services_process_card2_text" class="form-control" value="<%= site.services_process_card2_text %>"></div>
+                    <div class="col-md-4"><label class="form-label">Step 3 Title</label><input type="text" name="services_process_card3_title" class="form-control" value="<%= site.services_process_card3_title %>"></div>
+                    <div class="col-md-8"><label class="form-label">Step 3 Text</label><input type="text" name="services_process_card3_text" class="form-control" value="<%= site.services_process_card3_text %>"></div>
                 </div>
 
                 <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">About Page</h6>
                 <div class="row g-3">
                     <div class="col-12"><label class="form-label">Headline</label><input type="text" name="about_heading" class="form-control" value="<%= site.about_heading %>"></div>
                     <div class="col-12"><label class="form-label">Second Paragraph</label><textarea name="about_paragraph2" class="form-control" rows="2"><%= site.about_paragraph2 %></textarea></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 1 Title</label><input type="text" name="about_mission_title" class="form-control" value="<%= site.about_mission_title %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 1 Text</label><input type="text" name="about_mission_text" class="form-control" value="<%= site.about_mission_text %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 2 Title</label><input type="text" name="about_vision_title" class="form-control" value="<%= site.about_vision_title %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 2 Text</label><input type="text" name="about_vision_text" class="form-control" value="<%= site.about_vision_text %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 3 Title</label><input type="text" name="about_team_title" class="form-control" value="<%= site.about_team_title %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 3 Text</label><input type="text" name="about_team_text" class="form-control" value="<%= site.about_team_text %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 4 Title</label><input type="text" name="about_focus_title" class="form-control" value="<%= site.about_focus_title %>"></div>
+                    <div class="col-md-6"><label class="form-label">Mini-card 4 Text</label><input type="text" name="about_focus_text" class="form-control" value="<%= site.about_focus_text %>"></div>
                 </div>
 
                 <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Contact Page</h6>
                 <div class="row g-3">
-                    <div class="col-md-4"><label class="form-label">Heading</label><input type="text" name="contact_heading" class="form-control" value="<%= site.contact_heading %>"></div>
-                    <div class="col-md-8"><label class="form-label">Subheading</label><input type="text" name="contact_subheading" class="form-control" value="<%= site.contact_subheading %>"></div>
+                    <div class="col-md-4"><label class="form-label">Hero Heading</label><input type="text" name="contact_heading" class="form-control" value="<%= site.contact_heading %>"></div>
+                    <div class="col-md-8"><label class="form-label">Hero Subheading</label><input type="text" name="contact_subheading" class="form-control" value="<%= site.contact_subheading %>"></div>
+                    <div class="col-md-6"><label class="form-label">Form Heading</label><input type="text" name="contact_form_heading" class="form-control" value="<%= site.contact_form_heading %>"></div>
+                    <div class="col-md-6"><label class="form-label">Location Heading</label><input type="text" name="contact_location_heading" class="form-control" value="<%= site.contact_location_heading %>"></div>
+                    <div class="col-md-3"><label class="form-label">Name Placeholder</label><input type="text" name="contact_form_name_placeholder" class="form-control" value="<%= site.contact_form_name_placeholder %>"></div>
+                    <div class="col-md-3"><label class="form-label">Email Placeholder</label><input type="text" name="contact_form_email_placeholder" class="form-control" value="<%= site.contact_form_email_placeholder %>"></div>
+                    <div class="col-md-3"><label class="form-label">Phone Placeholder</label><input type="text" name="contact_form_phone_placeholder" class="form-control" value="<%= site.contact_form_phone_placeholder %>"></div>
+                    <div class="col-md-3"><label class="form-label">Service Dropdown Default</label><input type="text" name="contact_form_service_placeholder" class="form-control" value="<%= site.contact_form_service_placeholder %>"></div>
+                    <div class="col-md-6"><label class="form-label">Message Placeholder</label><input type="text" name="contact_form_message_placeholder" class="form-control" value="<%= site.contact_form_message_placeholder %>"></div>
+                    <div class="col-md-6"><label class="form-label">Submit Button Label</label><input type="text" name="contact_form_submit_label" class="form-control" value="<%= site.contact_form_submit_label %>"></div>
+                    <div class="col-12"><label class="form-label">Google Maps Embed URL</label><input type="text" name="contact_map_embed_url" class="form-control" value="<%= site.contact_map_embed_url %>"></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Store Page &mdash; Hero</h6>
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Kicker</label><input type="text" name="store_hero_kicker" class="form-control" value="<%= site.store_hero_kicker %>"></div>
+                    <div class="col-md-8"><label class="form-label">Headline</label><input type="text" name="store_hero_heading" class="form-control" value="<%= site.store_hero_heading %>"></div>
+                    <div class="col-12"><label class="form-label">Subheadline</label><textarea name="store_hero_description" class="form-control" rows="2"><%= site.store_hero_description %></textarea></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Navigation Menu</h6>
+                <div class="row g-3">
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Home</label><input type="text" name="nav_home_label" class="form-control" value="<%= site.nav_home_label %>"></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Services</label><input type="text" name="nav_services_label" class="form-control" value="<%= site.nav_services_label %>"></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Store</label><input type="text" name="nav_store_label" class="form-control" value="<%= site.nav_store_label %>"></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Contact</label><input type="text" name="nav_contact_label" class="form-control" value="<%= site.nav_contact_label %>"></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">About</label><input type="text" name="nav_about_label" class="form-control" value="<%= site.nav_about_label %>"></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Login Button</label><input type="text" name="nav_login_label" class="form-control" value="<%= site.nav_login_label %>"></div>
+                    <div class="col-md-4 col-lg-3"><label class="form-label">Logout Button</label><input type="text" name="nav_logout_label" class="form-control" value="<%= site.nav_logout_label %>"></div>
+                </div>
+
+                <h6 class="fw-bold mt-4 mb-3 text-uppercase small text-muted">Footer</h6>
+                <div class="row g-3">
+                    <div class="col-md-6"><label class="form-label">Contact Heading</label><input type="text" name="footer_contact_heading" class="form-control" value="<%= site.footer_contact_heading %>"></div>
+                    <div class="col-md-6"><label class="form-label">Rights Text</label><input type="text" name="footer_rights_text" class="form-control" value="<%= site.footer_rights_text %>"></div>
+                    <div class="col-md-6"><label class="form-label">Terms Link Label</label><input type="text" name="footer_terms_label" class="form-control" value="<%= site.footer_terms_label %>"></div>
+                    <div class="col-md-6"><label class="form-label">Privacy Link Label</label><input type="text" name="footer_privacy_label" class="form-control" value="<%= site.footer_privacy_label %>"></div>
                 </div>
 
                 <button type="submit" class="btn btn-primary mt-4">Save Page Text</button>

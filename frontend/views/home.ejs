@@ -10,8 +10,8 @@
                 <p class="hero-description lead mb-5"><%= site.home_hero_description %></p>
 
                 <div class="hero-actions d-flex flex-column flex-sm-row justify-content-center gap-3 mb-5">
-                    <a href="<%= site.routes.contact %>" class="btn btn-primary btn-lg shadow">Get Quote</a>
-                    <a href="tel:<%= site.phone_href %>" class="btn btn-outline-light btn-lg shadow">Call Now</a>
+                    <a href="<%= site.routes.contact %>" class="btn btn-primary btn-lg shadow"><%= site.home_hero_btn1_label %></a>
+                    <a href="tel:<%= site.phone_href %>" class="btn btn-outline-light btn-lg shadow"><%= site.home_hero_btn2_label %></a>
                 </div>
 
                 <div class="hero-pillbar d-flex flex-wrap justify-content-center gap-3">
@@ -76,20 +76,20 @@
                 <span class="section-eyebrow"><%= site.home_about_kicker %></span>
                 <h2 class="display-5 fw-bold mb-4"><%= site.home_about_heading %></h2>
                 <p class="lead"><%= site.short_name %> is a technology-focused organization based in <%= site.location %>, helping teams modernize operations and launch better digital experiences.</p>
-                <p>We focus on strong fundamentals: clean architecture, secure implementation, measurable outcomes, and collaboration that keeps projects moving forward.</p>
+                <p><%= site.home_about_paragraph2 %></p>
 
                 <div class="about-mini-grid">
                     <div class="about-mini-card">
-                        <h3>Mission</h3>
-                        <p>Deliver dependable software solutions with clarity, trust, and long-term value.</p>
+                        <h3><%= site.home_about_mission_title %></h3>
+                        <p><%= site.home_about_mission_text %></p>
                     </div>
                     <div class="about-mini-card">
-                        <h3>Approach</h3>
-                        <p>Combine research, product thinking, and engineering discipline to solve real business problems.</p>
+                        <h3><%= site.home_about_approach_title %></h3>
+                        <p><%= site.home_about_approach_text %></p>
                     </div>
                 </div>
 
-                <a href="<%= site.routes.about %>" class="btn btn-primary shadow mt-4">Learn More <i class="fas fa-arrow-right ms-2"></i></a>
+                <a href="<%= site.routes.about %>" class="btn btn-primary shadow mt-4"><%= site.home_about_btn_label %> <i class="fas fa-arrow-right ms-2"></i></a>
             </div>
 
             <div class="col-lg-6" data-aos="fade-left">

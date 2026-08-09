@@ -10,11 +10,11 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-xl-auto align-items-xl-center">
-                    <li class="nav-item"><a class="nav-link nav-link-home <%= activePage === 'home' ? 'active' : '' %>" href="<%= site.routes.home %>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link nav-link-services <%= activePage === 'services' ? 'active' : '' %>" href="<%= site.routes.services %>">Services</a></li>
-                    <li class="nav-item"><a class="nav-link nav-link-store <%= activePage === 'store' ? 'active' : '' %>" href="/store">Store</a></li>
-                    <li class="nav-item"><a class="nav-link nav-link-contact <%= activePage === 'contact' ? 'active' : '' %>" href="<%= site.routes.contact %>">Contact</a></li>
-                    <li class="nav-item"><a class="nav-link nav-link-about <%= activePage === 'about' ? 'active' : '' %>" href="<%= site.routes.about %>">About</a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-home <%= activePage === 'home' ? 'active' : '' %>" href="<%= site.routes.home %>"><%= site.nav_home_label %></a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-services <%= activePage === 'services' ? 'active' : '' %>" href="<%= site.routes.services %>"><%= site.nav_services_label %></a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-store <%= activePage === 'store' ? 'active' : '' %>" href="/store"><%= site.nav_store_label %></a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-contact <%= activePage === 'contact' ? 'active' : '' %>" href="<%= site.routes.contact %>"><%= site.nav_contact_label %></a></li>
+                    <li class="nav-item"><a class="nav-link nav-link-about <%= activePage === 'about' ? 'active' : '' %>" href="<%= site.routes.about %>"><%= site.nav_about_label %></a></li>
                     <li class="nav-item d-flex align-items-center">
                         <%- include('language-switcher') %>
                     </li>
@@ -26,9 +26,9 @@
                         <i class="fas fa-cart-shopping"></i><span class="cart-badge d-none" data-cart-count></span>
                     </a></li>
                     <% if (typeof user !== 'undefined' && user) { %>
-                        <li class="nav-item"><a class="nav-link nav-link-cta" href="/logout"><i class="fas fa-arrow-right-from-bracket me-1"></i>Logout</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-cta" href="/logout"><i class="fas fa-arrow-right-from-bracket me-1"></i><%= site.nav_logout_label %></a></li>
                     <% } else { %>
-                        <li class="nav-item"><a class="nav-link nav-link-cta nav-link-login" href="#" data-open-login><i class="fas fa-right-to-bracket me-1"></i>Login / Sign Up</a></li>
+                        <li class="nav-item"><a class="nav-link nav-link-cta nav-link-login" href="#" data-open-login><i class="fas fa-right-to-bracket me-1"></i><%= site.nav_login_label %></a></li>
                     <% } %>
                 </ul>
             </div>

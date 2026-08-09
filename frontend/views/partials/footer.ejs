@@ -8,13 +8,13 @@
                     <p><%= site.address %><br><%= site.location %> - <%= site.postal_code %><br>GST: <%= site.gst %></p>
                 </div>
                 <div class="col-md-6 mb-4">
-                    <h5 class="fw-bold">Contact Us</h5>
+                    <h5 class="fw-bold"><%= site.footer_contact_heading %></h5>
                     <p>Email: <a href="mailto:<%= site.email %>"><%= site.email %></a><br>Phone: <a href="tel:<%= site.phone_href %>"><%= site.phone_display %></a></p>
                 </div>
             </div>
             <hr class="my-4">
-            <p class="text-center mb-2"><a href="/terms">Terms &amp; Conditions</a> &middot; <a href="/privacy">Privacy Policy</a></p>
-            <p class="text-center mb-0">&copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. All Rights Reserved.</p>
+            <p class="text-center mb-2"><a href="/terms"><%= site.footer_terms_label %></a> &middot; <a href="/privacy"><%= site.footer_privacy_label %></a></p>
+            <p class="text-center mb-0">&copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. <%= site.footer_rights_text %></p>
         </div>
     </footer>
 
