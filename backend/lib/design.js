@@ -35,7 +35,17 @@ const CARD_SLOTS = [
     { key: 'home_about_mission_card_bg', label: 'Home Page - Mission Card' },
     { key: 'home_about_approach_card_bg', label: 'Home Page - Approach Card' },
 ];
-const CARD_COLOR_SLOTS = CARD_SLOTS.map(s => s.key);
+
+const ADMIN_CARD_SLOTS = [
+    { key: 'admin_stat_submissions_bg', label: 'Contact Submissions' },
+    { key: 'admin_stat_users_bg', label: 'Registered Users' },
+    { key: 'admin_stat_orders_bg', label: 'Total Orders' },
+    { key: 'admin_stat_pending_bg', label: 'Pending Approvals' },
+    { key: 'admin_stat_upi_bg', label: 'Pending UPI Confirmations' },
+    { key: 'admin_stat_revenue_bg', label: 'Revenue (Paid)' },
+];
+
+const CARD_COLOR_SLOTS = [...CARD_SLOTS, ...ADMIN_CARD_SLOTS].map(s => s.key);
 
 const IMAGE_SLOTS = [
     'logo', 'favicon', 'hero_background', 'team_photo', 'page_background', 'services_background', 'button_background',
@@ -196,6 +206,7 @@ module.exports = {
     IMAGE_SLOTS,
     ADMIN_BUTTON_SLOTS,
     CARD_SLOTS,
+    ADMIN_CARD_SLOTS,
     CARD_COLOR_SLOTS,
     DEFAULT_ADMIN_BG,
 };

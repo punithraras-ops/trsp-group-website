@@ -303,6 +303,55 @@
             </div>
         </div>
     </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mt-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1"><i class="fas fa-chart-simple me-2" style="color: var(--admin-accent);"></i>Admin Dashboard Cards</h4>
+            <p class="text-muted">Set a custom background color and/or image for each of the summary cards at the top of the admin dashboard (this only affects the admin portal, never the public site).</p>
+            <div class="row g-4">
+                <% const adminCardSlots = [
+                    { key: 'admin_stat_submissions_bg', label: 'Contact Submissions' },
+                    { key: 'admin_stat_users_bg', label: 'Registered Users' },
+                    { key: 'admin_stat_orders_bg', label: 'Total Orders' },
+                    { key: 'admin_stat_pending_bg', label: 'Pending Approvals' },
+                    { key: 'admin_stat_upi_bg', label: 'Pending UPI Confirmations' },
+                    { key: 'admin_stat_revenue_bg', label: 'Revenue (Paid)' },
+                ]; %>
+                <% adminCardSlots.forEach(slot => { %>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="border rounded-4 p-3 h-100">
+                            <h6 class="fw-bold small mb-2"><%= slot.label %></h6>
+                            <% if (images[slot.key]) { %>
+                                <img src="<%= images[slot.key] %>" class="img-fluid mb-2 rounded border d-block" style="max-height:60px;">
+                            <% } %>
+                            <form method="POST" action="/admin/design/upload/<%= slot.key %>" enctype="multipart/form-data" class="mb-2" data-ajax-upload>
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input type="file" name="file" accept="image/*" class="form-control form-control-sm mb-2" required>
+                                <button type="submit" class="btn btn-sm btn-primary w-100">Upload Image</button>
+                            </form>
+                            <% if (images[slot.key]) { %>
+                                <form method="POST" action="/admin/design/remove/<%= slot.key %>" data-confirm="Remove this image?" class="mb-2">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">Remove Image</button>
+                                </form>
+                            <% } %>
+                            <form method="POST" action="/admin/design/card-color/<%= slot.key %>" class="d-flex gap-2 align-items-center">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <input type="color" name="color" class="form-control form-control-color" value="<%= (design.cardColors && design.cardColors[slot.key]) || '#ffffff' %>">
+                                <button type="submit" class="btn btn-sm btn-outline-primary text-nowrap flex-grow-1">Set Color</button>
+                            </form>
+                            <% if (design.cardColors && design.cardColors[slot.key]) { %>
+                                <form method="POST" action="/admin/design/card-color/<%= slot.key %>/remove" class="mt-2">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary w-100">Reset Color</button>
+                                </form>
+                            <% } %>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+    </div>
 </div>
 </main>
 <footer class="admin-footer">

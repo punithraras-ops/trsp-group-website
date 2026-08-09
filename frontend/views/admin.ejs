@@ -41,32 +41,32 @@
     <% } %>
     <% const revenuePaise = orders.filter(o => o.status === 'paid').reduce((sum, o) => sum + (o.amount_paise || 0), 0); %>
     <div class="admin-stats">
-        <div class="admin-stat-card" style="animation-delay: 0.02s;">
+        <div class="admin-stat-card" style="animation-delay: 0.02s;<%- include('partials/frame-bg-style', { color: design.cardColors.admin_stat_submissions_bg, image: design.images.admin_stat_submissions_bg, overlay: 'light' }) %>">
             <div class="stat-icon"><i class="fas fa-envelope"></i></div>
             <div class="stat-value"><%= submissions.length %></div>
             <div class="stat-label">Contact Submissions</div>
         </div>
-        <div class="admin-stat-card" style="animation-delay: 0.06s;">
+        <div class="admin-stat-card" style="animation-delay: 0.06s;<%- include('partials/frame-bg-style', { color: design.cardColors.admin_stat_users_bg, image: design.images.admin_stat_users_bg, overlay: 'light' }) %>">
             <div class="stat-icon"><i class="fas fa-users"></i></div>
             <div class="stat-value"><%= users.length %></div>
             <div class="stat-label">Registered Users</div>
         </div>
-        <div class="admin-stat-card" style="animation-delay: 0.1s;">
+        <div class="admin-stat-card" style="animation-delay: 0.1s;<%- include('partials/frame-bg-style', { color: design.cardColors.admin_stat_orders_bg, image: design.images.admin_stat_orders_bg, overlay: 'light' }) %>">
             <div class="stat-icon"><i class="fas fa-bag-shopping"></i></div>
             <div class="stat-value"><%= orders.length %></div>
             <div class="stat-label">Total Orders</div>
         </div>
-        <div class="admin-stat-card" style="animation-delay: 0.14s;">
+        <div class="admin-stat-card" style="animation-delay: 0.14s;<%- include('partials/frame-bg-style', { color: design.cardColors.admin_stat_pending_bg, image: design.images.admin_stat_pending_bg, overlay: 'light' }) %>">
             <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
             <div class="stat-value"><%= pendingApprovalCount %></div>
             <div class="stat-label">Pending Approvals</div>
         </div>
-        <div class="admin-stat-card" style="animation-delay: 0.18s;">
+        <div class="admin-stat-card" style="animation-delay: 0.18s;<%- include('partials/frame-bg-style', { color: design.cardColors.admin_stat_upi_bg, image: design.images.admin_stat_upi_bg, overlay: 'light' }) %>">
             <div class="stat-icon"><i class="fas fa-qrcode"></i></div>
             <div class="stat-value"><%= pendingUpiCount %></div>
             <div class="stat-label">Pending UPI Confirmations</div>
         </div>
-        <div class="admin-stat-card" style="animation-delay: 0.22s;">
+        <div class="admin-stat-card" style="animation-delay: 0.22s;<%- include('partials/frame-bg-style', { color: design.cardColors.admin_stat_revenue_bg, image: design.images.admin_stat_revenue_bg, overlay: 'light' }) %>">
             <div class="stat-icon"><i class="fas fa-indian-rupee-sign"></i></div>
             <div class="stat-value">&#8377;<%= (revenuePaise / 100).toLocaleString('en-IN') %></div>
             <div class="stat-label">Revenue (Paid)</div>
