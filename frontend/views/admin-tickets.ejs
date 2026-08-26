@@ -168,6 +168,10 @@
                                     <a href="/admin/tickets/<%= t.id %>/invoice" class="btn btn-sm btn-outline-secondary w-100 mt-2"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
                                 <% } %>
                                 <button type="button" class="btn btn-sm btn-outline-dark w-100 mt-2" data-open-chat="<%= t.id %>" data-ticket-title="<%= t.title %>" data-user-name="<%= t.user_name %>" data-ticket-status="<%= t.status %>"><i class="fas fa-comments me-1"></i>Conversation</button>
+                                <form method="POST" action="/admin/tickets/<%= t.id %>/delete" data-confirm="Delete this ticket? This cannot be undone." class="mt-2">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100" <%- !deleteEnabled ? 'disabled title="Deletion is turned off in Security Center"' : '' %>><i class="fas fa-trash me-1"></i>Delete Ticket</button>
+                                </form>
                             </div>
                         </div>
                     </div>

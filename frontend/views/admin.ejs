@@ -105,7 +105,7 @@
             <% } else { %>
             <div class="table-responsive">
                 <table class="table table-striped align-middle bg-white rounded shadow-sm">
-                    <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Phone</th><th>Service</th><th>Message</th></tr></thead>
+                    <thead><tr><th>Date</th><th>Name</th><th>Email</th><th>Phone</th><th>Service</th><th>Message</th><th></th></tr></thead>
                     <tbody>
                         <% submissions.forEach(s => { %>
                             <tr>
@@ -115,6 +115,12 @@
                                 <td><%= s.phone %></td>
                                 <td><%= s.service %></td>
                                 <td><%= s.message %></td>
+                                <td>
+                                    <form method="POST" action="/admin/submissions/<%= s.id %>/delete" data-confirm="Delete this submission?">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" <%- !deletePermissions.submissions ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete</button>
+                                    </form>
+                                </td>
                             </tr>
                         <% }) %>
                     </tbody>
@@ -266,7 +272,7 @@
                                 <td>
                                     <form method="POST" action="/admin/services/<%= s.id %>/delete" data-confirm="Delete this service?">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" <%- !deletePermissions.services ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete</button>
                                     </form>
                                 </td>
                                 <td>
@@ -443,7 +449,7 @@
                                 </form>
                                 <form method="POST" action="/admin/products/<%= p.id %>/delete" data-confirm="Delete this product?" class="d-inline">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger mt-2">Delete Product</button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger mt-2" <%- !deletePermissions.products ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete Product</button>
                                 </form>
 
                                 <div class="mt-3 pt-3 border-top">
@@ -522,7 +528,7 @@
                                 <td>
                                     <form method="POST" action="/admin/features/<%= f.id %>/delete" data-confirm="Delete this feature?">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" <%- !deletePermissions.features ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete</button>
                                     </form>
                                 </td>
                                 <td>
@@ -595,7 +601,7 @@
                                 <td>
                                     <form method="POST" action="/admin/testimonials/<%= t.id %>/delete" data-confirm="Delete this testimonial?">
                                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" <%- !deletePermissions.testimonials ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete</button>
                                     </form>
                                 </td>
                                 <td>
@@ -652,7 +658,7 @@
                             </form>
                             <form method="POST" action="/admin/research-verticals/<%= r.id %>/delete" data-confirm="Delete this research vertical?" class="mt-2 d-inline-block me-2">
                                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger" <%- !deletePermissions.research_verticals ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete</button>
                             </form>
 
                             <div class="border-top mt-3 pt-3">
@@ -713,7 +719,7 @@
                                     <td>
                                         <form method="POST" action="/admin/reviews/<%= r.id %>/delete" data-confirm="Delete this review?">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" <%- !deletePermissions.reviews ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete</button>
                                         </form>
                                     </td>
                                 </tr>

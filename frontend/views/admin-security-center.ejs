@@ -44,6 +44,27 @@
         </div>
     </div>
 
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1"><i class="fas fa-toggle-on me-2" style="color: var(--admin-accent);"></i>Deletion Controls</h4>
+            <p class="text-muted">Turn deletion off for any item type to prevent it from being permanently removed, even by mistake. When off, the Delete buttons for that type are disabled everywhere in the admin panel.</p>
+            <form method="POST" action="/admin/security-center/delete-permissions">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="row g-3 mb-3">
+                    <% deletableEntities.forEach(entity => { %>
+                        <div class="col-md-4 col-lg-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="del-<%= entity.key %>" name="<%= entity.key %>" value="1" <%= deletePermissions[entity.key] ? 'checked' : '' %>>
+                                <label class="form-check-label" for="del-<%= entity.key %>"><%= entity.label %></label>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Deletion Controls</button>
+            </form>
+        </div>
+    </div>
+
     <% if (suggestedBlocks.length > 0) { %>
         <div class="card border-0 shadow-sm rounded-4 mb-4 border-start border-danger border-4">
             <div class="card-body p-4">

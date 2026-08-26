@@ -50,7 +50,7 @@
                                         </form>
                                         <form method="POST" action="/admin/coupons/<%= c.id %>/delete" class="d-inline" data-confirm="Delete this coupon?">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" <%- !deletePermissions.coupons ? 'disabled title="Deletion is turned off in Security Center"' : '' %>>Delete</button>
                                         </form>
                                     </td>
                                 </tr>

@@ -16,6 +16,7 @@ const { markOrderPaid } = require('../lib/orders');
 const { adminLoginLimiter } = require('../lib/rateLimiters');
 const csrf = require('../lib/csrf');
 const security = require('../lib/security');
+const deletePermissions = require('../lib/deletePermissions');
 
 function logAdminAction(req, action, details) {
     return auditLog.log(req, action, details);
@@ -232,7 +233,21 @@ router.get('/admin/security-center', async (req, res) => {
     const summary = db.isDbConfigured() ? await security.getSecuritySummary() : {
         eventCount24h: 0, suggestedBlocks: [], blockedIps: [], recentEvents: [], appErrors: [], posture: [], dependencyScan: null,
     };
-    res.render('admin-security-center', { site, ...summary, error: '', message: '' });
+    const deletePerms = await deletePermissions.getDeletePermissions();
+    res.render('admin-security-center', {
+        site, ...summary,
+        deletableEntities: deletePermissions.DELETABLE_ENTITIES,
+        deletePermissions: deletePerms,
+        error: '', message: '',
+    });
+});
+
+router.post('/admin/security-center/delete-permissions', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await deletePermissions.setDeletePermissions(req.body);
+        await logAdminAction(req, 'security.delete_permissions', '');
+    }
+    res.redirect('/admin/security-center');
 });
 
 router.get('/admin/security-center/alert-count', async (req, res) => {
@@ -360,6 +375,8 @@ router.get('/admin', async (req, res) => {
         }
     }
 
+    const deletePerms = await deletePermissions.getDeletePermissions();
+
     res.render('admin', {
         site,
         dbConfigured: db.isDbConfigured(),
@@ -373,10 +390,19 @@ router.get('/admin', async (req, res) => {
         testimonials,
         researchVerticals,
         staffAccounts,
+        deletePermissions: deletePerms,
     });
 });
 
-router.post('/admin/reviews/:id/delete', async (req, res) => {
+router.post('/admin/submissions/:id/delete', deletePermissions.requireDeleteEnabled('submissions', '/admin?tab=submissions'), async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('contact_submissions').deleteOne({ _id: db.toId(req.params.id) });
+        await logAdminAction(req, 'submission.delete', req.params.id);
+    }
+    res.redirect('/admin?tab=submissions');
+});
+
+router.post('/admin/reviews/:id/delete', deletePermissions.requireDeleteEnabled('reviews', '/admin?tab=reviews'), async (req, res) => {
     if (db.isDbConfigured()) {
         await reviews.deleteReview(req.params.id);
         await logAdminAction(req, 'review.delete', req.params.id);
@@ -477,7 +503,7 @@ router.post('/admin/products/:id/images/remove', async (req, res) => {
     res.redirect('/admin?tab=products');
 });
 
-router.post('/admin/products/:id/delete', async (req, res) => {
+router.post('/admin/products/:id/delete', deletePermissions.requireDeleteEnabled('products', '/admin?tab=products'), async (req, res) => {
     if (db.isDbConfigured()) {
         const product = await db.getDb().collection('products').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('products').deleteOne({ _id: db.toId(req.params.id) });
@@ -560,7 +586,7 @@ router.post('/admin/features/:id/update', async (req, res) => {
     res.redirect('/admin?tab=features');
 });
 
-router.post('/admin/features/:id/delete', async (req, res) => {
+router.post('/admin/features/:id/delete', deletePermissions.requireDeleteEnabled('features', '/admin?tab=features'), async (req, res) => {
     if (db.isDbConfigured()) {
         const feature = await db.getDb().collection('upcoming_features').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('upcoming_features').deleteOne({ _id: db.toId(req.params.id) });
@@ -646,7 +672,7 @@ router.post('/admin/testimonials/:id/update', async (req, res) => {
     res.redirect('/admin?tab=testimonials');
 });
 
-router.post('/admin/testimonials/:id/delete', async (req, res) => {
+router.post('/admin/testimonials/:id/delete', deletePermissions.requireDeleteEnabled('testimonials', '/admin?tab=testimonials'), async (req, res) => {
     if (db.isDbConfigured()) {
         const testimonial = await db.getDb().collection('testimonials').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('testimonials').deleteOne({ _id: db.toId(req.params.id) });
@@ -734,7 +760,7 @@ router.post('/admin/research-verticals/:id/update', async (req, res) => {
     res.redirect('/admin?tab=research');
 });
 
-router.post('/admin/research-verticals/:id/delete', async (req, res) => {
+router.post('/admin/research-verticals/:id/delete', deletePermissions.requireDeleteEnabled('research_verticals', '/admin?tab=research'), async (req, res) => {
     if (db.isDbConfigured()) {
         const vertical = await db.getDb().collection('research_verticals').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('research_verticals').deleteOne({ _id: db.toId(req.params.id) });
@@ -834,7 +860,7 @@ router.post('/admin/services/:id/update', async (req, res) => {
     res.redirect('/admin?tab=services');
 });
 
-router.post('/admin/services/:id/delete', async (req, res) => {
+router.post('/admin/services/:id/delete', deletePermissions.requireDeleteEnabled('services', '/admin?tab=services'), async (req, res) => {
     if (db.isDbConfigured()) {
         const assignedStaffCount = await db.getDb().collection('staff_accounts').countDocuments({ service_id: db.toId(req.params.id) });
         if (assignedStaffCount > 0) {
@@ -1244,7 +1270,25 @@ router.get('/admin/tickets', async (req, res) => {
         const docs = await db.getDb().collection('tickets').aggregate(pipeline).toArray();
         tickets = docs.map(db.withId);
     }
-    res.render('admin-tickets', { site, tickets, services, selectedServiceFilter: req.query.service || '', error: '', message: '' });
+    const deleteEnabled = await deletePermissions.isDeleteEnabled('tickets');
+    res.render('admin-tickets', { site, tickets, services, selectedServiceFilter: req.query.service || '', deleteEnabled, error: '', message: '' });
+});
+
+router.post('/admin/tickets/:id/delete', deletePermissions.requireDeleteEnabled('tickets', '/admin/tickets'), async (req, res) => {
+    if (db.isDbConfigured()) {
+        const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id) });
+        await db.getDb().collection('tickets').deleteOne({ _id: db.toId(req.params.id) });
+        if (ticket) {
+            for (const file of ticket.attachments || []) {
+                await db.deleteFile(file.id);
+            }
+            for (const file of ticket.deliverable_files || []) {
+                await db.deleteFile(file.id);
+            }
+        }
+        await logAdminAction(req, 'ticket.delete', req.params.id);
+    }
+    res.redirect('/admin/tickets');
 });
 
 router.post('/admin/tickets/:id/update', async (req, res) => {
@@ -1501,7 +1545,8 @@ router.get('/admin/audit-log', async (req, res) => {
 
 router.get('/admin/coupons', async (req, res) => {
     const list = await coupons.listCoupons();
-    res.render('admin-coupons', { site, coupons: list, error: '', message: '' });
+    const deletePerms = await deletePermissions.getDeletePermissions();
+    res.render('admin-coupons', { site, coupons: list, deletePermissions: deletePerms, error: '', message: '' });
 });
 
 router.post('/admin/coupons', async (req, res) => {
@@ -1520,7 +1565,7 @@ router.post('/admin/coupons/:id/update', async (req, res) => {
     res.redirect('/admin/coupons');
 });
 
-router.post('/admin/coupons/:id/delete', async (req, res) => {
+router.post('/admin/coupons/:id/delete', deletePermissions.requireDeleteEnabled('coupons', '/admin/coupons'), async (req, res) => {
     if (db.isDbConfigured()) {
         await coupons.deleteCoupon(req.params.id);
         await logAdminAction(req, 'coupon.delete', req.params.id);
