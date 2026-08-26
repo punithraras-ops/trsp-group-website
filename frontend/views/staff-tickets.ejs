@@ -9,7 +9,7 @@
             <% } %>
             <div>
                 <h1 class="mb-0"><i class="fas fa-ticket me-2" style="color: var(--admin-accent);"></i>Store Tickets</h1>
-                <div class="small text-muted"><%= staffUser.name %> &middot; <%= staffUser.service_slug %></div>
+                <div class="small text-muted"><%= staffUser.name %> &middot; <%= staffUser.service_id ? staffUser.service_slug : 'All Stores' %></div>
             </div>
         </div>
         <div class="me-2"><%- include('partials/language-switcher') %></div>
@@ -25,7 +25,7 @@
     <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
 
     <% if (tickets.length === 0) { %>
-        <p class="text-muted">No tickets raised for your store yet.</p>
+        <p class="text-muted">No tickets raised <%= staffUser.service_id ? 'for your store' : '' %> yet.</p>
     <% } else { %>
         <div class="d-flex flex-column gap-3">
             <% tickets.forEach(t => { %>
@@ -35,7 +35,12 @@
                             <div class="col-lg-5">
                                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                                     <h5 class="fw-bold mb-0"><%= t.title %></h5>
-                                    <span class="badge bg-<%= t.status === 'fulfilled' ? 'success' : (t.status === 'closed' ? 'secondary' : (t.status === 'in_progress' ? 'info' : 'warning text-dark')) %>"><%= t.status.replace(/_/g, ' ') %></span>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <span class="badge bg-<%= t.status === 'fulfilled' ? 'success' : (t.status === 'closed' ? 'secondary' : (t.status === 'in_progress' ? 'info' : 'warning text-dark')) %>"><%= t.status.replace(/_/g, ' ') %></span>
+                                        <% if (!staffUser.service_id) { %>
+                                            <span class="badge bg-dark"><%= t.service_title || 'Unassigned' %></span>
+                                        <% } %>
+                                    </div>
                                 </div>
                                 <p class="text-muted small mb-1"><%= t.user_name %> (<%= t.user_email %>)</p>
                                 <p class="text-muted small mb-3"><%= new Date(t.created_at).toLocaleString('en-IN') %></p>

@@ -23,6 +23,17 @@ function safeStaffRedirect(value) {
     return '/staff/tickets';
 }
 
+// A staff account with service_id === null is scoped to ALL stores, so its
+// ticket filter must omit service_id entirely rather than matching { service_id: null }
+// (which would only match tickets with no store assigned - the opposite of "all").
+function ticketFilter(req, ticketId) {
+    const filter = { _id: db.toId(ticketId) };
+    if (req.staffUser.service_id) {
+        filter.service_id = req.staffUser.service_id;
+    }
+    return filter;
+}
+
 router.get('/staff/login', (req, res) => {
     res.render('staff-login', { site, redirect: safeStaffRedirect(req.query.redirect), error: '' });
 });
@@ -59,13 +70,19 @@ router.use('/staff', requireStaff);
 router.get('/staff/tickets', async (req, res) => {
     let tickets = [];
     if (db.isDbConfigured()) {
-        const docs = await db.getDb().collection('tickets').aggregate([
-            { $match: { service_id: req.staffUser.service_id } },
+        const pipeline = [];
+        if (req.staffUser.service_id) {
+            pipeline.push({ $match: { service_id: req.staffUser.service_id } });
+        }
+        pipeline.push(
             { $sort: { created_at: -1 } },
             { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
             { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-            { $addFields: { user_name: '$user.name', user_email: '$user.email' } },
-        ]).toArray();
+            { $lookup: { from: 'services', localField: 'service_id', foreignField: '_id', as: 'service' } },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            { $addFields: { user_name: '$user.name', user_email: '$user.email', service_title: '$service.title' } }
+        );
+        const docs = await db.getDb().collection('tickets').aggregate(pipeline).toArray();
         tickets = docs.map(db.withId);
     }
     res.render('staff-tickets', { site, tickets, staffUser: req.staffUser, error: '', message: '' });
@@ -82,7 +99,7 @@ router.post('/staff/tickets/:id/update', async (req, res) => {
         update.admin_notes = String(req.body.admin_notes || '').trim();
 
         const result = await db.getDb().collection('tickets').updateOne(
-            { _id: db.toId(req.params.id), service_id: req.staffUser.service_id },
+            ticketFilter(req, req.params.id),
             { $set: update }
         );
         if (result.matchedCount > 0) {
@@ -97,7 +114,7 @@ router.get('/staff/tickets/:id/messages', async (req, res) => {
         res.status(503).json({ error: 'Not available.' });
         return;
     }
-    const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id), service_id: req.staffUser.service_id });
+    const ticket = await db.getDb().collection('tickets').findOne(ticketFilter(req, req.params.id));
     if (!ticket) {
         res.status(404).json({ error: 'Ticket not found.' });
         return;
@@ -116,7 +133,7 @@ router.post('/staff/tickets/:id/message', async (req, res) => {
         return;
     }
 
-    const existing = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id), service_id: req.staffUser.service_id });
+    const existing = await db.getDb().collection('tickets').findOne(ticketFilter(req, req.params.id));
     if (!existing) {
         res.status(404).json({ error: 'Ticket not found.' });
         return;
@@ -128,7 +145,7 @@ router.post('/staff/tickets/:id/message', async (req, res) => {
 
     const newMessage = { from: 'staff', text, created_at: new Date() };
     const ticket = await db.getDb().collection('tickets').findOneAndUpdate(
-        { _id: db.toId(req.params.id), service_id: req.staffUser.service_id },
+        ticketFilter(req, req.params.id),
         { $push: { messages: newMessage }, $set: { updated_at: new Date(), unread_by_customer: true } },
         { returnDocument: 'after' }
     );
@@ -152,7 +169,7 @@ router.post('/staff/tickets/:id/message', async (req, res) => {
 
 router.post('/staff/tickets/:id/deliverable', uploadDeliverable.array('files', 5), csrf.verifyAfterUpload, async (req, res) => {
     if (db.isDbConfigured() && req.files && req.files.length > 0) {
-        const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id), service_id: req.staffUser.service_id });
+        const ticket = await db.getDb().collection('tickets').findOne(ticketFilter(req, req.params.id));
         if (ticket) {
             const newFiles = [];
             for (const file of req.files) {
@@ -160,7 +177,7 @@ router.post('/staff/tickets/:id/deliverable', uploadDeliverable.array('files', 5
                 newFiles.push({ id: fileId.toString(), filename: file.originalname, uploaded_at: new Date() });
             }
             await db.getDb().collection('tickets').updateOne(
-                { _id: db.toId(req.params.id), service_id: req.staffUser.service_id },
+                ticketFilter(req, req.params.id),
                 { $push: { deliverable_files: { $each: newFiles } }, $set: { updated_at: new Date() } }
             );
             await logStaffAction(req, 'staff.deliverable_upload', `${req.staffUser.email}: ${req.params.id}: ${newFiles.map(f => f.filename).join(', ')}`);
@@ -175,7 +192,7 @@ router.get('/staff/tickets/:id/attachment/:fileId', async (req, res) => {
         return;
     }
     try {
-        const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id), service_id: req.staffUser.service_id });
+        const ticket = await db.getDb().collection('tickets').findOne(ticketFilter(req, req.params.id));
         const file = ticket && (ticket.attachments || []).find(f => f.id === req.params.fileId);
         if (!file) {
             res.status(404).send('File not available.');
@@ -196,10 +213,10 @@ router.get('/staff/tickets/:id/attachment/:fileId', async (req, res) => {
 
 router.post('/staff/tickets/:id/deliverable/:fileId/remove', async (req, res) => {
     if (db.isDbConfigured()) {
-        const ticket = await db.getDb().collection('tickets').findOne({ _id: db.toId(req.params.id), service_id: req.staffUser.service_id });
+        const ticket = await db.getDb().collection('tickets').findOne(ticketFilter(req, req.params.id));
         if (ticket) {
             await db.getDb().collection('tickets').updateOne(
-                { _id: db.toId(req.params.id), service_id: req.staffUser.service_id },
+                ticketFilter(req, req.params.id),
                 { $pull: { deliverable_files: { id: req.params.fileId } } }
             );
             await db.deleteFile(req.params.fileId);

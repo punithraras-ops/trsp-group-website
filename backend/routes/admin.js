@@ -843,17 +843,18 @@ router.post('/admin/staff', async (req, res) => {
         const email = String(req.body.email || '').trim().toLowerCase();
         const name = String(req.body.name || '').trim();
         const password = String(req.body.password || '');
+        const isAllStores = req.body.service_id === 'all';
         const validServiceId = /^[0-9a-fA-F]{24}$/.test(req.body.service_id || '');
         const service = validServiceId ? await db.getDb().collection('services').findOne({ _id: db.toId(req.body.service_id) }) : null;
 
-        if (name && email && password.length >= 8 && service) {
+        if (name && email && password.length >= 8 && (isAllStores || service)) {
             try {
                 await db.getDb().collection('staff_accounts').insertOne({
                     name,
                     email,
                     password_hash: await hashPassword(password),
-                    service_id: service._id,
-                    service_slug: service.slug,
+                    service_id: isAllStores ? null : service._id,
+                    service_slug: isAllStores ? 'all' : service.slug,
                     is_active: true,
                     created_at: new Date(),
                     updated_at: new Date(),
@@ -876,7 +877,10 @@ router.post('/admin/staff/:id/update', async (req, res) => {
             is_active: req.body.is_active === '1',
             updated_at: new Date(),
         };
-        if (/^[0-9a-fA-F]{24}$/.test(req.body.service_id || '')) {
+        if (req.body.service_id === 'all') {
+            update.service_id = null;
+            update.service_slug = 'all';
+        } else if (/^[0-9a-fA-F]{24}$/.test(req.body.service_id || '')) {
             const service = await db.getDb().collection('services').findOne({ _id: db.toId(req.body.service_id) });
             if (service) {
                 update.service_id = service._id;
