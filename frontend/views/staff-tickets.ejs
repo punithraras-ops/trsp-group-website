@@ -1,4 +1,4 @@
-<%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Tickets' }) %>
+<%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Store Tickets' }) %>
 <body class="admin-page" style="--admin-bg: <%= design.adminBackground %>; --admin-accent: <%= design.adminColors.admin_accent %>; --admin-accent-dark: <%= design.adminColors.admin_accent_dark %>; --admin-text: <%= design.adminColors.admin_text %>; --admin-surface: <%= design.adminColors.admin_surface %>;">
 
 <div class="admin-topbar">
@@ -7,11 +7,14 @@
             <% if (design.images.logo || site.icon_path) { %>
                 <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="admin-logo-mark">
             <% } %>
-            <h1 class="mb-0"><i class="fas fa-ticket me-2" style="color: var(--admin-accent);"></i>Requirement Tickets</h1>
+            <div>
+                <h1 class="mb-0"><i class="fas fa-ticket me-2" style="color: var(--admin-accent);"></i>Store Tickets</h1>
+                <div class="small text-muted"><%= staffUser.name %> &middot; <%= staffUser.service_slug %></div>
+            </div>
         </div>
         <div class="me-2"><%- include('partials/language-switcher') %></div>
-        <a href="/admin/tickets" class="btn btn-outline-primary btn-sm"><i class="fas fa-rotate me-1"></i>Refresh</a>
-        <a href="/admin" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Dashboard</a>
+        <a href="/staff/tickets" class="btn btn-outline-primary btn-sm"><i class="fas fa-rotate me-1"></i>Refresh</a>
+        <a href="/staff/logout" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-right-from-bracket me-1"></i>Logout</a>
     </div>
 </div>
 
@@ -21,21 +24,8 @@
     <% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
     <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
 
-    <form method="GET" action="/admin/tickets" class="d-flex align-items-end gap-2 mb-4">
-        <div>
-            <label class="form-label small mb-1">Filter by store</label>
-            <select name="service" class="form-select form-select-sm" onchange="this.form.submit()">
-                <option value="" <%= selectedServiceFilter === '' ? 'selected' : '' %>>All stores</option>
-                <option value="unassigned" <%= selectedServiceFilter === 'unassigned' ? 'selected' : '' %>>Unassigned</option>
-                <% services.forEach(s => { %>
-                    <option value="<%= s.id %>" <%= selectedServiceFilter === s.id ? 'selected' : '' %>><%= s.title %></option>
-                <% }) %>
-            </select>
-        </div>
-    </form>
-
     <% if (tickets.length === 0) { %>
-        <p class="text-muted">No tickets raised yet.</p>
+        <p class="text-muted">No tickets raised for your store yet.</p>
     <% } else { %>
         <div class="d-flex flex-column gap-3">
             <% tickets.forEach(t => { %>
@@ -45,57 +35,17 @@
                             <div class="col-lg-5">
                                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                                     <h5 class="fw-bold mb-0"><%= t.title %></h5>
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        <span class="badge bg-<%= t.status === 'fulfilled' ? 'success' : (t.status === 'closed' ? 'secondary' : (t.status === 'in_progress' ? 'info' : 'warning text-dark')) %>"><%= t.status.replace(/_/g, ' ') %></span>
-                                        <span class="badge bg-<%= t.payment_status === 'paid' ? 'success' : (t.payment_status === 'awaiting_confirmation' ? 'warning text-dark' : 'danger') %>"><%= t.payment_status === 'paid' ? 'Paid' : (t.payment_status === 'awaiting_confirmation' ? 'Awaiting UPI Confirmation' : 'Unpaid') %></span>
-                                        <span class="badge bg-dark"><%= t.service_title || 'Unassigned' %></span>
-                                    </div>
+                                    <span class="badge bg-<%= t.status === 'fulfilled' ? 'success' : (t.status === 'closed' ? 'secondary' : (t.status === 'in_progress' ? 'info' : 'warning text-dark')) %>"><%= t.status.replace(/_/g, ' ') %></span>
                                 </div>
-                                <% if (!t.service_title) { %>
-                                    <form method="POST" action="/admin/tickets/<%= t.id %>/update" class="d-flex gap-2 align-items-center mb-3">
-                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                        <input type="hidden" name="status" value="<%= t.status %>">
-                                        <input type="hidden" name="delivery_status" value="<%= t.delivery_status %>">
-                                        <input type="hidden" name="payment_status" value="<%= t.payment_status %>">
-                                        <input type="hidden" name="admin_notes" value="<%= t.admin_notes || '' %>">
-                                        <select name="service_id" class="form-select form-select-sm" style="max-width: 220px;" required>
-                                            <option value="" disabled selected>Assign to store...</option>
-                                            <% services.forEach(s => { %>
-                                                <option value="<%= s.id %>"><%= s.title %></option>
-                                            <% }) %>
-                                        </select>
-                                        <button type="submit" class="btn btn-sm btn-outline-dark text-nowrap">Assign</button>
-                                    </form>
-                                <% } %>
                                 <p class="text-muted small mb-1"><%= t.user_name %> (<%= t.user_email %>)</p>
                                 <p class="text-muted small mb-3"><%= new Date(t.created_at).toLocaleString('en-IN') %></p>
                                 <p class="mb-3"><%= t.description %></p>
-
-                                <% if (t.payment_status === 'awaiting_confirmation') { %>
-                                    <div class="alert alert-warning py-2 mb-3">
-                                        <% if (t.utr_reference) { %>
-                                            UPI UTR: <strong><%= t.utr_reference %></strong> &mdash; check your bank app before confirming.
-                                        <% } else { %>
-                                            Customer hasn't submitted a UTR reference yet.
-                                        <% } %>
-                                        <div class="d-flex gap-2 mt-2">
-                                            <form method="POST" action="/admin/tickets/<%= t.id %>/confirm-manual-upi" data-confirm="Confirm you verified this UPI payment in your bank app?">
-                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                                <button type="submit" class="btn btn-sm btn-success">Confirm Paid</button>
-                                            </form>
-                                            <form method="POST" action="/admin/tickets/<%= t.id %>/reject-manual-upi" data-confirm="Reject this UPI payment claim?">
-                                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Reject</button>
-                                            </form>
-                                        </div>
-                                    </div>
-                                <% } %>
 
                                 <% if (t.attachments && t.attachments.length > 0) { %>
                                     <div class="mb-3">
                                         <h6 class="fw-bold small mb-1">Customer Attachments</h6>
                                         <% t.attachments.forEach(f => { %>
-                                            <a href="/admin/tickets/<%= t.id %>/attachment/<%= f.id %>" class="badge bg-light text-dark border me-1 mb-1 text-decoration-none"><i class="fas fa-paperclip me-1"></i><%= f.filename %></a>
+                                            <a href="/staff/tickets/<%= t.id %>/attachment/<%= f.id %>" class="badge bg-light text-dark border me-1 mb-1 text-decoration-none"><i class="fas fa-paperclip me-1"></i><%= f.filename %></a>
                                         <% }) %>
                                     </div>
                                 <% } %>
@@ -110,7 +60,7 @@
                             </div>
 
                             <div class="col-lg-4">
-                                <form method="POST" action="/admin/tickets/<%= t.id %>/update">
+                                <form method="POST" action="/staff/tickets/<%= t.id %>/update">
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <div class="mb-2">
                                         <label class="form-label small">Status</label>
@@ -128,19 +78,6 @@
                                         </select>
                                     </div>
                                     <div class="mb-2">
-                                        <label class="form-label small">Price (INR)</label>
-                                        <input type="number" name="price" class="form-control form-control-sm" step="0.01" min="0" value="<%= t.price_paise ? (t.price_paise / 100).toFixed(2) : '' %>">
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label small">Payment Status</label>
-                                        <select name="payment_status" class="form-select form-select-sm">
-                                            <option value="unpaid" <%= t.payment_status !== 'paid' && t.payment_status !== 'awaiting_confirmation' ? 'selected' : '' %>>Unpaid</option>
-                                            <option value="awaiting_confirmation" <%= t.payment_status === 'awaiting_confirmation' ? 'selected' : '' %>>Awaiting UPI Confirmation</option>
-                                            <option value="paid" <%= t.payment_status === 'paid' ? 'selected' : '' %>>Paid</option>
-                                        </select>
-                                        <div class="form-text">Auto-set to Paid when the customer pays via Razorpay; you can also set it manually for offline/cash payments.</div>
-                                    </div>
-                                    <div class="mb-2">
                                         <label class="form-label small">Notes to customer (reply)</label>
                                         <textarea name="admin_notes" class="form-control form-control-sm" rows="2"><%= t.admin_notes || '' %></textarea>
                                     </div>
@@ -153,20 +90,17 @@
                                 <% (t.deliverable_files || []).forEach(f => { %>
                                     <div class="d-flex align-items-center gap-1 mb-1">
                                         <span class="badge bg-light text-dark border text-truncate" style="max-width: 140px;" title="<%= f.filename %>"><i class="fas fa-file me-1"></i><%= f.filename %></span>
-                                        <form method="POST" action="/admin/tickets/<%= t.id %>/deliverable/<%= f.id %>/remove" data-confirm="Remove this file?">
+                                        <form method="POST" action="/staff/tickets/<%= t.id %>/deliverable/<%= f.id %>/remove" data-confirm="Remove this file?">
                                             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                             <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1">&times;</button>
                                         </form>
                                     </div>
                                 <% }) %>
-                                <form method="POST" action="/admin/tickets/<%= t.id %>/deliverable" enctype="multipart/form-data" class="d-flex flex-column gap-1 mt-2" data-ajax-upload>
+                                <form method="POST" action="/staff/tickets/<%= t.id %>/deliverable" enctype="multipart/form-data" class="d-flex flex-column gap-1 mt-2" data-ajax-upload>
                                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                                     <input type="file" name="files" multiple class="form-control form-control-sm">
                                     <button type="submit" class="btn btn-sm btn-outline-primary">Upload</button>
                                 </form>
-                                <% if (t.price_paise) { %>
-                                    <a href="/admin/tickets/<%= t.id %>/invoice" class="btn btn-sm btn-outline-secondary w-100 mt-2"><i class="fas fa-file-invoice me-1"></i>Invoice</a>
-                                <% } %>
                                 <button type="button" class="btn btn-sm btn-outline-dark w-100 mt-2" data-open-chat="<%= t.id %>" data-ticket-title="<%= t.title %>" data-user-name="<%= t.user_name %>" data-ticket-status="<%= t.status %>"><i class="fas fa-comments me-1"></i>Conversation</button>
                             </div>
                         </div>
@@ -197,7 +131,7 @@
     </div>
 </div>
 <footer class="admin-footer">
-    &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Admin Panel.
+    &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Store Staff Panel.
 </footer>
 <%- include('partials/confirm-modal') %>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -206,6 +140,6 @@
 <script src="/js/click-sound.js"></script>
 <script src="/js/translate-widget.js"></script>
 <script src="/js/admin-upload.js"></script>
-<script src="/js/admin-tickets.js"></script>
+<script src="/js/staff-tickets.js"></script>
 </body>
 </html>

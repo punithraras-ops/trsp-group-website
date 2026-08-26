@@ -64,6 +64,7 @@ app.use(require('./routes/contact'));
 app.use(require('./routes/checkout'));
 app.use(require('./routes/reviews'));
 app.use(require('./routes/tickets'));
+app.use(require('./routes/staff'));
 app.use(require('./routes/admin'));
 
 app.use((req, res) => {

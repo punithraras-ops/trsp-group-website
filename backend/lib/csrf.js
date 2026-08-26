@@ -22,7 +22,8 @@ function isKnownMultipartRoute(req) {
         || /^\/admin\/research-verticals\/[^/]+\/background$/.test(req.path)
         || /^\/admin\/features\/[^/]+\/background$/.test(req.path)
         || /^\/admin\/testimonials\/[^/]+\/background$/.test(req.path)
-        || /^\/admin\/tickets\/[^/]+\/deliverable$/.test(req.path);
+        || /^\/admin\/tickets\/[^/]+\/deliverable$/.test(req.path)
+        || /^\/staff\/tickets\/[^/]+\/deliverable$/.test(req.path);
 }
 
 function ensureToken(req, res, next) {

@@ -16,6 +16,9 @@ const authLimiter = make(15, 20, 'Too many attempts. Please try again in a few m
 // Admin login guards the single shared admin account - a high-value target.
 const adminLoginLimiter = make(15, 10, 'Too many login attempts. Please try again in a few minutes.');
 
+// Store staff login - same threshold as admin login.
+const staffLoginLimiter = make(15, 10, 'Too many login attempts. Please try again in a few minutes.');
+
 // Contact form: block spam bots without blocking a genuine visitor retrying.
 const contactLimiter = make(15, 8, 'Too many messages sent. Please try again later.');
 
@@ -25,4 +28,4 @@ const checkoutLimiter = make(15, 40, 'Too many requests. Please slow down and tr
 // Review submissions.
 const reviewLimiter = make(60, 10, 'Too many reviews submitted. Please try again later.');
 
-module.exports = { authLimiter, adminLoginLimiter, contactLimiter, checkoutLimiter, reviewLimiter };
+module.exports = { authLimiter, adminLoginLimiter, staffLoginLimiter, contactLimiter, checkoutLimiter, reviewLimiter };

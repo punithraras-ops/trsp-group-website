@@ -25,11 +25,15 @@ async function getUserTickets(userId) {
 router.get('/tickets', requireAuthPage(), async (req, res) => {
     const tickets = db.isDbConfigured() ? await getUserTickets(req.user.id) : [];
     const unreadCount = tickets.filter(t => t.unread_by_customer).length;
+    const services = db.isDbConfigured()
+        ? (await db.getDb().collection('services').find({ is_active: true }).sort({ sort_order: 1 }).toArray()).map(db.withId)
+        : [];
     res.render('tickets', {
         pageTitle: `${res.locals.site.short_name} - My Tickets`,
         pageDescription: 'Submit and track your custom product requirements.',
         activePage: 'tickets',
         tickets,
+        services,
         ticketCreated: req.query.created === '1',
         rated: req.query.rated === '1',
         razorpayConfigured: razorpay.isConfigured(),
@@ -49,6 +53,15 @@ router.post('/tickets', requireAuthPage(), uploadAttachment.array('attachments',
         return;
     }
 
+    let service = null;
+    if (/^[0-9a-fA-F]{24}$/.test(req.body.service_id || '')) {
+        service = await db.getDb().collection('services').findOne({ _id: db.toId(req.body.service_id), is_active: true });
+    }
+    if (!service) {
+        res.redirect('/tickets');
+        return;
+    }
+
     const attachments = [];
     for (const file of req.files || []) {
         const fileId = await db.uploadBuffer(file.buffer, file.originalname, file.mimetype);
@@ -59,6 +72,8 @@ router.post('/tickets', requireAuthPage(), uploadAttachment.array('attachments',
         user_id: db.toId(req.user.id),
         title,
         description,
+        service_id: service._id,
+        service_slug: service.slug,
         attachments,
         status: 'open',
         price_paise: null,

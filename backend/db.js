@@ -46,6 +46,10 @@ async function connect() {
             db.collection('reviews').createIndex({ product_id: 1 }),
             db.collection('coupons').createIndex({ code: 1 }, { unique: true }),
             db.collection('admin_audit_log').createIndex({ created_at: -1 }),
+            db.collection('staff_accounts').createIndex({ email: 1 }, { unique: true }),
+            db.collection('staff_accounts').createIndex({ service_id: 1 }),
+            db.collection('staff_sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
+            db.collection('tickets').createIndex({ service_id: 1 }),
         ]);
 
         console.log('Connected to MongoDB successfully.');

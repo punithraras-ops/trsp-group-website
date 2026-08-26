@@ -80,6 +80,7 @@
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-users" type="button"><i class="fas fa-users me-1"></i>Users (<%= users.length %>)</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-orders" type="button"><i class="fas fa-bag-shopping me-1"></i>Orders (<%= orders.length %>)</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-services" type="button"><i class="fas fa-briefcase me-1"></i>Services (<%= services.length %>)</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-staff" type="button"><i class="fas fa-user-tie me-1"></i>Store Staff (<%= staffAccounts.length %>)</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-products" type="button"><i class="fas fa-box me-1"></i>Products (<%= products.length %>)</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-features" type="button"><i class="fas fa-rocket me-1"></i>Upcoming Features (<%= features.length %>)</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reviews" type="button"><i class="fas fa-star me-1"></i>Reviews (<%= productReviews.length %>)</button></li>
@@ -300,6 +301,61 @@
                 <div class="col-md-6"><label class="form-label">Hero Subtitle (detail page)</label><textarea name="hero_subtitle" class="form-control" rows="2"></textarea></div>
                 <div class="col-12"><label class="form-label">Features (one per line: Title :: Description)</label><textarea name="features" class="form-control" rows="4" placeholder="Custom Web Applications :: Built with modern frameworks..."></textarea></div>
                 <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Add Service</button></div>
+            </form>
+        </div>
+
+        <div class="tab-pane fade" id="tab-staff">
+            <h3 class="mb-3">Store Staff</h3>
+            <p class="text-muted">Each staff account can log in separately at <code>/staff/login</code> and can only see and reply to tickets for their assigned service. They cannot confirm payments, set pricing, or view invoices — those stay admin-only.</p>
+            <div class="table-responsive mb-4">
+                <table class="table table-striped align-middle bg-white rounded shadow-sm">
+                    <thead><tr><th>Name</th><th>Email</th><th>Store</th><th>Active</th><th></th><th style="min-width:220px">Reset Password</th></tr></thead>
+                    <tbody>
+                        <% staffAccounts.forEach(st => { %>
+                            <tr>
+                                <form method="POST" action="/admin/staff/<%= st.id %>/update">
+                                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                    <td><input type="text" name="name" class="form-control" value="<%= st.name %>" required></td>
+                                    <td><input type="email" name="email" class="form-control" value="<%= st.email %>" required></td>
+                                    <td>
+                                        <select name="service_id" class="form-select">
+                                            <% services.forEach(s => { %>
+                                                <option value="<%= s.id %>" <%= st.service_id && st.service_id.toString() === s.id ? 'selected' : '' %>><%= s.title %></option>
+                                            <% }) %>
+                                        </select>
+                                    </td>
+                                    <td class="text-center"><input type="checkbox" name="is_active" value="1" <%= st.is_active ? 'checked' : '' %>></td>
+                                    <td class="text-nowrap"><button type="submit" class="btn btn-sm btn-primary">Save</button></td>
+                                </form>
+                                <td>
+                                    <form method="POST" action="/admin/staff/<%= st.id %>/reset-password" class="d-flex gap-1">
+                                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                        <input type="password" name="password" class="form-control form-control-sm" placeholder="New password (min 8 chars)" minlength="8">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary text-nowrap">Reset</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 class="mb-3">Add Staff Account</h4>
+            <form method="POST" action="/admin/staff" class="row g-2">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="col-md-3"><label class="form-label">Name</label><input type="text" name="name" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label">Email</label><input type="email" name="email" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label">Password (min 8 chars)</label><input type="password" name="password" class="form-control" minlength="8" required></div>
+                <div class="col-md-2">
+                    <label class="form-label">Store</label>
+                    <select name="service_id" class="form-select" required>
+                        <option value="" disabled selected>Select store</option>
+                        <% services.forEach(s => { %>
+                            <option value="<%= s.id %>"><%= s.title %></option>
+                        <% }) %>
+                    </select>
+                </div>
+                <div class="col-md-1 d-flex align-items-end"><button type="submit" class="btn btn-primary w-100">Add</button></div>
             </form>
         </div>
 

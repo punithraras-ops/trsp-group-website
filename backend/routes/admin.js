@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const db = require('../db');
 const site = require('../config/site');
-const { requireAdmin, createAdminSession, destroyAdminSession } = require('../lib/auth');
+const { requireAdmin, createAdminSession, destroyAdminSession, hashPassword } = require('../lib/auth');
 const adminSecurity = require('../lib/adminSecurity');
 const design = require('../lib/design');
 const siteInfo = require('../lib/siteInfo');
@@ -235,12 +235,13 @@ router.get('/admin', async (req, res) => {
     let productReviews = [];
     let testimonials = [];
     let researchVerticals = [];
+    let staffAccounts = [];
 
     if (db.isDbConfigured()) {
         try {
             const database = db.getDb();
             productReviews = await reviews.listAllReviews();
-            const [submissionDocs, userDocs, orderDocs, productDocs, featureDocs, serviceDocs, testimonialDocs, researchDocs] = await Promise.all([
+            const [submissionDocs, userDocs, orderDocs, productDocs, featureDocs, serviceDocs, testimonialDocs, researchDocs, staffDocs] = await Promise.all([
                 database.collection('contact_submissions').find().sort({ created_at: -1 }).toArray(),
                 database.collection('users').find().sort({ created_at: -1 }).toArray(),
                 database.collection('orders').aggregate([
@@ -262,6 +263,12 @@ router.get('/admin', async (req, res) => {
                 database.collection('services').find().sort({ sort_order: 1, created_at: 1 }).toArray(),
                 database.collection('testimonials').find().sort({ sort_order: 1, created_at: -1 }).toArray(),
                 database.collection('research_verticals').find().sort({ sort_order: 1, created_at: -1 }).toArray(),
+                database.collection('staff_accounts').aggregate([
+                    { $sort: { created_at: -1 } },
+                    { $lookup: { from: 'services', localField: 'service_id', foreignField: '_id', as: 'service' } },
+                    { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+                    { $addFields: { service_title: '$service.title' } },
+                ]).toArray(),
             ]);
 
             submissions = submissionDocs.map(db.withId);
@@ -291,6 +298,7 @@ router.get('/admin', async (req, res) => {
                 areasText: areasToText(r.areas),
                 background_image: r.background_image_id ? `/uploads/${r.background_image_id}` : null,
             }));
+            staffAccounts = staffDocs.map(db.withId);
         } catch (error) {
             // Leave arrays empty if any query fails; the page still renders.
         }
@@ -308,6 +316,7 @@ router.get('/admin', async (req, res) => {
         productReviews,
         testimonials,
         researchVerticals,
+        staffAccounts,
     });
 });
 
@@ -771,6 +780,12 @@ router.post('/admin/services/:id/update', async (req, res) => {
 
 router.post('/admin/services/:id/delete', async (req, res) => {
     if (db.isDbConfigured()) {
+        const assignedStaffCount = await db.getDb().collection('staff_accounts').countDocuments({ service_id: db.toId(req.params.id) });
+        if (assignedStaffCount > 0) {
+            await logAdminAction(req, 'service.delete_blocked', `${req.params.id}: ${assignedStaffCount} staff assigned`);
+            res.redirect('/admin?tab=services');
+            return;
+        }
         const service = await db.getDb().collection('services').findOne({ _id: db.toId(req.params.id) });
         await db.getDb().collection('services').deleteOne({ _id: db.toId(req.params.id) });
         if (service && service.background_image_id) {
@@ -821,6 +836,76 @@ router.post('/admin/services/:id/background-color', async (req, res) => {
         await logAdminAction(req, 'service.background_color', req.params.id);
     }
     res.redirect('/admin?tab=services');
+});
+
+router.post('/admin/staff', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const email = String(req.body.email || '').trim().toLowerCase();
+        const name = String(req.body.name || '').trim();
+        const password = String(req.body.password || '');
+        const validServiceId = /^[0-9a-fA-F]{24}$/.test(req.body.service_id || '');
+        const service = validServiceId ? await db.getDb().collection('services').findOne({ _id: db.toId(req.body.service_id) }) : null;
+
+        if (name && email && password.length >= 8 && service) {
+            try {
+                await db.getDb().collection('staff_accounts').insertOne({
+                    name,
+                    email,
+                    password_hash: await hashPassword(password),
+                    service_id: service._id,
+                    service_slug: service.slug,
+                    is_active: true,
+                    created_at: new Date(),
+                    updated_at: new Date(),
+                    last_login_at: null,
+                });
+                await logAdminAction(req, 'staff.create', email);
+            } catch (error) {
+                // Duplicate email (unique index) or other write error - silently skip, matching this file's existing error-handling style.
+            }
+        }
+    }
+    res.redirect('/admin?tab=staff');
+});
+
+router.post('/admin/staff/:id/update', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const update = {
+            name: String(req.body.name || '').trim(),
+            email: String(req.body.email || '').trim().toLowerCase(),
+            is_active: req.body.is_active === '1',
+            updated_at: new Date(),
+        };
+        if (/^[0-9a-fA-F]{24}$/.test(req.body.service_id || '')) {
+            const service = await db.getDb().collection('services').findOne({ _id: db.toId(req.body.service_id) });
+            if (service) {
+                update.service_id = service._id;
+                update.service_slug = service.slug;
+            }
+        }
+        try {
+            await db.getDb().collection('staff_accounts').updateOne(
+                { _id: db.toId(req.params.id) },
+                { $set: update }
+            );
+            await logAdminAction(req, 'staff.update', req.params.id);
+        } catch (error) {
+            // Duplicate email or other write error - skip.
+        }
+    }
+    res.redirect('/admin?tab=staff');
+});
+
+router.post('/admin/staff/:id/reset-password', async (req, res) => {
+    if (db.isDbConfigured() && req.body.password && req.body.password.length >= 8) {
+        await db.getDb().collection('staff_accounts').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { password_hash: await hashPassword(req.body.password), updated_at: new Date() } }
+        );
+        await db.getDb().collection('staff_sessions').deleteMany({ staff_id: db.toId(req.params.id) });
+        await logAdminAction(req, 'staff.reset_password', req.params.id);
+    }
+    res.redirect('/admin?tab=staff');
 });
 
 router.get('/admin/design', async (req, res) => {
@@ -1077,16 +1162,29 @@ router.post('/admin/design/admin-button-color/:slot/remove', async (req, res) =>
 
 router.get('/admin/tickets', async (req, res) => {
     let tickets = [];
+    let services = [];
     if (db.isDbConfigured()) {
-        const docs = await db.getDb().collection('tickets').aggregate([
+        services = (await db.getDb().collection('services').find({ is_active: true }).sort({ sort_order: 1 }).toArray()).map(db.withId);
+
+        const pipeline = [
             { $sort: { created_at: -1 } },
             { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
             { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
-            { $addFields: { user_name: '$user.name', user_email: '$user.email' } },
-        ]).toArray();
+            { $lookup: { from: 'services', localField: 'service_id', foreignField: '_id', as: 'service' } },
+            { $unwind: { path: '$service', preserveNullAndEmptyArrays: true } },
+            { $addFields: { user_name: '$user.name', user_email: '$user.email', service_title: '$service.title' } },
+        ];
+
+        if (req.query.service === 'unassigned') {
+            pipeline.push({ $match: { service_id: { $exists: false } } });
+        } else if (/^[0-9a-fA-F]{24}$/.test(req.query.service || '')) {
+            pipeline.push({ $match: { service_id: db.toId(req.query.service) } });
+        }
+
+        const docs = await db.getDb().collection('tickets').aggregate(pipeline).toArray();
         tickets = docs.map(db.withId);
     }
-    res.render('admin-tickets', { site, tickets, error: '', message: '' });
+    res.render('admin-tickets', { site, tickets, services, selectedServiceFilter: req.query.service || '', error: '', message: '' });
 });
 
 router.post('/admin/tickets/:id/update', async (req, res) => {
@@ -1103,6 +1201,14 @@ router.post('/admin/tickets/:id/update', async (req, res) => {
             update.price_paise = Math.round(parseFloat(req.body.price) * 100);
         }
         update.admin_notes = String(req.body.admin_notes || '').trim();
+
+        if (/^[0-9a-fA-F]{24}$/.test(req.body.service_id || '')) {
+            const service = await db.getDb().collection('services').findOne({ _id: db.toId(req.body.service_id) });
+            if (service) {
+                update.service_id = service._id;
+                update.service_slug = service.slug;
+            }
+        }
 
         await db.getDb().collection('tickets').updateOne(
             { _id: db.toId(req.params.id) },

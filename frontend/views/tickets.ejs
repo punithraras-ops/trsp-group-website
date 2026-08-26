@@ -34,6 +34,15 @@
                                 <textarea name="description" class="form-control" rows="4" placeholder="Tell us what you need built, any specific features, deadlines, or references." required></textarea>
                             </div>
                             <div class="mb-3">
+                                <label class="form-label">Which service is this about?</label>
+                                <select name="service_id" class="form-select" required>
+                                    <option value="" disabled selected>Select a service</option>
+                                    <% services.forEach(s => { %>
+                                        <option value="<%= s.id %>"><%= s.title %></option>
+                                    <% }) %>
+                                </select>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label">Attach reference files (optional)</label>
                                 <input type="file" name="attachments" multiple class="form-control">
                             </div>

@@ -200,8 +200,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
             messagesEl.innerHTML = messages.map((m) => `
-                <div class="p-2 rounded-3 ${m.from === 'admin' ? 'bg-light align-self-start' : 'bg-primary bg-opacity-10 align-self-end'}" style="max-width: 80%;">
-                    <div class="small fw-bold mb-1">${m.from === 'admin' ? 'Our Team' : 'You'}</div>
+                <div class="p-2 rounded-3 ${m.from !== 'customer' ? 'bg-light align-self-start' : 'bg-primary bg-opacity-10 align-self-end'}" style="max-width: 80%;">
+                    <div class="small fw-bold mb-1">${m.from !== 'customer' ? 'Our Team' : 'You'}</div>
                     <div>${m.text}</div>
                     <div class="small text-muted mt-1">${new Date(m.created_at).toLocaleString('en-IN')}</div>
                 </div>

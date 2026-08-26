@@ -7,6 +7,8 @@ const SESSION_COOKIE = 'sid';
 const SESSION_DAYS = 30;
 const ADMIN_SESSION_COOKIE = 'admin_sid';
 const ADMIN_SESSION_HOURS = 12;
+const STAFF_SESSION_COOKIE = 'staff_sid';
+const STAFF_SESSION_HOURS = 12;
 
 async function hashPassword(password) {
     const salt = crypto.randomBytes(16).toString('hex');
@@ -195,6 +197,66 @@ async function requireAdmin(req, res, next) {
     res.redirect(`/admin/login?redirect=${encodeURIComponent(req.originalUrl)}`);
 }
 
+async function createStaffSession(res, staffId) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + STAFF_SESSION_HOURS * 60 * 60 * 1000);
+
+    await db.getDb().collection('staff_sessions').insertOne({
+        _id: token,
+        staff_id: db.toId(staffId),
+        created_at: new Date(),
+        expires_at: expiresAt,
+    });
+
+    res.cookie(STAFF_SESSION_COOKIE, token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: STAFF_SESSION_HOURS * 60 * 60 * 1000,
+        path: '/',
+    });
+}
+
+async function destroyStaffSession(req, res) {
+    const token = req.cookies ? req.cookies[STAFF_SESSION_COOKIE] : null;
+    if (token && db.isDbConfigured()) {
+        await db.getDb().collection('staff_sessions').deleteOne({ _id: token });
+    }
+    res.clearCookie(STAFF_SESSION_COOKIE, { path: '/' });
+}
+
+async function requireStaff(req, res, next) {
+    if (!db.isDbConfigured()) {
+        res.redirect('/staff/login');
+        return;
+    }
+
+    const token = req.cookies ? req.cookies[STAFF_SESSION_COOKIE] : null;
+    if (token) {
+        try {
+            const session = await db.getDb().collection('staff_sessions').findOne({ _id: token, expires_at: { $gt: new Date() } });
+            if (session) {
+                const staff = await db.getDb().collection('staff_accounts').findOne({ _id: session.staff_id });
+                if (staff && staff.is_active) {
+                    req.staffUser = {
+                        id: staff._id.toString(),
+                        name: staff.name,
+                        email: staff.email,
+                        service_id: staff.service_id,
+                        service_slug: staff.service_slug,
+                    };
+                    next();
+                    return;
+                }
+            }
+        } catch (error) {
+            // fall through to login redirect
+        }
+    }
+
+    res.redirect(`/staff/login?redirect=${encodeURIComponent(req.originalUrl)}`);
+}
+
 module.exports = {
     hashPassword,
     verifyPassword,
@@ -207,4 +269,7 @@ module.exports = {
     checkAdminCredentials,
     createAdminSession,
     destroyAdminSession,
+    createStaffSession,
+    destroyStaffSession,
+    requireStaff,
 };
