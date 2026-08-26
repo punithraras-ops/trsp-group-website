@@ -1,31 +1,36 @@
 const rateLimit = require('express-rate-limit');
+const security = require('./security');
 
-function make(windowMinutes, max, message) {
+function make(windowMinutes, max, message, eventType) {
     return rateLimit({
         windowMs: windowMinutes * 60 * 1000,
         max,
         standardHeaders: true,
         legacyHeaders: false,
         message: { error: message },
+        handler: (req, res) => {
+            security.logSecurityEvent(req, 'rate_limited', { eventType }).catch(() => {});
+            res.status(429).send({ error: message });
+        },
     });
 }
 
 // Auth endpoints: generous enough for real typos, tight enough to blunt brute force.
-const authLimiter = make(15, 20, 'Too many attempts. Please try again in a few minutes.');
+const authLimiter = make(15, 20, 'Too many attempts. Please try again in a few minutes.', 'auth');
 
 // Admin login guards the single shared admin account - a high-value target.
-const adminLoginLimiter = make(15, 10, 'Too many login attempts. Please try again in a few minutes.');
+const adminLoginLimiter = make(15, 10, 'Too many login attempts. Please try again in a few minutes.', 'admin_login');
 
 // Store staff login - same threshold as admin login.
-const staffLoginLimiter = make(15, 10, 'Too many login attempts. Please try again in a few minutes.');
+const staffLoginLimiter = make(15, 10, 'Too many login attempts. Please try again in a few minutes.', 'staff_login');
 
 // Contact form: block spam bots without blocking a genuine visitor retrying.
-const contactLimiter = make(15, 8, 'Too many messages sent. Please try again later.');
+const contactLimiter = make(15, 8, 'Too many messages sent. Please try again later.', 'contact');
 
 // Checkout/payment endpoints: allow rapid legitimate retries (double-clicks, coupon checks).
-const checkoutLimiter = make(15, 40, 'Too many requests. Please slow down and try again.');
+const checkoutLimiter = make(15, 40, 'Too many requests. Please slow down and try again.', 'checkout');
 
 // Review submissions.
-const reviewLimiter = make(60, 10, 'Too many reviews submitted. Please try again later.');
+const reviewLimiter = make(60, 10, 'Too many reviews submitted. Please try again later.', 'review');
 
 module.exports = { authLimiter, adminLoginLimiter, staffLoginLimiter, contactLimiter, checkoutLimiter, reviewLimiter };

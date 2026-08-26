@@ -10,6 +10,7 @@ const { google, github } = require('./lib/oauth');
 const { getDesignSettings, DEFAULT_COLORS, DEFAULT_ADMIN_BG } = require('./lib/design');
 const { getMergedSite } = require('./lib/siteInfo');
 const csrf = require('./lib/csrf');
+const security = require('./lib/security');
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
@@ -32,6 +33,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(frontendDir, { index: false }));
+
+// Blocked IPs are checked here (after static assets, before everything else) so a
+// blocked attacker can't reach any dynamic route, while legitimate static-asset
+// requests never need this check to hit the DB - isIpBlocked() is an in-memory read.
+app.use((req, res, next) => {
+    if (security.isIpBlocked(req.ip)) {
+        res.status(403).send('Access denied.');
+        return;
+    }
+    next();
+});
 
 app.use(csrf.ensureToken);
 app.use(csrf.verify);
@@ -81,11 +93,13 @@ app.use((err, req, res, next) => {
         return;
     }
     console.error(err);
+    security.recordAppError(err, req).catch(() => {});
     res.status(500).send('Something went wrong.');
 });
 
 async function start() {
     await db.connect();
+    await security.loadBlockedIpCache().catch(() => {});
 
     app.listen(port, host, () => {
         console.log(`Server running at http://${host}:${port}`);

@@ -19,6 +19,7 @@
             <a href="/admin/coupons" class="btn btn-outline-primary btn-sm admin-nav-coupons"><i class="fas fa-tags me-1"></i>Coupons</a>
             <a href="/admin/audit-log" class="btn btn-outline-primary btn-sm admin-nav-auditlog"><i class="fas fa-clock-rotate-left me-1"></i>Audit Log</a>
             <a href="/admin/security" class="btn btn-outline-primary btn-sm admin-nav-security"><i class="fas fa-shield-halved me-1"></i>Security</a>
+            <a href="/admin/security-center" class="btn btn-outline-primary btn-sm admin-nav-security-center"><i class="fas fa-triangle-exclamation me-1"></i>Security Center</a>
             <a href="/admin/logout" class="btn btn-outline-secondary btn-sm admin-nav-logout"><i class="fas fa-arrow-right-from-bracket me-1"></i>Logout</a>
         </div>
     </div>
@@ -71,6 +72,11 @@
             <div class="stat-value">&#8377;<%= (revenuePaise / 100).toLocaleString('en-IN') %></div>
             <div class="stat-label">Revenue (Paid)</div>
         </div>
+        <a href="/admin/security-center" class="admin-stat-card d-block text-decoration-none text-reset" style="animation-delay: 0.26s;">
+            <div class="stat-icon"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="stat-value" data-security-alert-count>&hellip;</div>
+            <div class="stat-label">Security Alerts (24h)</div>
+        </a>
     </div>
 
     <div class="admin-tabs-scroll-wrapper mb-4">
@@ -762,5 +768,6 @@
 <script src="/js/translate-widget.js"></script>
 <script src="/js/admin-upload.js"></script>
 <script src="/js/toggle-password.js"></script>
+<script src="/js/admin-security-alert.js"></script>
 </body>
 </html>

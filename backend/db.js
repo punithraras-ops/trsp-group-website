@@ -50,6 +50,11 @@ async function connect() {
             db.collection('staff_accounts').createIndex({ service_id: 1 }),
             db.collection('staff_sessions').createIndex({ expires_at: 1 }, { expireAfterSeconds: 0 }),
             db.collection('tickets').createIndex({ service_id: 1 }),
+            // created_at stores creation time (not a future expiry), so expireAfterSeconds
+            // must be a positive duration here - unlike the expires_at/0 pattern used above.
+            db.collection('security_events').createIndex({ created_at: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 }),
+            db.collection('security_events').createIndex({ ip: 1, created_at: -1 }),
+            db.collection('app_errors').createIndex({ created_at: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 14 }),
         ]);
 
         console.log('Connected to MongoDB successfully.');

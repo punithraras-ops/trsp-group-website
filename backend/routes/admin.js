@@ -15,6 +15,7 @@ const reviews = require('../lib/reviews');
 const { markOrderPaid } = require('../lib/orders');
 const { adminLoginLimiter } = require('../lib/rateLimiters');
 const csrf = require('../lib/csrf');
+const security = require('../lib/security');
 
 function logAdminAction(req, action, details) {
     return auditLog.log(req, action, details);
@@ -88,6 +89,7 @@ router.post('/admin/login', adminLoginLimiter, async (req, res) => {
 
     const valid = await adminSecurity.checkAdminPassword(req.body.username, req.body.password);
     if (!valid) {
+        security.logSecurityEvent(req, 'login_failed_admin', { username: req.body.username }).catch(() => {});
         res.render('admin-login', { site, redirect, error: 'Invalid username or password.' });
         return;
     }
@@ -120,6 +122,7 @@ router.post('/admin/verify-2fa', adminLoginLimiter, async (req, res) => {
 
     const valid = await adminSecurity.verifyLoginTotpCode(req.body.code);
     if (!valid) {
+        security.logSecurityEvent(req, '2fa_failed_admin', {}).catch(() => {});
         res.render('admin-verify-2fa', { site, error: 'Invalid or expired code. Please try again.' });
         return;
     }
@@ -223,6 +226,59 @@ router.post('/admin/security/change-password', async (req, res) => {
 
     await adminSecurity.setAdminPassword(req.body.password);
     res.render('admin-security', { site, enabled, enrollment: null, error: '', message: 'Password updated successfully.' });
+});
+
+router.get('/admin/security-center', async (req, res) => {
+    const summary = db.isDbConfigured() ? await security.getSecuritySummary() : {
+        eventCount24h: 0, suggestedBlocks: [], blockedIps: [], recentEvents: [], appErrors: [], posture: [], dependencyScan: null,
+    };
+    res.render('admin-security-center', { site, ...summary, error: '', message: '' });
+});
+
+router.get('/admin/security-center/alert-count', async (req, res) => {
+    const count = db.isDbConfigured() ? await security.getAlertCount() : 0;
+    res.json({ count });
+});
+
+router.post('/admin/security-center/block-ip', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const ip = String(req.body.ip || '').trim();
+        try {
+            await security.blockIp(ip, req.body.reason, req);
+            await logAdminAction(req, 'security.block_ip', ip);
+        } catch (error) {
+            // Refused (e.g. tried to block own IP) - the page just won't show it as blocked.
+        }
+    }
+    res.redirect('/admin/security-center');
+});
+
+router.post('/admin/security-center/unblock-ip', async (req, res) => {
+    if (db.isDbConfigured()) {
+        const ip = String(req.body.ip || '').trim();
+        await security.unblockIp(ip);
+        await logAdminAction(req, 'security.unblock_ip', ip);
+    }
+    res.redirect('/admin/security-center');
+});
+
+router.post('/admin/security-center/errors/:id/resolve', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await db.getDb().collection('app_errors').updateOne(
+            { _id: db.toId(req.params.id) },
+            { $set: { resolved: true } }
+        );
+        await logAdminAction(req, 'security.error_resolve', req.params.id);
+    }
+    res.redirect('/admin/security-center');
+});
+
+router.post('/admin/security-center/run-dependency-scan', async (req, res) => {
+    if (db.isDbConfigured()) {
+        await security.runDependencyScan();
+        await logAdminAction(req, 'security.dependency_scan', '');
+    }
+    res.redirect('/admin/security-center');
 });
 
 router.get('/admin', async (req, res) => {

@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+const security = require('./security');
 
 const CSRF_COOKIE = 'csrf_token';
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -44,6 +45,7 @@ function ensureToken(req, res, next) {
 }
 
 function reject(req, res) {
+    security.logSecurityEvent(req, 'csrf_rejected', { path: req.path }).catch(() => {});
     const wantsJson = req.xhr || (req.headers.accept || '').includes('application/json') || (req.headers['content-type'] || '').includes('application/json');
     if (wantsJson) {
         res.status(403).json({ error: 'Your session security token expired or is invalid. Please refresh the page and try again.' });

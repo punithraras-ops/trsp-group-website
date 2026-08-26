@@ -7,6 +7,7 @@ const { staffLoginLimiter } = require('../lib/rateLimiters');
 const csrf = require('../lib/csrf');
 const auditLog = require('../lib/auditLog');
 const mailer = require('../lib/mailer');
+const security = require('../lib/security');
 
 const router = express.Router();
 // Same size limit as the admin deliverable upload - project files can be large.
@@ -51,6 +52,7 @@ router.post('/staff/login', staffLoginLimiter, async (req, res) => {
     const valid = staff && staff.is_active && await verifyPassword(req.body.password || '', staff.password_hash);
 
     if (!valid) {
+        security.logSecurityEvent(req, 'login_failed_staff', { email }).catch(() => {});
         res.render('staff-login', { site, redirect, error: 'Invalid email or password.' });
         return;
     }

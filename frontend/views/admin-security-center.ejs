@@ -1,0 +1,213 @@
+<%- include('partials/admin-head', { adminPageTitle: site.short_name + ' - Security Center' }) %>
+<body class="admin-page" style="--admin-bg: <%= design.adminBackground %>; --admin-accent: <%= design.adminColors.admin_accent %>; --admin-accent-dark: <%= design.adminColors.admin_accent_dark %>; --admin-text: <%= design.adminColors.admin_text %>; --admin-surface: <%= design.adminColors.admin_surface %>;">
+
+<div class="admin-topbar">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <% if (design.images.logo || site.icon_path) { %>
+                <img src="<%= design.images.logo || site.icon_path %>" alt="<%= site.legal_name %> logo" class="admin-logo-mark">
+            <% } %>
+            <h1 class="mb-0"><i class="fas fa-triangle-exclamation me-2" style="color: var(--admin-accent);"></i>Security Center</h1>
+        </div>
+        <div class="me-2"><%- include('partials/language-switcher') %></div>
+        <a href="/admin/security-center" class="btn btn-outline-primary btn-sm"><i class="fas fa-rotate me-1"></i>Refresh</a>
+        <a href="/admin" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Back to Dashboard</a>
+    </div>
+</div>
+
+<main class="admin-page-main">
+<div class="container-fluid px-4 pb-5">
+
+    <% if (message) { %><div class="alert alert-success"><%= message %></div><% } %>
+    <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+
+    <p class="text-muted">This detects real activity already happening against your site &mdash; failed logins, failed 2FA codes, forged form submissions, and rate-limit abuse &mdash; and gives you real one-click actions. It cannot guarantee protection from every possible attack, and it never blocks an IP automatically; you always confirm blocking yourself.</p>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3"><i class="fas fa-list-check me-2" style="color: var(--admin-accent);"></i>Security Checklist</h4>
+            <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                <% posture.forEach(item => { %>
+                    <li class="d-flex align-items-center gap-2">
+                        <% if (item.ok) { %>
+                            <span class="badge bg-success"><i class="fas fa-check"></i></span>
+                        <% } else { %>
+                            <span class="badge bg-danger"><i class="fas fa-xmark"></i></span>
+                        <% } %>
+                        <span><%= item.label %></span>
+                        <% if (!item.ok && item.fixLink) { %>
+                            <a href="<%= item.fixLink %>" class="btn btn-sm btn-outline-primary ms-auto">Fix</a>
+                        <% } %>
+                    </li>
+                <% }) %>
+            </ul>
+        </div>
+    </div>
+
+    <% if (suggestedBlocks.length > 0) { %>
+        <div class="card border-0 shadow-sm rounded-4 mb-4 border-start border-danger border-4">
+            <div class="card-body p-4">
+                <h4 class="fw-bold mb-1"><i class="fas fa-triangle-exclamation me-2 text-danger"></i>Suggested: Block These IPs</h4>
+                <p class="text-muted">5 or more failed logins in the last 15 minutes &mdash; a real sign of brute-force attempts. Nothing is blocked automatically; review and click Block only if you don't recognize the activity.</p>
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle bg-white rounded shadow-sm">
+                        <thead><tr><th>IP</th><th>Failed Attempts</th><th>Last Seen</th><th></th></tr></thead>
+                        <tbody>
+                            <% suggestedBlocks.forEach(s => { %>
+                                <tr>
+                                    <td><%= s.ip %></td>
+                                    <td><%= s.count %></td>
+                                    <td class="text-nowrap"><%= new Date(s.last_seen).toLocaleString('en-IN') %></td>
+                                    <td>
+                                        <form method="POST" action="/admin/security-center/block-ip" data-confirm="Block <%= s.ip %>? This may also affect other visitors sharing that network.">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="ip" value="<%= s.ip %>">
+                                            <input type="hidden" name="reason" value="Auto-suggested: <%= s.count %> failed logins in 15 min">
+                                            <button type="submit" class="btn btn-sm btn-danger">Block</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    <% } %>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3"><i class="fas fa-ban me-2" style="color: var(--admin-accent);"></i>Blocked IPs</h4>
+            <% if (blockedIps.length === 0) { %>
+                <p class="text-muted">No IPs are currently blocked.</p>
+            <% } else { %>
+                <div class="table-responsive mb-4">
+                    <table class="table table-striped align-middle bg-white rounded shadow-sm">
+                        <thead><tr><th>IP</th><th>Reason</th><th>Blocked At</th><th></th></tr></thead>
+                        <tbody>
+                            <% blockedIps.forEach(b => { %>
+                                <tr>
+                                    <td><%= b.ip %></td>
+                                    <td><%= b.reason %></td>
+                                    <td class="text-nowrap"><%= new Date(b.blocked_at).toLocaleString('en-IN') %></td>
+                                    <td>
+                                        <form method="POST" action="/admin/security-center/unblock-ip">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <input type="hidden" name="ip" value="<%= b.ip %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Unblock</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+
+            <h6 class="fw-bold mb-2">Manually Block an IP</h6>
+            <p class="text-muted small">Blocking an IP may also affect other legitimate visitors sharing that network (common on mobile networks). You can't block the IP you're currently browsing from.</p>
+            <form method="POST" action="/admin/security-center/block-ip" class="row g-2" data-confirm="Block this IP? This may also affect other visitors sharing that network.">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <div class="col-md-4"><input type="text" name="ip" class="form-control" placeholder="e.g. 203.0.113.5" required></div>
+                <div class="col-md-5"><input type="text" name="reason" class="form-control" placeholder="Reason (optional)"></div>
+                <div class="col-md-3"><button type="submit" class="btn btn-danger w-100">Block IP</button></div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1"><i class="fas fa-shield-virus me-2" style="color: var(--admin-accent);"></i>Dependency Vulnerability Scan</h4>
+            <p class="text-muted">Checks your installed packages against known public vulnerability reports (read-only &mdash; never changes any files).</p>
+            <% if (dependencyScan) { %>
+                <p class="text-muted small mb-2">Last scanned: <%= new Date(dependencyScan.ran_at).toLocaleString('en-IN') %></p>
+                <% if (dependencyScan.error) { %>
+                    <div class="alert alert-warning">Scan failed: <%= dependencyScan.error %></div>
+                <% } else { %>
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <span class="badge bg-<%= dependencyScan.vulnerabilities.critical > 0 ? 'danger' : 'secondary' %>">Critical: <%= dependencyScan.vulnerabilities.critical %></span>
+                        <span class="badge bg-<%= dependencyScan.vulnerabilities.high > 0 ? 'danger' : 'secondary' %>">High: <%= dependencyScan.vulnerabilities.high %></span>
+                        <span class="badge bg-<%= dependencyScan.vulnerabilities.moderate > 0 ? 'warning text-dark' : 'secondary' %>">Moderate: <%= dependencyScan.vulnerabilities.moderate %></span>
+                        <span class="badge bg-secondary">Low: <%= dependencyScan.vulnerabilities.low %></span>
+                        <span class="badge bg-light text-dark border"><%= dependencyScan.dependency_count %> packages scanned</span>
+                    </div>
+                <% } %>
+            <% } else { %>
+                <p class="text-muted">No scan has been run yet.</p>
+            <% } %>
+            <form method="POST" action="/admin/security-center/run-dependency-scan">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-outline-primary" data-scan-button>Run Scan Now</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3"><i class="fas fa-bug me-2" style="color: var(--admin-accent);"></i>Recent Application Errors</h4>
+            <% if (appErrors.length === 0) { %>
+                <p class="text-muted">No unresolved errors. Good.</p>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle bg-white rounded shadow-sm">
+                        <thead><tr><th>When</th><th>Message</th><th>Path</th><th></th></tr></thead>
+                        <tbody>
+                            <% appErrors.forEach(e => { %>
+                                <tr>
+                                    <td class="text-nowrap"><%= new Date(e.created_at).toLocaleString('en-IN') %></td>
+                                    <td><%= e.message %></td>
+                                    <td class="text-muted small"><%= e.method %> <%= e.path %></td>
+                                    <td>
+                                        <form method="POST" action="/admin/security-center/errors/<%= e.id %>/resolve">
+                                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Mark Resolved</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-1"><i class="fas fa-list me-2" style="color: var(--admin-accent);"></i>Recent Security Events</h4>
+            <p class="text-muted">Last 50 events, most recent first. <%= eventCount24h %> in the last 24 hours.</p>
+            <% if (recentEvents.length === 0) { %>
+                <p class="text-muted">No security events recorded yet.</p>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle bg-white rounded shadow-sm">
+                        <thead><tr><th>When</th><th>Type</th><th>IP</th><th>Path</th></tr></thead>
+                        <tbody>
+                            <% recentEvents.forEach(e => { %>
+                                <tr>
+                                    <td class="text-nowrap"><%= new Date(e.created_at).toLocaleString('en-IN') %></td>
+                                    <td><span class="badge bg-secondary"><%= e.type %></span></td>
+                                    <td class="text-muted small"><%= e.ip %></td>
+                                    <td class="text-muted small"><%= e.method %> <%= e.path %></td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+</main>
+<footer class="admin-footer">
+    &copy; <%= new Date().getFullYear() %> <%= site.legal_name %>. Admin Panel.
+</footer>
+<%- include('partials/confirm-modal') %>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/csrf.js"></script>
+<script src="/js/confirm-modal.js"></script>
+<script src="/js/click-sound.js"></script>
+<script src="/js/translate-widget.js"></script>
+<script src="/js/admin-security-center.js"></script>
+</body>
+</html>
